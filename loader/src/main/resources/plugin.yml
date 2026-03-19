@@ -1,0 +1,32 @@
+name: MinecraftChallenges
+version: '${version}'
+main: gg.itzkatze.mcc.MinecraftChallenges
+api-version: '1.21.11'
+
+commands:
+    backpack:
+        aliases: [ bp ]
+    displayresults:
+    exclude:
+    help:
+    joker:
+    language:
+        aliases: [ lang ]
+    craft:
+        aliases: [ crafting ]
+    points:
+    randomteams:
+    recipe:
+    reset:
+    result:
+    settings:
+        aliases: [ menu ]
+    configsettings:
+    skip:
+    team:
+    timer:
+    allitemsprogress:
+        aliases: [ allitemsstats, allitemsinfo ]
+    allitemssettings:
+        aliases: [ allitems, allitemsconfig ]
+    leaderboard:
