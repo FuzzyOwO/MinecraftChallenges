@@ -1,13 +1,18 @@
 package gg.itzkatze.mcc.game;
 
-import lombok.Getter;
 import gg.itzkatze.mcc.MinecraftChallenges;
-import gg.itzkatze.mcc.util.StringUtility;
-import net.kyori.adventure.text.Component;
-import gg.itzkatze.mcc.event.*;
+import gg.itzkatze.mcc.challenges.Challenge;
+import gg.itzkatze.mcc.challenges.ChallengeManager;
 import gg.itzkatze.mcc.player.MccPlayer;
+import gg.itzkatze.mcc.event.TimerEndEvent;
+import gg.itzkatze.mcc.event.TimerPauseEvent;
+import gg.itzkatze.mcc.event.TimerSetTimeEvent;
+import gg.itzkatze.mcc.event.TimerStartTimeChangeEvent;
+import gg.itzkatze.mcc.util.StringUtility;
+import lombok.Getter;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.sound.Sound;
+import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.Style;
 import net.kyori.adventure.text.format.TextDecoration;
@@ -15,6 +20,7 @@ import org.bukkit.Bukkit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Comparator;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -46,8 +52,7 @@ public class MccTimer {
             public void run() {
                 MccPlayer.getOnlinePlayers().forEach(
                         forceBattlePlayer -> forceBattlePlayer.sendActionbar(
-                                running ? Component.text(StringUtility.formatTime(time)).color(NamedTextColor.BLUE).style(Style.style(TextDecoration.ITALIC))
-                                        : Component.text("Timer paused.").color(NamedTextColor.BLUE).style(Style.style(TextDecoration.ITALIC))
+                                getActionbarMessage(forceBattlePlayer)
                         ));
             }
         };
@@ -87,6 +92,20 @@ public class MccTimer {
         timer.scheduleAtFixedRate(timerTask, 0L, 1000L);
     }
 
+    private Component getActionbarMessage(MccPlayer player) {
+        Challenge actionbarChallenge = ChallengeManager.getActiveChallenges().stream()
+                .filter(challenge -> challenge.getActionbar(player, running, time) != null)
+                .max(Comparator.comparingInt(Challenge::getActionbarPriority))
+                .orElse(null);
+        if (actionbarChallenge != null) {
+            return actionbarChallenge.getActionbar(player, running, time);
+        }
+
+        return running
+                ? Component.text(StringUtility.formatTime(time)).color(NamedTextColor.BLUE).style(Style.style(TextDecoration.ITALIC))
+                : Component.text("Timer paused.").color(NamedTextColor.BLUE).style(Style.style(TextDecoration.ITALIC));
+    }
+
     public void setStartTime(int newStartTime) {
         TimerStartTimeChangeEvent startTimeChangeEvent = new TimerStartTimeChangeEvent(newStartTime);
         Bukkit.getPluginManager().callEvent(startTimeChangeEvent);
@@ -109,13 +128,6 @@ public class MccTimer {
 
     public void setRunning(boolean running) {
         if (running) {
-            TimerStartEvent startEvent = new TimerStartEvent(this.time);
-            Bukkit.getPluginManager().callEvent(startEvent);
-            if (startEvent.isCancelled()) {
-                logger.info("TimerStartEvent has been denied by an external plugin.");
-                return;
-            }
-            this.time = startEvent.getStartTime();
             this.hitZero = false;
             this.running = true;
         } else {

@@ -40,12 +40,28 @@ public class ForceBattle implements Challenge {
 
     @Override
     public void onDisable() {
+        ForceBattleGameListener.startPhase = true;
         BossbarManager.hideBarsForChallenge(this);
         ForceBattleTeam.deleteAll();
         MccTeam.downgrade(ChallengeType.FORCE_BATTLE);
         MccTeam.unregisterFactory(ChallengeType.FORCE_BATTLE);
         MccPlayer.downgrade(ChallengeType.FORCE_BATTLE);
         MccPlayer.unregisterFactory(ChallengeType.FORCE_BATTLE);
+    }
+
+    @Override
+    public void onGameStart() {
+        gameListener.startGame();
+    }
+
+    @Override
+    public void onGameReset() {
+        ForceBattleGameListener.startPhase = true;
+        MccPlayer.PLAYERS.stream()
+                .filter(ForceBattlePlayer.class::isInstance)
+                .map(ForceBattlePlayer.class::cast)
+                .filter(player -> !player.isOffline())
+                .forEach(player -> player.reset(true));
     }
 
     @Override

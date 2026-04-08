@@ -100,7 +100,10 @@ public class ChallengeSettingsManager {
         // Get the first enum constant as the "off" state
         Class<? extends SettingStateType> stateType = state.getClass();
         Object[] stateConstants = stateType.getEnumConstants();
-        return stateConstants.length == 0 || state != stateConstants[0];
+        if (stateConstants == null || stateConstants.length == 0) {
+            return true;
+        }
+        return state != stateConstants[0];
     }
 
     /**

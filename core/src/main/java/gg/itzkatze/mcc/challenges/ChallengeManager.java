@@ -7,6 +7,7 @@ import gg.itzkatze.mcc.game.TaskManager;
 import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
@@ -22,9 +23,13 @@ public class ChallengeManager {
 
     @Getter
     private static final Set<Challenge> activeChallenges = new HashSet<>();
+    @Getter
+    private static boolean gameStarted = false;
 
     /** Commands registered per challenge, so we can unregister them when the challenge is disabled. */
     private static final Map<Challenge, List<MccCommand>> commandsByChallenge = new HashMap<>();
+    /** Listeners registered per challenge, so we can unregister them when the challenge is disabled. */
+    private static final Map<Challenge, List<Listener>> listenersByChallenge = new HashMap<>();
 
     /**
      * Loads a challenge by activating it.
@@ -49,7 +54,9 @@ public class ChallengeManager {
         refreshCommandListForAllPlayers();
 
         // Register listeners
-        for (Listener listener : challenge.getListeners()) {
+        List<Listener> listeners = new ArrayList<>(challenge.getListeners());
+        listenersByChallenge.put(challenge, listeners);
+        for (Listener listener : listeners) {
             Plugin plugin = MinecraftChallenges.get();
             MinecraftChallenges.get().getServer().getPluginManager().registerEvents(listener, plugin);
         }
@@ -83,7 +90,18 @@ public class ChallengeManager {
         }
         refreshCommandListForAllPlayers();
 
+        List<Listener> listeners = listenersByChallenge.remove(challenge);
+        if (listeners != null) {
+            for (Listener listener : listeners) {
+                HandlerList.unregisterAll(listener);
+            }
+        }
+
         TaskManager.unregister(challenge);
+
+        if (activeChallenges.isEmpty()) {
+            gameStarted = false;
+        }
     }
 
     /**
@@ -94,6 +112,7 @@ public class ChallengeManager {
             challenge.onDisable();
         }
         activeChallenges.clear();
+        gameStarted = false;
 
         for (List<MccCommand> commands : commandsByChallenge.values()) {
             for (MccCommand command : commands) {
@@ -101,9 +120,36 @@ public class ChallengeManager {
             }
         }
         commandsByChallenge.clear();
+
+        for (List<Listener> listeners : listenersByChallenge.values()) {
+            for (Listener listener : listeners) {
+                HandlerList.unregisterAll(listener);
+            }
+        }
+        listenersByChallenge.clear();
+
         refreshCommandListForAllPlayers();
 
         TaskManager.stopAll();
+    }
+
+    public static boolean startActiveChallenges() {
+        if (activeChallenges.isEmpty() || gameStarted) {
+            return false;
+        }
+
+        for (Challenge challenge : activeChallenges) {
+            challenge.onGameStart();
+        }
+        gameStarted = true;
+        return true;
+    }
+
+    public static void resetGameState() {
+        gameStarted = false;
+        for (Challenge challenge : activeChallenges) {
+            challenge.onGameReset();
+        }
     }
 
     /**

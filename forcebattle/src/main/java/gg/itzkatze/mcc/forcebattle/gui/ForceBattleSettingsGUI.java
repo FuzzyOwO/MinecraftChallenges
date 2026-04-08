@@ -1,11 +1,10 @@
 package gg.itzkatze.mcc.forcebattle.gui;
 
+import gg.itzkatze.mcc.MinecraftChallenges;
 import gg.itzkatze.mcc.challenges.Challenge;
 import gg.itzkatze.mcc.challenges.ChallengeType;
 import gg.itzkatze.mcc.configuration.states.SettingStateType;
 import lombok.Getter;
-import gg.itzkatze.mcc.MinecraftChallenges;
-import gg.itzkatze.mcc.forcebattle.ForceBattlePlayer;
 import gg.itzkatze.mcc.forcebattle.ForceBattleSettings;
 import gg.itzkatze.mcc.configuration.GlobalSetting;
 import gg.itzkatze.mcc.configuration.SettingsManager;
@@ -13,6 +12,7 @@ import gg.itzkatze.mcc.configuration.states.PlayerTeamBothState;
 import gg.itzkatze.mcc.configuration.Setting;
 import gg.itzkatze.mcc.configuration.ChallengeSettingsManager;
 import gg.itzkatze.mcc.challenges.ChallengeRegistry;
+import gg.itzkatze.mcc.game.GameLifecycleManager;
 import gg.itzkatze.mcc.gui.MccGUI;
 import gg.itzkatze.mcc.gui.GUIClickableItem;
 import gg.itzkatze.mcc.player.MccPlayer;
@@ -133,13 +133,7 @@ public class ForceBattleSettingsGUI extends MccGUI {
 
         public void handleClick(MccPlayer player) {
             if (this == RESET) {
-                MinecraftChallenges.getTimer().setRunning(false);
-                MinecraftChallenges.getTimer().setTime(MinecraftChallenges.getTimer().getStartTime());
-                MccPlayer.PLAYERS.stream()
-                        .filter(ForceBattlePlayer.class::isInstance)
-                        .map(ForceBattlePlayer.class::cast)
-                        .filter(p -> !p.isOffline())
-                        .forEach(p -> p.reset(true));
+                GameLifecycleManager.resetGame();
                 return;
             }
 

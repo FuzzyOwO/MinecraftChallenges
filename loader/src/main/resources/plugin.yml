@@ -30,3 +30,4 @@ commands:
     allitemssettings:
         aliases: [ allitems, allitemsconfig ]
     leaderboard:
+    start:

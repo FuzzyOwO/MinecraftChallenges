@@ -9,13 +9,12 @@ import gg.itzkatze.mcc.challenges.ChallengeType;
 import gg.itzkatze.mcc.commands.framework.CallerType;
 import gg.itzkatze.mcc.commands.framework.CommandCaller;
 import gg.itzkatze.mcc.event.PlayerExcludeEvent;
-import gg.itzkatze.mcc.game.SpawnManager;
+import gg.itzkatze.mcc.game.GameLifecycleManager;
 import gg.itzkatze.mcc.team.MccTeam;
 import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.sound.Sound;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
-import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
@@ -284,14 +283,7 @@ public class MccPlayer implements CommandCaller {
 
     public void handleReset() {
         if (getPlayer() == null) return;
-        if (!SpawnManager.isSpawnCreated()) SpawnManager.createSpawnIfNeeded();
-        getPlayer().setFoodLevel(20);
-        getPlayer().setHealth(20);
-        getPlayer().setSaturation(20);
-        getPlayer().setFireTicks(0);
-        getPlayer().getInventory().clear();
-        getPlayer().setGameMode(GameMode.ADVENTURE);
-        getPlayer().teleport(SpawnManager.getSpawn());
+        GameLifecycleManager.sendToLobby(this);
     }
 
     public boolean isOffline() {

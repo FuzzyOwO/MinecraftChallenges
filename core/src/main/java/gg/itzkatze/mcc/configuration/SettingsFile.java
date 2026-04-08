@@ -6,6 +6,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import gg.itzkatze.mcc.challenges.Challenge;
 import gg.itzkatze.mcc.challenges.ChallengeRegistry;
+import gg.itzkatze.mcc.configuration.states.ConfigurableSettingState;
 import gg.itzkatze.mcc.configuration.states.SettingStateType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -63,7 +64,12 @@ public class SettingsFile {
                         String stateStr = null;
                         try {
                             stateStr = settingsObject.get(key).getAsString();
-                            SettingStateType parsedState = parseState(defaultState.getClass(), stateStr);
+                            SettingStateType parsedState;
+                            if (defaultState instanceof ConfigurableSettingState configurable) {
+                                parsedState = configurable.parse(stateStr);
+                            } else {
+                                parsedState = parseState(defaultState.getClass(), stateStr);
+                            }
                             if (parsedState != null) {
                                 settingsManager.setState(enumValue, parsedState);
                             } else {
@@ -135,6 +141,8 @@ public class SettingsFile {
                 SettingStateType state = settingsManager.getState(setting);
                 if (state instanceof Enum<?> enumState) {
                     settingsObject.addProperty(setting.getId(), enumState.name());
+                } else if (state instanceof ConfigurableSettingState configurable) {
+                    settingsObject.addProperty(setting.getId(), configurable.serialize());
                 }
             }
         } catch (Exception e) {

@@ -2,6 +2,7 @@ package gg.itzkatze.mcc.challenges;
 
 import gg.itzkatze.mcc.bossbar.BossbarContent;
 import gg.itzkatze.mcc.commands.framework.MccCommand;
+import gg.itzkatze.mcc.player.MccPlayer;
 import gg.itzkatze.mcc.scoreboard.ScoreboardContent;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Material;
@@ -25,6 +26,20 @@ public interface Challenge extends ChallengeSettings {
      * Called when the challenge is deactivated/unloaded.
      */
     default void onDisable() {
+        // Default empty implementation
+    }
+
+    /**
+     * Called when a configured game is explicitly started.
+     */
+    default void onGameStart() {
+        // Default empty implementation
+    }
+
+    /**
+     * Called when a started game is reset back into its pre-start state.
+     */
+    default void onGameReset() {
         // Default empty implementation
     }
 
@@ -75,6 +90,22 @@ public interface Challenge extends ChallengeSettings {
      * @return List of tasks
      */
     @NotNull List<Runnable> getTasks();
+
+    /**
+     * Gets a challenge-specific actionbar message.
+     * Return null to let the default timer actionbar render instead.
+     */
+    @Nullable default Component getActionbar(@NotNull MccPlayer player, boolean timerRunning, int timerSeconds) {
+        return null;
+    }
+
+    /**
+     * Gets the priority of this challenge's actionbar override when multiple challenges are active.
+     * Higher priority wins.
+     */
+    default int getActionbarPriority() {
+        return 0;
+    }
 
     /**
      * Gets the scoreboard content for this challenge.

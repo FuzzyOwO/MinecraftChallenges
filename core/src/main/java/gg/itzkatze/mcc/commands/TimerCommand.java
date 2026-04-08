@@ -2,16 +2,16 @@ package gg.itzkatze.mcc.commands;
 
 import gg.itzkatze.mcc.MinecraftChallenges;
 import gg.itzkatze.mcc.challenges.ChallengeManager;
-import gg.itzkatze.mcc.commands.framework.CallerType;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
-import gg.itzkatze.mcc.commands.framework.MccCommand;
 import gg.itzkatze.mcc.commands.framework.CommandCaller;
+import gg.itzkatze.mcc.commands.framework.CallerType;
+import gg.itzkatze.mcc.commands.framework.MccCommand;
 import gg.itzkatze.mcc.game.MccTimer;
 import gg.itzkatze.mcc.util.StringUtility;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import org.bukkit.permissions.PermissionDefault;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.bukkit.permissions.PermissionDefault;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,12 +38,12 @@ public class TimerCommand extends MccCommand {
         MccTimer timer = MinecraftChallenges.getTimer();
         switch (args[0]) {
             case "toggle" -> {
-                    if (timer.isRunning()) {
+                if (timer.isRunning()) {
                     timer.pause();
                     caller.sendMessage(Component.text("The timer has been paused.").color(NamedTextColor.BLUE));
                 } else {
-                    if (ChallengeManager.getActiveChallenges().isEmpty()) {
-                        caller.sendMessage(Component.text("No battletype is selected, game can not be started!").color(NamedTextColor.RED));
+                    if (!ChallengeManager.isGameStarted()) {
+                        caller.sendMessage(Component.text("The game has not been started yet. Use /start first.").color(NamedTextColor.RED));
                         return;
                     }
                     timer.start();

@@ -5,6 +5,7 @@ import gg.itzkatze.mcc.bossbar.BossbarManager;
 import gg.itzkatze.mcc.commands.framework.MccCommand;
 import gg.itzkatze.mcc.commands.framework.CommandHandler;
 import gg.itzkatze.mcc.commands.framework.CommandVisibilityListener;
+import gg.itzkatze.mcc.game.GameLifecycleManager;
 import gg.itzkatze.mcc.game.SpawnManager;
 import gg.itzkatze.mcc.configuration.SettingsFile;
 import gg.itzkatze.mcc.game.MccTimer;
@@ -68,6 +69,7 @@ public final class MinecraftChallenges extends JavaPlugin {
 
         EventRegistrar.registerAll(this, "gg.itzkatze.mcc");
 
+        getServer().getPluginManager().registerEvents(new GameLifecycleManager(), this);
         getServer().getPluginManager().registerEvents(new SpawnManager(), this);
 
         logger.info("Successfully initialized MinecraftChallenges.");

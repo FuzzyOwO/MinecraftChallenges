@@ -8,13 +8,11 @@ import gg.itzkatze.mcc.util.Joker;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import gg.itzkatze.mcc.configuration.SettingsManager;
-import gg.itzkatze.mcc.game.SpawnManager;
 import gg.itzkatze.mcc.team.MccTeam;
 import org.bukkit.event.Listener;
 import gg.itzkatze.mcc.event.PlayerTeamJoinEvent;
 import gg.itzkatze.mcc.event.PlayerTeamLeaveEvent;
 import gg.itzkatze.mcc.event.TimerEndEvent;
-import gg.itzkatze.mcc.event.TimerStartEvent;
 import gg.itzkatze.mcc.player.MccPlayer;
 import gg.itzkatze.mcc.util.StringUtility;
 import gg.itzkatze.mcc.util.Toast;
@@ -28,13 +26,16 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
-import org.bukkit.event.player.*;
 import org.bukkit.event.block.Action;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.permissions.PermissionDefault;
 import org.jetbrains.annotations.NotNull;
+import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -116,15 +117,9 @@ public class ForceBattleGameListener implements Listener {
 
         updateAllTablists();
 
-        if (!MinecraftChallenges.getTimer().isRunning() && startPhase) {
-            SpawnManager.createSpawnIfNeeded();
-            mccPlayer.getPlayer().setGameMode(GameMode.ADVENTURE);
-            mccPlayer.getPlayer().teleport(SpawnManager.getSpawn());
-        }
-
         boolean firstStartup = MinecraftChallenges.get().getConfig().getBoolean("first-startup", true);
         if (firstStartup && PermissionDefault.OP.getValue(event.getPlayer().isOp())) {
-            mccPlayer.sendMessage(Component.text("----\nIt seems to be the first time you start the plugin.\n-> Use /menu to adjust settings and /timer toggle to start the battle.\n----"));
+            mccPlayer.sendMessage(Component.text("----\nIt seems to be the first time you start the plugin.\n-> Use /menu to adjust settings and /start to start the battle.\n----"));
         }
     }
 
@@ -133,10 +128,8 @@ public class ForceBattleGameListener implements Listener {
         updateAllTablists();
     }
 
-    @EventHandler
-    public void onGameStart(TimerStartEvent event) {
+    public void startGame() {
         startPhase = false;
-        SpawnManager.destroySpawn();
 
         updateAllTablists();
 
@@ -151,12 +144,6 @@ public class ForceBattleGameListener implements Listener {
                 player.getTeam().updateObjective(player, false, false);
             }
             player.getPlayer().playSound(player.getPlayer(), Sound.EVENT_RAID_HORN, SoundCategory.MASTER, 100, 1);
-            player.getPlayer().setGameMode(GameMode.SURVIVAL);
-            player.getInventory().clear();
-            player.getPlayer().setHealth(20);
-            player.getPlayer().setSaturation(20);
-            player.getPlayer().setFoodLevel(20);
-            player.getPlayer().setFireTicks(0);
 
             player.getPlayer().getInventory().addItem(Joker.getPlayerSkipItem(MinecraftChallenges.get().getConfig().getInt("playerSkips", 3)));
             player.getPlayer().getInventory().addItem(Joker.getSwapItem(MinecraftChallenges.get().getConfig().getInt("swaps", 1)));
@@ -164,8 +151,6 @@ public class ForceBattleGameListener implements Listener {
             if (SettingsManager.isEnabled(GlobalSetting.EXTRA_TEAM_OBJECTIVE) && player.isInTeam()) {
                 player.getPlayer().getInventory().addItem(Joker.getTeamSkipItem(MinecraftChallenges.get().getConfig().getInt("teamSkips", 1)));
             }
-
-            player.getPlayer().teleport(Bukkit.getWorld("world").getSpawnLocation());
         }
 
         for (MccTeam team : MccTeam.teams) {
@@ -215,6 +200,7 @@ public class ForceBattleGameListener implements Listener {
 
     @EventHandler
     public void onEntityDamageByEntity(EntityDamageByEntityEvent event) {
+        if (!MinecraftChallenges.getTimer().isRunning()) return;
         if (ForceBattleType.FORCE_MOB.getSettingState() == PlayerTeamBothState.OFF) return;
 
         Player damager = null;
@@ -228,7 +214,7 @@ public class ForceBattleGameListener implements Listener {
             damager = player;
         } else return;
 
-        ForceBattlePlayer mccPlayer = (ForceBattlePlayer) MccPlayer.adapt(damager);
+        if (!(MccPlayer.adapt(damager) instanceof ForceBattlePlayer mccPlayer)) return;
         if (mccPlayer.isExcluded()) return;
 
         if (target.getHealth() - event.getDamage() > 0) return;
@@ -300,11 +286,10 @@ public class ForceBattleGameListener implements Listener {
 
     @EventHandler
     public void onPlayerSkip(@NotNull PlayerInteractEvent event) {
+        if (!(MccPlayer.adapt(event.getPlayer()) instanceof ForceBattlePlayer player)) return;
         if (event.getHand() == null || !event.getHand().equals(EquipmentSlot.HAND)) {return;}
         if (event.getAction() != Action.RIGHT_CLICK_BLOCK && event.getAction() != Action.RIGHT_CLICK_AIR) {return;}
         if (event.getItem() == null || !Joker.isPlayerSkipItem(event.getItem())) {return;}
-
-        ForceBattlePlayer player = (ForceBattlePlayer) MccPlayer.adapt(event.getPlayer());
         if (player.isExcluded()) return;
 
         event.setCancelled(true);
@@ -341,11 +326,10 @@ public class ForceBattleGameListener implements Listener {
 
     @EventHandler
     public void onTeamSkip(@NotNull PlayerInteractEvent event) {
+        if (!(MccPlayer.adapt(event.getPlayer()) instanceof ForceBattlePlayer mccPlayer)) return;
         if (event.getHand() == null || !event.getHand().equals(EquipmentSlot.HAND)) {return;}
         if (event.getAction() != Action.RIGHT_CLICK_BLOCK && event.getAction() != Action.RIGHT_CLICK_AIR) {return;}
         if (event.getItem() == null || !Joker.isTeamSkipItem(event.getItem())) {return;}
-
-        ForceBattlePlayer mccPlayer = (ForceBattlePlayer) MccPlayer.adapt(event.getPlayer());
         ForceBattleTeam team = (ForceBattleTeam) mccPlayer.getTeam();
         if (mccPlayer.isExcluded()) return;
 
@@ -390,11 +374,10 @@ public class ForceBattleGameListener implements Listener {
 
     @EventHandler
     public void onPlayerSwap(@NotNull PlayerInteractEvent event) {
+        if (!(MccPlayer.adapt(event.getPlayer()) instanceof ForceBattlePlayer mccPlayer)) return;
         if (event.getHand() == null || !event.getHand().equals(EquipmentSlot.HAND)) return;
         if (event.getAction() != Action.RIGHT_CLICK_BLOCK && event.getAction() != Action.RIGHT_CLICK_AIR) return;
         if (event.getItem() == null || !Joker.isSwapItem(event.getItem())) return;
-
-        ForceBattlePlayer mccPlayer = (ForceBattlePlayer) MccPlayer.adapt(event.getPlayer());
         if (mccPlayer.isExcluded()) return;
         event.setCancelled(true);
 
@@ -411,8 +394,8 @@ public class ForceBattleGameListener implements Listener {
         List<MccPlayer> availablePlayers = new ArrayList<>();
         for (Player player : Bukkit.getOnlinePlayers()) {
             if (event.getPlayer().equals(player)) continue;
-            ForceBattlePlayer toSwap = (ForceBattlePlayer) MccPlayer.adapt(player);
-            ForceBattlePlayer sender = (ForceBattlePlayer) MccPlayer.adapt(event.getPlayer());
+            if (!(MccPlayer.adapt(player) instanceof ForceBattlePlayer toSwap)) continue;
+            ForceBattlePlayer sender = mccPlayer;
             if (toSwap.getObjective() == null) continue;
             if (toSwap.getTeam() == sender.getTeam() && toSwap.isInTeam() && sender.isInTeam()) continue;
             availablePlayers.add(toSwap);

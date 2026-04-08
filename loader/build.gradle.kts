@@ -27,6 +27,9 @@ dependencies {
     implementation(project(":core"))
     implementation(project(":forcebattle"))
     implementation(project(":allitems"))
+    implementation(project(":deathswap"))
+    implementation(project(":randomizer"))
+    implementation(project(":itemrain"))
     compileOnly("io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT")
 }
 
