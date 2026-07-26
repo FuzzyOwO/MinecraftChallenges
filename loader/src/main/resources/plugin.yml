@@ -1,11 +1,12 @@
 name: MinecraftChallenges
 version: '${version}'
 main: gg.itzkatze.mcc.MinecraftChallenges
-api-version: '1.21.11'
+api-version: '26.1.2'
 
 commands:
     backpack:
         aliases: [ bp ]
+    chat:
     displayresults:
     exclude:
     help:
@@ -24,6 +25,7 @@ commands:
     configsettings:
     skip:
     team:
+    t:
     timer:
     allitemsprogress:
         aliases: [ allitemsstats, allitemsinfo ]

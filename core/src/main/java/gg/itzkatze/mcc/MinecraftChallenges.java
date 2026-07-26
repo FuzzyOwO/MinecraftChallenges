@@ -2,15 +2,20 @@ package gg.itzkatze.mcc;
 
 import lombok.Getter;
 import gg.itzkatze.mcc.bossbar.BossbarManager;
+import gg.itzkatze.mcc.chat.TeamChatManager;
 import gg.itzkatze.mcc.commands.framework.MccCommand;
 import gg.itzkatze.mcc.commands.framework.CommandHandler;
 import gg.itzkatze.mcc.commands.framework.CommandVisibilityListener;
 import gg.itzkatze.mcc.game.GameLifecycleManager;
-import gg.itzkatze.mcc.game.SpawnManager;
-import gg.itzkatze.mcc.configuration.SettingsFile;
 import gg.itzkatze.mcc.game.MccTimer;
+import gg.itzkatze.mcc.game.PauseManager;
+import gg.itzkatze.mcc.game.SpawnManager;
+import gg.itzkatze.mcc.gui.GUIListener;
+import gg.itzkatze.mcc.gui.sign.SignInput;
+import gg.itzkatze.mcc.configuration.SettingsFile;
+import gg.itzkatze.mcc.game.GameTimer;
+import gg.itzkatze.mcc.game.TimerRegistry;
 import gg.itzkatze.mcc.scoreboard.ScoreboardManager;
-import gg.itzkatze.mcc.util.EventRegistrar;
 import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 import net.kyori.adventure.text.Component;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -31,9 +36,7 @@ public final class MinecraftChallenges extends JavaPlugin {
     private static MinecraftChallenges instance;
     @Getter
     private static BukkitAudiences bukkitAudiences;
-
-    @Getter
-    private static MccTimer timer;
+    private final PauseManager pauseManager = new PauseManager();
 
     public static MinecraftChallenges get() {
         return instance;
@@ -54,23 +57,25 @@ public final class MinecraftChallenges extends JavaPlugin {
             saveResource("data/settings.json", false);
         }
 
-        timer = new MccTimer(getGameDuration(), false);
-
         try {
             SettingsFile.loadSettingsFromFile(settingsFile);
         } catch (IOException e) {
             throw new RuntimeException("settings.json File not found", e);
         }
+        installTimerEngine();
 
         CommandHandler.registerAll(loopThroughPackage("gg.itzkatze.mcc.commands", MccCommand.class).toList());
         getServer().getPluginManager().registerEvents(new CommandVisibilityListener(), this);
+        getServer().getPluginManager().registerEvents(new GUIListener(), this);
+        getServer().getPluginManager().registerEvents(new SignInput(), this);
         BossbarManager.runTask();
         ScoreboardManager.startUpdater();
 
-        EventRegistrar.registerAll(this, "gg.itzkatze.mcc");
-
         getServer().getPluginManager().registerEvents(new GameLifecycleManager(), this);
         getServer().getPluginManager().registerEvents(new SpawnManager(), this);
+        getServer().getPluginManager().registerEvents(new TeamChatManager(), this);
+        getServer().getPluginManager().registerEvents(pauseManager, this);
+        pauseManager.startStateWatcher();
 
         logger.info("Successfully initialized MinecraftChallenges.");
     }
@@ -92,6 +97,14 @@ public final class MinecraftChallenges extends JavaPlugin {
 
     public int getGameDuration() {
         return getConfig().getInt("game-duration", 5400);
+    }
+
+    public static GameTimer getTimer() {
+        return TimerRegistry.getTimer();
+    }
+
+    private void installTimerEngine() {
+        TimerRegistry.setTimer(new MccTimer(getGameDuration(), false));
     }
 
     public static void broadcast(Component message) {

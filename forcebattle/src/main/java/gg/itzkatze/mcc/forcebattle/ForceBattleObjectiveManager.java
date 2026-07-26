@@ -364,6 +364,7 @@ public class ForceBattleObjectiveManager {
         List<String> mobsToExclude = MinecraftChallenges.get().getConfig().getStringList("exclude.mobs");
 
         for (EntityType entity : EntityType.values()) {
+            if (!entity.isAlive() || !entity.isSpawnable()) continue;
             if (mobsToExclude.contains(entity.name())) continue;
             if (excludeEndMobs && ENDMOBS.contains(entity)) continue;
 

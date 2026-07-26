@@ -3,11 +3,12 @@ package gg.itzkatze.mcc.game;
 import gg.itzkatze.mcc.MinecraftChallenges;
 import gg.itzkatze.mcc.challenges.Challenge;
 import gg.itzkatze.mcc.challenges.ChallengeManager;
-import gg.itzkatze.mcc.player.MccPlayer;
 import gg.itzkatze.mcc.event.TimerEndEvent;
 import gg.itzkatze.mcc.event.TimerPauseEvent;
 import gg.itzkatze.mcc.event.TimerSetTimeEvent;
+import gg.itzkatze.mcc.event.TimerStartEvent;
 import gg.itzkatze.mcc.event.TimerStartTimeChangeEvent;
+import gg.itzkatze.mcc.player.MccPlayer;
 import gg.itzkatze.mcc.util.StringUtility;
 import lombok.Getter;
 import net.kyori.adventure.key.Key;
@@ -21,12 +22,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Comparator;
-import java.util.Timer;
-import java.util.TimerTask;
 
-public class MccTimer {
+public class MccTimer implements GameTimer {
 
-    private static final Logger logger = LoggerFactory.getLogger("ForceBattle/" + MccTimer.class.getSimpleName());
+    private static final Logger logger = LoggerFactory.getLogger("MinecraftChallenges/" + MccTimer.class.getSimpleName());
 
     @Getter
     private int startTime;
@@ -34,62 +33,48 @@ public class MccTimer {
     private int time;
     @Getter
     private boolean running;
+    @Getter
+    private Mode mode;
     private boolean hitZero;
-    private Timer timer;
-    private TimerTask timerTask;
 
-    public MccTimer(int time, boolean running) {
-        this.startTime = time;
-        this.time = time;
+    public MccTimer(int startTime, boolean running) {
+        this.startTime = startTime;
+        this.time = 0;
         this.running = running;
+        this.mode = Mode.DISABLED;
         runTimerTask();
         runActionbarTask();
     }
 
     private void runActionbarTask() {
-        TimerTask task = new TimerTask() {
-            @Override
-            public void run() {
-                MccPlayer.getOnlinePlayers().forEach(
-                        forceBattlePlayer -> forceBattlePlayer.sendActionbar(
-                                getActionbarMessage(forceBattlePlayer)
-                        ));
-            }
-        };
-
-        Timer timer = new Timer("forcebattle/actionbar");
-        timer.scheduleAtFixedRate(task, 0L, 150L);
+        Bukkit.getScheduler().runTaskTimer(MinecraftChallenges.get(), () ->
+                MccPlayer.getOnlinePlayers().forEach(player -> player.sendActionbar(getActionbarMessage(player))),
+                1L,
+                3L
+        );
     }
 
     private void runTimerTask() {
-        if (timer != null) timer.cancel();
-        if (timerTask != null) timerTask.cancel();
+        Bukkit.getScheduler().runTaskTimer(MinecraftChallenges.get(), () -> {
+            if (!running) return;
 
-        timer = new Timer("forcebattle/timer");
-        timerTask = new TimerTask() {
-            @Override
-            public void run() {
-                if (!running) return;
+            if (mode == Mode.COUNT_UP) {
+                time++;
+                return;
+            }
 
+            if (mode == Mode.COUNT_DOWN) {
                 time--;
                 if (time < 11 && time > 0) {
-                    MccPlayer.PLAYERS.forEach(battlePlayer ->
-                            battlePlayer.playSound(Sound.sound(Key.key("block.note_block.bass"), Sound.Source.MASTER, 20, 20))
-                    );
+                    MccPlayer.PLAYERS.forEach(p ->
+                            p.playSound(Sound.sound(Key.key("block.note_block.bass"), Sound.Source.MASTER, 20, 20)));
                 }
 
                 if (time <= 0) {
-                    running = false;
-                    hitZero = true;
-
-                    Bukkit.getScheduler().runTask(MinecraftChallenges.get(), () -> {
-                        TimerEndEvent timerEndEvent = new TimerEndEvent();
-                        Bukkit.getPluginManager().callEvent(timerEndEvent);
-                    });
+                    stop();
                 }
             }
-        };
-        timer.scheduleAtFixedRate(timerTask, 0L, 1000L);
+        }, 20L, 20L);
     }
 
     private Component getActionbarMessage(MccPlayer player) {
@@ -101,11 +86,20 @@ public class MccTimer {
             return actionbarChallenge.getActionbar(player, running, time);
         }
 
+        if (mode == Mode.DISABLED) {
+            return Component.empty();
+        }
+
+        if (!running && (hitZero || !ChallengeManager.isGameStarted())) {
+            return Component.empty();
+        }
+
         return running
                 ? Component.text(StringUtility.formatTime(time)).color(NamedTextColor.BLUE).style(Style.style(TextDecoration.ITALIC))
                 : Component.text("Timer paused.").color(NamedTextColor.BLUE).style(Style.style(TextDecoration.ITALIC));
     }
 
+    @Override
     public void setStartTime(int newStartTime) {
         TimerStartTimeChangeEvent startTimeChangeEvent = new TimerStartTimeChangeEvent(newStartTime);
         Bukkit.getPluginManager().callEvent(startTimeChangeEvent);
@@ -116,6 +110,7 @@ public class MccTimer {
         this.startTime = startTimeChangeEvent.getNewStartTime();
     }
 
+    @Override
     public void setTime(int newTime) {
         TimerSetTimeEvent setTimeEvent = new TimerSetTimeEvent(newTime);
         Bukkit.getPluginManager().callEvent(setTimeEvent);
@@ -126,36 +121,53 @@ public class MccTimer {
         this.time = setTimeEvent.getNewTime();
     }
 
-    public void setRunning(boolean running) {
-        if (running) {
-            this.hitZero = false;
-            this.running = true;
-        } else {
-            TimerPauseEvent pauseEvent = new TimerPauseEvent(this.time);
-            Bukkit.getPluginManager().callEvent(pauseEvent);
-            if (pauseEvent.isCancelled()) {
-                logger.info("TimerPauseEvent has been denied by an external plugin.");
-                return;
-            }
-            this.time = pauseEvent.getPauseTime();
-            this.running = false;
-        }
+    @Override
+    public void setMode(Mode mode) {
+        this.mode = mode;
+        this.hitZero = false;
     }
 
+    @Override
     public boolean hasHitZero() {
         return hitZero;
     }
 
+    @Override
     public void start() {
-        if (!running) {
-            setRunning(true);
+        TimerStartEvent startEvent = new TimerStartEvent(this.time);
+        Bukkit.getPluginManager().callEvent(startEvent);
+        if (startEvent.isCancelled()) {
+            logger.info("TimerStartEvent has been denied by an external plugin.");
+            return;
         }
+        this.time = startEvent.getStartTime();
+        this.hitZero = false;
+        this.running = true;
     }
 
+    @Override
     public void pause() {
-        if (running) {
-            setRunning(false);
+        TimerPauseEvent pauseEvent = new TimerPauseEvent(this.time);
+        Bukkit.getPluginManager().callEvent(pauseEvent);
+        if (pauseEvent.isCancelled()) {
+            logger.info("TimerPauseEvent has been denied by an external plugin.");
+            return;
         }
+        this.time = pauseEvent.getPauseTime();
+        this.running = false;
     }
 
+    @Override
+    public void stop() {
+        TimerEndEvent endEvent = new TimerEndEvent();
+        Bukkit.getPluginManager().callEvent(endEvent);
+        if (endEvent.isCancelled()) {
+            logger.info("TimerEndEvent has been denied by an external plugin.");
+            return;
+        }
+
+        ChallengeManager.onTimerElapsed();
+        this.running = false;
+        hitZero = true;
+    }
 }

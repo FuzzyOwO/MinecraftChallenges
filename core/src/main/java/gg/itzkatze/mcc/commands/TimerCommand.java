@@ -2,10 +2,10 @@ package gg.itzkatze.mcc.commands;
 
 import gg.itzkatze.mcc.MinecraftChallenges;
 import gg.itzkatze.mcc.challenges.ChallengeManager;
-import gg.itzkatze.mcc.commands.framework.CommandCaller;
 import gg.itzkatze.mcc.commands.framework.CallerType;
+import gg.itzkatze.mcc.commands.framework.CommandCaller;
 import gg.itzkatze.mcc.commands.framework.MccCommand;
-import gg.itzkatze.mcc.game.MccTimer;
+import gg.itzkatze.mcc.game.GameTimer;
 import gg.itzkatze.mcc.util.StringUtility;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -23,9 +23,9 @@ public class TimerCommand extends MccCommand {
                 "timer",
                 List.of(),
                 CallerType.NONE,
-                "/timer <toggle|set|duration> <time in s>",
+                "/timer <pause|resume|set> [time in s]",
                 PermissionDefault.OP,
-                "Command to control the timer: toggle, set, duration"
+                "Command to control the timer: pause, resume, set"
         );
     }
 
@@ -35,20 +35,20 @@ public class TimerCommand extends MccCommand {
             sendUsage(caller);
             return;
         }
-        MccTimer timer = MinecraftChallenges.getTimer();
-        switch (args[0]) {
-            case "toggle" -> {
-                if (timer.isRunning()) {
-                    timer.pause();
-                    caller.sendMessage(Component.text("The timer has been paused.").color(NamedTextColor.BLUE));
-                } else {
-                    if (!ChallengeManager.isGameStarted()) {
-                        caller.sendMessage(Component.text("The game has not been started yet. Use /start first.").color(NamedTextColor.RED));
-                        return;
-                    }
-                    timer.start();
-                    caller.sendMessage(Component.text("The timer has been started.").color(NamedTextColor.GREEN));
+        GameTimer timer = MinecraftChallenges.getTimer();
+        switch (args[0].toLowerCase()) {
+            case "pause" -> {
+                timer.pause();
+                caller.sendMessage(Component.text("The timer has been paused.").color(NamedTextColor.BLUE));
+                return;
+            }
+            case "resume" -> {
+                if (!ChallengeManager.isGameStarted()) {
+                    caller.sendMessage(Component.text("The game has not been started yet. Use /start first.").color(NamedTextColor.RED));
+                    return;
                 }
+                timer.start();
+                caller.sendMessage(Component.text("The timer has been resumed.").color(NamedTextColor.GREEN));
                 return;
             }
             case "set" -> {
@@ -62,18 +62,6 @@ public class TimerCommand extends MccCommand {
                 }
                 timer.setTime(newTime);
                 caller.sendMessage(Component.text("The timer has been set to " + StringUtility.formatTime(newTime) + ".").color(NamedTextColor.BLUE));
-                return;
-            }
-            case "duration" -> {
-                if (args.length < 2) {
-                    sendUsage(caller);
-                    return;
-                }
-                Integer newStartTime = parseInt(caller, args[1]);
-                if (newStartTime == null) {
-                    return;
-                }
-                timer.setStartTime(newStartTime);
                 return;
             }
         }
@@ -94,7 +82,7 @@ public class TimerCommand extends MccCommand {
     @Override
     public List<String> tabComplete(CommandCaller caller, String @NotNull [] args) {
         if (args.length == 1) {
-            return StringUtility.copyPartialMatches(args[0], List.of("toggle", "set", "duration"), new ArrayList<>());
+            return StringUtility.copyPartialMatches(args[0], List.of("pause", "resume", "set"), new ArrayList<>());
         }
         return List.of();
     }

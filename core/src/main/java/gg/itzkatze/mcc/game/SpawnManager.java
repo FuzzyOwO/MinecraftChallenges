@@ -9,9 +9,12 @@ import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.entity.EntityType;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockPhysicsEvent;
+import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.util.BoundingBox;
@@ -19,7 +22,7 @@ import org.bukkit.util.BoundingBox;
 public class SpawnManager implements Listener {
 
     @Getter
-    private static boolean spawnCreated = false;
+    private static boolean existsSpawn = false;
 
     @Getter
     private static final Location spawn = new Location(Bukkit.getWorld("world"), 0.5, 201, 0.5);
@@ -28,9 +31,9 @@ public class SpawnManager implements Listener {
 
     public static void createSpawnIfNeeded() {
         World world = Bukkit.getWorld("world");
-        if (!spawnCreated && world != null) {
+        if (!existsSpawn && world != null) {
             StructureUtil.createSpawn();
-            spawnCreated = true;
+            existsSpawn = true;
 
             world.setTime(6000);
             world.setStorm(false);
@@ -41,7 +44,7 @@ public class SpawnManager implements Listener {
     }
 
     public static void destroySpawn() {
-        spawnCreated = false;
+        existsSpawn = false;
         World world = Bukkit.getWorld("world");
         if (world == null) return;
 
@@ -80,6 +83,7 @@ public class SpawnManager implements Listener {
 
     @EventHandler
     public void onBlockPhysics(BlockPhysicsEvent event) {
+        if (!existsSpawn) return;
         if (spawnBoundingBox.contains(event.getBlock().getBoundingBox())) {
             event.setCancelled(true);
         }
@@ -87,6 +91,7 @@ public class SpawnManager implements Listener {
 
     @EventHandler
     public void onInteract(PlayerInteractEvent event) {
+        if (!existsSpawn) return;
         Block clickedBlock = event.getClickedBlock();
         if (clickedBlock == null) return;
 
@@ -97,6 +102,7 @@ public class SpawnManager implements Listener {
 
     @EventHandler
     public void onPlayerMove(PlayerMoveEvent event) {
+        if (!existsSpawn) return;
         Location blockLocation = event.getPlayer().getLocation().subtract(0, 1, 0);
         if (spawnBarriers.contains(blockLocation.getX(), blockLocation.getY(), blockLocation.getZ())) return;
 
@@ -105,10 +111,25 @@ public class SpawnManager implements Listener {
         }
     }
 
+    @EventHandler
+    public void onPlayerDamage(EntityDamageEvent event) {
+        if (!existsSpawn) return;
+        if (event.getEntity().getType() == EntityType.PLAYER) event.setCancelled(true);
+    }
+
+    @EventHandler
+    public void onHungerChange(FoodLevelChangeEvent event) {
+        if (!existsSpawn) return;
+        event.setCancelled(true);
+    }
+
     private static void setWorldData(String worldName) {
         World world = Bukkit.getWorld(worldName);
         if (world != null) {
-            world.setTime(0);
+            // Nether and End dimensions do not have a world clock in modern Paper.
+            if (world.getEnvironment() == World.Environment.NORMAL) {
+                world.setTime(0);
+            }
             world.setStorm(false);
             world.setThundering(false);
             world.setWeatherDuration(0);

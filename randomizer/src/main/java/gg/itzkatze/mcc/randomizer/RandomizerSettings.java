@@ -20,11 +20,16 @@ public class RandomizerSettings {
         return SettingsManager.isEnabled(RandomizerSetting.CHEST_LOOT);
     }
 
+    public static boolean isSharedMappingsEnabled() {
+        return SettingsManager.isEnabled(RandomizerSetting.SHARED_MAPPINGS);
+    }
+
     @Getter
     public enum RandomizerSetting implements Setting {
         BLOCK_DROPS(false, "Block Drops", OnOffState.ON),
         MOB_DROPS(false, "Mob Drops", OnOffState.OFF),
-        CHEST_LOOT(false, "Chest Loot", OnOffState.ON);
+        CHEST_LOOT(false, "Chest Loot", OnOffState.ON),
+        SHARED_MAPPINGS(true, "Shared Mappings", OnOffState.ON);
 
         private final boolean updateOnChange;
         private final String displayName;

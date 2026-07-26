@@ -53,8 +53,10 @@ public class ScoreboardManager {
 
         // Find the challenge with the highest priority
         Challenge highestPriorityChallenge = activeChallenges.stream()
+                .filter(c -> c.getScoreboardContent() != null)
                 .max(Comparator.comparingInt(c -> c.getScoreboardContent().getPriority()))
                 .orElse(null);
+        if (highestPriorityChallenge == null) return;
 
         ScoreboardContent content = highestPriorityChallenge.getScoreboardContent();
         if (content == null) return;

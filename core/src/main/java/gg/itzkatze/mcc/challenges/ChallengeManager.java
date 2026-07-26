@@ -3,6 +3,7 @@ package gg.itzkatze.mcc.challenges;
 import gg.itzkatze.mcc.MinecraftChallenges;
 import gg.itzkatze.mcc.commands.framework.CommandHandler;
 import gg.itzkatze.mcc.commands.framework.MccCommand;
+import gg.itzkatze.mcc.game.GameTimer;
 import gg.itzkatze.mcc.game.TaskManager;
 import lombok.Getter;
 import org.bukkit.Bukkit;
@@ -25,6 +26,8 @@ public class ChallengeManager {
     private static final Set<Challenge> activeChallenges = new HashSet<>();
     @Getter
     private static boolean gameStarted = false;
+    @Getter
+    private static String lastStartError;
 
     /** Commands registered per challenge, so we can unregister them when the challenge is disabled. */
     private static final Map<Challenge, List<MccCommand>> commandsByChallenge = new HashMap<>();
@@ -138,9 +141,16 @@ public class ChallengeManager {
             return false;
         }
 
+        lastStartError = null;
+
+        if (!applyTimerSpec()) {
+            return false;
+        }
+
         for (Challenge challenge : activeChallenges) {
             challenge.onGameStart();
         }
+
         gameStarted = true;
         return true;
     }
@@ -149,6 +159,19 @@ public class ChallengeManager {
         gameStarted = false;
         for (Challenge challenge : activeChallenges) {
             challenge.onGameReset();
+        }
+    }
+
+    public static void onTimerElapsed() {
+        if (!gameStarted) {
+            return;
+        }
+
+        for (Challenge challenge : activeChallenges) {
+            TimerSpec spec = challenge.getTimerSpec();
+            if (spec != null && spec.mode() == GameTimer.Mode.COUNT_DOWN) {
+                challenge.onTimerElapsed();
+            }
         }
     }
 
@@ -170,5 +193,46 @@ public class ChallengeManager {
     public static boolean isChallengeActive(@NotNull ChallengeType challengeType) {
         return activeChallenges.stream()
                 .anyMatch(challenge -> challenge.getType() == challengeType);
+    }
+
+    private static boolean applyTimerSpec() {
+        List<TimerSpec> specs = activeChallenges.stream()
+                .map(Challenge::getTimerSpec)
+                .filter(java.util.Objects::nonNull)
+                .toList();
+
+        GameTimer timer = MinecraftChallenges.getTimer();
+        timer.pause();
+
+        if (specs.isEmpty()) {
+            timer.setMode(GameTimer.Mode.DISABLED);
+            timer.setTime(0);
+            return true;
+        }
+
+        List<TimerSpec> countdownSpecs = specs.stream()
+                .filter(spec -> spec.mode() == GameTimer.Mode.COUNT_DOWN)
+                .toList();
+        if (!countdownSpecs.isEmpty()) {
+            int longestSeconds = countdownSpecs.stream()
+                    .mapToInt(TimerSpec::startSeconds)
+                    .max()
+                    .orElse(0);
+            timer.setMode(GameTimer.Mode.COUNT_DOWN);
+            timer.setStartTime(longestSeconds);
+            timer.setTime(longestSeconds);
+            return true;
+        }
+
+        boolean hasCountUp = specs.stream().anyMatch(spec -> spec.mode() == GameTimer.Mode.COUNT_UP);
+        if (hasCountUp) {
+            timer.setMode(GameTimer.Mode.COUNT_UP);
+            timer.setTime(0);
+            return true;
+        }
+
+        timer.setMode(GameTimer.Mode.DISABLED);
+        timer.setTime(0);
+        return true;
     }
 }

@@ -6,6 +6,7 @@ import gg.itzkatze.mcc.commands.framework.CallerType;
 import gg.itzkatze.mcc.commands.framework.CommandCaller;
 import gg.itzkatze.mcc.commands.framework.MccCommand;
 import gg.itzkatze.mcc.game.GameLifecycleManager;
+import gg.itzkatze.mcc.game.GameTimer;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.permissions.PermissionDefault;
@@ -38,9 +39,15 @@ public class StartCommand extends MccCommand {
         }
 
         GameLifecycleManager.startGame();
-        ChallengeManager.startActiveChallenges();
-        MinecraftChallenges.getTimer().setTime(MinecraftChallenges.getTimer().getStartTime());
-        MinecraftChallenges.getTimer().start();
+        if (!ChallengeManager.startActiveChallenges()) {
+            GameLifecycleManager.resetGame();
+            String reason = ChallengeManager.getLastStartError();
+            caller.sendMessage(Component.text(reason == null ? "Failed to start challenges." : reason).color(NamedTextColor.RED));
+            return;
+        }
+        if (MinecraftChallenges.getTimer().getMode() != GameTimer.Mode.DISABLED) {
+            MinecraftChallenges.getTimer().start();
+        }
         caller.sendMessage(Component.text("The game has been started.").color(NamedTextColor.GREEN));
     }
 

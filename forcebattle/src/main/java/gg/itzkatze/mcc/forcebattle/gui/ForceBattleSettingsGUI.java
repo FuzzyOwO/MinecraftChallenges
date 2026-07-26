@@ -5,6 +5,7 @@ import gg.itzkatze.mcc.challenges.Challenge;
 import gg.itzkatze.mcc.challenges.ChallengeType;
 import gg.itzkatze.mcc.configuration.states.SettingStateType;
 import lombok.Getter;
+import gg.itzkatze.mcc.forcebattle.ForceBattle;
 import gg.itzkatze.mcc.forcebattle.ForceBattleSettings;
 import gg.itzkatze.mcc.configuration.GlobalSetting;
 import gg.itzkatze.mcc.configuration.SettingsManager;
@@ -15,6 +16,7 @@ import gg.itzkatze.mcc.challenges.ChallengeRegistry;
 import gg.itzkatze.mcc.game.GameLifecycleManager;
 import gg.itzkatze.mcc.gui.MccGUI;
 import gg.itzkatze.mcc.gui.GUIClickableItem;
+import gg.itzkatze.mcc.gui.sign.NumberSignInput;
 import gg.itzkatze.mcc.player.MccPlayer;
 import gg.itzkatze.mcc.util.ItemStackCreator;
 import net.kyori.adventure.text.Component;
@@ -55,6 +57,8 @@ public class ForceBattleSettingsGUI extends MccGUI {
                 "Click to toggle no Damage.", "No Damage"),
         MOBILE_CRAFTING(20, Material.CRAFTING_TABLE, GlobalSetting.MOBILE_CRAFTING, false, "Mobile Crafting",
                 "Click to toggle mobile crafting.", "Mobile Crafting"),
+        BATTLE_DURATION(21, Material.CLOCK, null, false, "Battle Duration",
+                "Click to set battle timer duration in minutes.", "Battle Duration"),
         CHAIN_MODE(27, Material.IRON_CHAIN, ForceBattleSettings.CHAIN_MODE, false, "Chain Mode",
                 "Click to toggle Chain Mode.", "Chain Mode"),
         BACKPACK(28, Material.CHEST, ForceBattleSettings.BACKPACK, false, "Backpacks",
@@ -94,6 +98,25 @@ public class ForceBattleSettingsGUI extends MccGUI {
         }
 
         public ItemStack createItem() {
+            if (this == BATTLE_DURATION) {
+                int minutes = MinecraftChallenges.get().getConfig().getInt(
+                        ForceBattle.BATTLE_DURATION_MINUTES_KEY,
+                        ForceBattle.DEFAULT_BATTLE_DURATION_MINUTES
+                );
+                List<Component> loreLines = new ArrayList<>();
+                loreLines.add(Component.text(toggleLine).color(NamedTextColor.GRAY));
+                loreLines.add(Component.empty());
+                loreLines.add(Component.text("Current").color(NamedTextColor.BLUE)
+                        .append(Component.text(": ").color(NamedTextColor.DARK_GRAY))
+                        .append(Component.text(minutes + " min").color(NamedTextColor.AQUA)));
+                return ItemStackCreator.getStack(
+                        Component.text(nameText).color(NamedTextColor.BLUE),
+                        material,
+                        1,
+                        loreLines
+                );
+            }
+
             if (setting == null) {
                 return ItemStackCreator.createNamedItemStack(
                         material,
@@ -134,6 +157,36 @@ public class ForceBattleSettingsGUI extends MccGUI {
         public void handleClick(MccPlayer player) {
             if (this == RESET) {
                 GameLifecycleManager.resetGame();
+                return;
+            }
+
+            if (this == BATTLE_DURATION) {
+                int current = MinecraftChallenges.get().getConfig().getInt(
+                        ForceBattle.BATTLE_DURATION_MINUTES_KEY,
+                        ForceBattle.DEFAULT_BATTLE_DURATION_MINUTES
+                );
+                NumberSignInput.open(
+                        player,
+                        "Battle Duration (min)",
+                        current,
+                        1,
+                        1440,
+                        (mccPlayer, value) -> {
+                            MinecraftChallenges.get().getConfig().set(ForceBattle.BATTLE_DURATION_MINUTES_KEY, value);
+                            MinecraftChallenges.get().saveConfig();
+                            MinecraftChallenges.broadcast(
+                                    Component.text("Battle Duration ").color(NamedTextColor.BLUE)
+                                            .append(Component.text("has been set to ").color(NamedTextColor.GRAY))
+                                            .append(Component.text(value + " min").color(NamedTextColor.AQUA))
+                                            .append(Component.text("!").color(NamedTextColor.GRAY))
+                            );
+                            new ForceBattleSettingsGUI().open(mccPlayer);
+                        },
+                        (mccPlayer, error) -> {
+                            mccPlayer.sendMessage(Component.text(error).color(NamedTextColor.RED));
+                            new ForceBattleSettingsGUI().open(mccPlayer);
+                        }
+                );
                 return;
             }
 

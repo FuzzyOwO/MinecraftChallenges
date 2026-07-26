@@ -1,6 +1,6 @@
 package gg.itzkatze.mcc.commands;
 
-import gg.itzkatze.mcc.MinecraftChallenges;
+import gg.itzkatze.mcc.challenges.ChallengeManager;
 import gg.itzkatze.mcc.commands.framework.CallerType;
 import gg.itzkatze.mcc.team.MccTeam;
 import gg.itzkatze.mcc.commands.framework.MccCommand;
@@ -43,12 +43,14 @@ public class TeamCommand extends MccCommand {
             return;
         }
         MccPlayer mccPlayer = battlePlayerOpt.get();
+
+        if (!args[0].equalsIgnoreCase("list") && ChallengeManager.isGameStarted()) {
+            caller.sendMessage(Component.text("Teams cannot be changed until the game is reset.").color(NamedTextColor.RED));
+            return;
+        }
+
         switch (args[0]) {
             case "create" -> {
-                if (MinecraftChallenges.getTimer().isRunning()) {
-                    caller.sendMessage(Component.text("The game has already started.").color(NamedTextColor.RED));
-                    return;
-                }
                 mccPlayer.leaveTeam();
                 MccTeam team = MccTeam.create(List.of(mccPlayer));
                 caller.sendMessage(Component.text("New team has been created. Team ID: " + team.getId()));
@@ -58,11 +60,6 @@ public class TeamCommand extends MccCommand {
                     caller.sendMessage(Component.text("Please specify a valid team ID.").color(NamedTextColor.RED));
                     return;
                 }
-                if (MinecraftChallenges.getTimer().isRunning()) {
-                    caller.sendMessage(Component.text("The game has already started.").color(NamedTextColor.RED));
-                    return;
-                }
-
                 int teamId;
                 try {
                     teamId = Integer.parseInt(args[1]);
@@ -78,10 +75,6 @@ public class TeamCommand extends MccCommand {
                 );
             }
             case "leave" -> {
-                if (MinecraftChallenges.getTimer().isRunning()) {
-                    caller.sendMessage(Component.text("The game has already started.").color(NamedTextColor.RED));
-                    return;
-                }
                 mccPlayer.leaveTeam();
             }
             case "accept" -> {
@@ -95,10 +88,6 @@ public class TeamCommand extends MccCommand {
                 }
             }
             case "reject" -> {
-                if (MinecraftChallenges.getTimer().isRunning()) {
-                    caller.sendMessage(Component.text("The game has already started.").color(NamedTextColor.RED));
-                    return;
-                }
                 MccTeam team = mccPlayer.getTeam();
                 if (team == null) {
                     caller.sendMessage(Component.text("You are not currently in a team.").color(NamedTextColor.GRAY));

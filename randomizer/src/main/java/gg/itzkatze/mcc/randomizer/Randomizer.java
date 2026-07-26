@@ -4,6 +4,8 @@ import gg.itzkatze.mcc.challenges.Challenge;
 import gg.itzkatze.mcc.challenges.ChallengeType;
 import gg.itzkatze.mcc.commands.framework.MccCommand;
 import gg.itzkatze.mcc.configuration.ChallengeSettingsManager;
+import gg.itzkatze.mcc.configuration.Setting;
+import gg.itzkatze.mcc.configuration.states.SettingStateType;
 import gg.itzkatze.mcc.gui.MccGUI;
 import gg.itzkatze.mcc.randomizer.gui.RandomizerSettingsGUI;
 import net.kyori.adventure.text.Component;
@@ -19,7 +21,7 @@ public class Randomizer implements Challenge {
 
     private final RandomizerGameListener gameListener = new RandomizerGameListener();
     private final ChallengeSettingsManager settingsManager =
-            new ChallengeSettingsManager(this, RandomizerSettings.RandomizerSetting.class);
+            new ChallengeSettingsManager(this, RandomizerSettings.RandomizerSetting.class, this::onSettingChanged);
 
     @Override
     public void onEnable() {
@@ -84,5 +86,11 @@ public class Randomizer implements Challenge {
     @Override
     @Nullable public ChallengeSettingsManager getSettingsManager() {
         return settingsManager;
+    }
+
+    private void onSettingChanged(Challenge challenge, Setting setting, SettingStateType oldState, SettingStateType newState) {
+        if (setting == RandomizerSettings.RandomizerSetting.SHARED_MAPPINGS) {
+            gameListener.resetMappings();
+        }
     }
 }

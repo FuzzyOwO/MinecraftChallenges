@@ -43,6 +43,7 @@ exclude:
         - FARMLAND
         - STRUCTURE_BLOCK
         - TEST_BLOCK
+        - TEST_INSTANCE_BLOCK
         - BUBBLE_COLUMN
         - CAVE_AIR
         - KNOWLEDGE_BOOK
@@ -61,6 +62,7 @@ exclude:
         - POTION
         - OMINOUS_TRIAL_SPAWNER
         - TRIAL_SPAWNER
+        - VAULT
         - SUSPICIOUS_GRAVEL
         - SUSPICIOUS_SAND
         - FROGSPAWN
@@ -111,6 +113,7 @@ exclude:
         - LLAMA_SPIT
         - MANGROVE_BOAT
         - MANGROVE_CHEST_BOAT
+        - MANNEQUIN
         - MARKER
         - MINECART
         - OAK_BOAT
@@ -119,6 +122,7 @@ exclude:
         - PAINTING
         - PALE_OAK_BOAT
         - PALE_OAK_CHEST_BOAT
+        - CREAKING
         - SHULKER_BULLET
         - SMALL_FIREBALL
         - SNOWBALL
@@ -134,7 +138,6 @@ exclude:
         - UNKNOWN
         - WIND_CHARGE
         - WITHER_SKULL
-        - ZOMBIE_HORSE
     biomes:
         - THE_VOID
 

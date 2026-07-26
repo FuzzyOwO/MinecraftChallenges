@@ -12,7 +12,6 @@ import gg.itzkatze.mcc.team.MccTeam;
 import org.bukkit.event.Listener;
 import gg.itzkatze.mcc.event.PlayerTeamJoinEvent;
 import gg.itzkatze.mcc.event.PlayerTeamLeaveEvent;
-import gg.itzkatze.mcc.event.TimerEndEvent;
 import gg.itzkatze.mcc.player.MccPlayer;
 import gg.itzkatze.mcc.util.StringUtility;
 import gg.itzkatze.mcc.util.Toast;
@@ -36,15 +35,20 @@ import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.player.PlayerRespawnEvent;
+import org.bukkit.event.entity.PlayerDeathEvent;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
 
 public class ForceBattleGameListener implements Listener {
 
     public static boolean startPhase = true;
+    private final Map<UUID, List<ItemStack>> pendingJokerRestore = new HashMap<>();
 
     public ForceBattleGameListener() {
         // Tasks are now managed by the Challenge system
@@ -160,8 +164,7 @@ public class ForceBattleGameListener implements Listener {
         }
     }
 
-    @EventHandler
-    public void onGameEnd(TimerEndEvent event) {
+    public void handleBattleEnd() {
         MinecraftChallenges.broadcast(Component.text("The battle is over. /displayresults (player/team) | /result (player/team)."));
 
         for (MccPlayer player : MccPlayer.getOnlinePlayers()) {
@@ -209,7 +212,7 @@ public class ForceBattleGameListener implements Listener {
         if (event.getDamager() instanceof Fireball fireball) {
             if (fireball.getShooter() instanceof Player player) {
                 damager = player;
-            }
+            } else return;
         } else if (event.getDamager() instanceof Player player) {
             damager = player;
         } else return;
@@ -276,12 +279,18 @@ public class ForceBattleGameListener implements Listener {
                     .filter(teammate -> teammate != player)
                     .forEach(teammate -> {
                         teammate.sendMessage(Component.text(player.getName() + " has finished " + formattedObjective + "."));
-                        Toast.display(teammate.getPlayer(), toastIcon, Component.text(formattedObjective).color(NamedTextColor.BLUE), Toast.Style.GOAL, plugin);
+                        Player teammatePlayer = teammate.getPlayer();
+                        if (teammatePlayer != null) {
+                            Toast.display(teammatePlayer, toastIcon, Component.text(formattedObjective).color(NamedTextColor.BLUE), Toast.Style.GOAL, plugin);
+                        }
                     });
         }
 
         player.sendMessage(Component.text("You finished " + formattedObjective + "."));
-        Toast.display(player.getPlayer(), toastIcon, Component.text(formattedObjective).color(NamedTextColor.BLUE), Toast.Style.GOAL, plugin);
+        Player playerObj = player.getPlayer();
+        if (playerObj != null) {
+            Toast.display(playerObj, toastIcon, Component.text(formattedObjective).color(NamedTextColor.BLUE), Toast.Style.GOAL, plugin);
+        }
     }
 
     @EventHandler
@@ -424,6 +433,34 @@ public class ForceBattleGameListener implements Listener {
         mccPlayer.sendMessage(Component.text("Your objective has been swapped with " + targetPlayer.getName() + "."));
 
         targetPlayer.getPlayer().playSound(targetPlayer.getPlayer(), Sound.BLOCK_NOTE_BLOCK_BASS, SoundCategory.MASTER, 1, 20);
+    }
+
+    @EventHandler
+    public void onPlayerDeath(PlayerDeathEvent event) {
+        if (!(MccPlayer.adapt(event.getEntity()) instanceof ForceBattlePlayer mccPlayer)) return;
+        if (!MinecraftChallenges.getTimer().isRunning() || mccPlayer.isExcluded()) return;
+
+        List<ItemStack> jokers = new ArrayList<>();
+        event.getDrops().removeIf(item -> {
+            if (item == null) return false;
+            if (!Joker.isPlayerSkipItem(item) && !Joker.isTeamSkipItem(item) && !Joker.isSwapItem(item)) return false;
+            jokers.add(item.clone());
+            return true;
+        });
+
+        if (!jokers.isEmpty()) {
+            pendingJokerRestore.put(event.getEntity().getUniqueId(), jokers);
+        }
+    }
+
+    @EventHandler
+    public void onPlayerRespawn(PlayerRespawnEvent event) {
+        List<ItemStack> jokers = pendingJokerRestore.remove(event.getPlayer().getUniqueId());
+        if (jokers == null || jokers.isEmpty()) return;
+
+        Bukkit.getScheduler().runTask(MinecraftChallenges.get(), () ->
+                event.getPlayer().getInventory().addItem(jokers.toArray(new ItemStack[0]))
+        );
     }
 
     private void decreaseItemAmount(@NotNull PlayerInteractEvent event) {

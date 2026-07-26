@@ -262,7 +262,7 @@ public class AllItemsGameListener implements Listener {
             }
             for (MccStructure structure : simplified.getStructures()) {
                 Structure bukkitStruct = registry.get(structure.getKey());
-                if (bukkitStruct != null && checkPlayerLocationInStructure(player, bukkitStruct)) {
+                if (bukkitStruct != null && checkPlayerLocationInStructure(player, structure.getKey(), bukkitStruct)) {
                     if (data.recordStructureFound(player, simplified)) {
                         announceDiscovery(player, "structure", simplified.getName());
                     }
@@ -272,9 +272,9 @@ public class AllItemsGameListener implements Listener {
         }
     }
 
-    private boolean checkPlayerLocationInStructure(Player player, Structure bukkitStruct) {
+    private boolean checkPlayerLocationInStructure(Player player, NamespacedKey structureKey, Structure bukkitStruct) {
         World world = player.getWorld();
-        String cacheKey = world.getName() + ":" + bukkitStruct.getStructureType().getKey();
+        String cacheKey = world.getName() + ":" + structureKey;
         Set<BoundingBox> cachedBoxes = STRUCTURE_CACHE.get(cacheKey);
         if (cachedBoxes != null) {
             for (BoundingBox box : cachedBoxes) {

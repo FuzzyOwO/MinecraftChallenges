@@ -42,7 +42,7 @@ subprojects {
         implementation("com.google.code.gson:gson:2.13.2")
         implementation("net.kyori:adventure-platform-bukkit:4.4.1")
 
-        compileOnly("io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT")
+        compileOnly("io.papermc.paper:paper-api:26.1.2.build.74-stable")
 
         compileOnly("org.projectlombok:lombok:1.18.42")
         compileOnly("org.jetbrains:annotations:26.0.1")

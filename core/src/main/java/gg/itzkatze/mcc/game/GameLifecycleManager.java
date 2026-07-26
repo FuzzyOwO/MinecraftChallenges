@@ -57,8 +57,7 @@ public class GameLifecycleManager implements Listener {
     }
 
     public static void resetGame() {
-        MinecraftChallenges.getTimer().pause();
-        MinecraftChallenges.getTimer().setTime(MinecraftChallenges.getTimer().getStartTime());
+        MinecraftChallenges.getTimer().stop();
         ChallengeManager.resetGameState();
 
         for (MccPlayer player : MccPlayer.getOnlinePlayers()) {

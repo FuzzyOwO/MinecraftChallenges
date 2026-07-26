@@ -44,6 +44,21 @@ public interface Challenge extends ChallengeSettings {
     }
 
     /**
+     * Timer behavior requested by this challenge for the current game session.
+     * Return null to indicate this challenge does not require timer control.
+     */
+    @Nullable default TimerSpec getTimerSpec() {
+        return null;
+    }
+
+    /**
+     * Called when the configured countdown timer reaches zero.
+     */
+    default void onTimerElapsed() {
+        // Default empty implementation
+    }
+
+    /**
      * Gets the name/identifier of this challenge.
      * @return The challenge name
      */

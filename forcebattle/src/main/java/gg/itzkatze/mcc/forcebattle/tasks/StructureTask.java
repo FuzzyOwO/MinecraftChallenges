@@ -75,7 +75,7 @@ public class StructureTask implements ForceTask {
         if (objectiveValue instanceof StructureSimplified simplified) {
             for (MccStructure structure : simplified.getStructures()) {
                 Structure bukkitStruct = registry.get(structure.getKey());
-                if (bukkitStruct != null && checkPlayerLocationInStructure(player, bukkitStruct)) {
+                if (bukkitStruct != null && checkPlayerLocationInStructure(player, structure.getKey(), bukkitStruct)) {
                     return true;
                 }
             }
@@ -84,18 +84,18 @@ public class StructureTask implements ForceTask {
 
         if (objectiveValue instanceof MccStructure structure) {
             Structure bukkitStruct = registry.get(structure.getKey());
-            return bukkitStruct != null && checkPlayerLocationInStructure(player, bukkitStruct);
+            return bukkitStruct != null && checkPlayerLocationInStructure(player, structure.getKey(), bukkitStruct);
         }
 
         return false;
     }
 
-    private boolean checkPlayerLocationInStructure(ForceBattlePlayer fbPlayer, Structure bukkitStruct) {
+    private boolean checkPlayerLocationInStructure(ForceBattlePlayer fbPlayer, NamespacedKey structureKey, Structure bukkitStruct) {
         Player player = fbPlayer.getPlayer();
         if (player == null) return false;
 
         String worldName = player.getWorld().getName();
-        String cacheKey = worldName + ":" + bukkitStruct.getStructureType().getKey();
+        String cacheKey = worldName + ":" + structureKey;
         Set<BoundingBox> cachedBoxes = STRUCTURE_CACHE.get(cacheKey);
         Location playerLoc = player.getLocation();
 

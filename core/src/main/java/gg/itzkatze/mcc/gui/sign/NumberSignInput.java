@@ -24,13 +24,17 @@ public final class NumberSignInput {
         SignInput.open(
                 player,
                 List.of(
+                        Component.empty(),
                         Component.text(label).color(NamedTextColor.AQUA),
                         Component.text("Current: " + current).color(NamedTextColor.GRAY),
-                        Component.text("Min " + min + " Max " + max).color(NamedTextColor.YELLOW),
-                        Component.empty()
+                        Component.text("Min " + min + " Max " + max).color(NamedTextColor.YELLOW)
                 ),
                 (mccPlayer, lines) -> {
-                    String raw = lines.isEmpty() ? "" : lines.getFirst().trim();
+                    String raw = lines.stream()
+                            .map(String::trim)
+                            .filter(s -> !s.isEmpty())
+                            .findFirst()
+                            .orElse("");
                     if (raw.isEmpty()) {
                         if (onError != null) {
                             onError.accept(mccPlayer, "No value entered.");

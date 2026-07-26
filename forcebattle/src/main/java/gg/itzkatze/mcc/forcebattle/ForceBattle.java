@@ -1,11 +1,14 @@
 package gg.itzkatze.mcc.forcebattle;
 
+import gg.itzkatze.mcc.MinecraftChallenges;
 import gg.itzkatze.mcc.bossbar.BossbarManager;
 import gg.itzkatze.mcc.team.MccTeam;
 import gg.itzkatze.mcc.player.MccPlayer;
 import gg.itzkatze.mcc.bossbar.BossbarContent;
 import gg.itzkatze.mcc.challenges.Challenge;
 import gg.itzkatze.mcc.challenges.ChallengeType;
+import gg.itzkatze.mcc.challenges.TimerSpec;
+import gg.itzkatze.mcc.game.GameTimer;
 import gg.itzkatze.mcc.forcebattle.bossbar.ForceBattlePlayerObjectiveBossbar;
 import gg.itzkatze.mcc.forcebattle.bossbar.ForceBattleTeamObjectiveBossbar;
 import gg.itzkatze.mcc.forcebattle.bossbar.ForceBattleWaitingBossbar;
@@ -24,6 +27,9 @@ import org.jspecify.annotations.NonNull;
 import java.util.List;
 
 public class ForceBattle implements Challenge {
+    public static final String BATTLE_DURATION_MINUTES_KEY = "forcebattle-duration-minutes";
+    public static final int DEFAULT_BATTLE_DURATION_MINUTES = 90;
+
 
     private final ForceBattleGameListener gameListener = new ForceBattleGameListener();
     private final ChallengeSettingsManager settingsManager =
@@ -62,6 +68,21 @@ public class ForceBattle implements Challenge {
                 .map(ForceBattlePlayer.class::cast)
                 .filter(player -> !player.isOffline())
                 .forEach(player -> player.reset(true));
+    }
+
+    @Override
+    public @Nullable TimerSpec getTimerSpec() {
+        int minutes = Math.max(1, MinecraftChallenges.get().getConfig().getInt(
+                BATTLE_DURATION_MINUTES_KEY,
+                DEFAULT_BATTLE_DURATION_MINUTES
+        ));
+        int seconds = minutes * 60;
+        return new TimerSpec(GameTimer.Mode.COUNT_DOWN, seconds);
+    }
+
+    @Override
+    public void onTimerElapsed() {
+        gameListener.handleBattleEnd();
     }
 
     @Override

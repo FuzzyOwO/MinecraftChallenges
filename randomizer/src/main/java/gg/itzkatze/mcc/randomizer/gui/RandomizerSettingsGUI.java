@@ -26,20 +26,31 @@ public class RandomizerSettingsGUI extends MccGUI {
     }
 
     private enum SettingButton {
-        BLOCK_DROPS(11, Material.GRASS_BLOCK, "Block Drops", RandomizerSettings.RandomizerSetting.BLOCK_DROPS),
-        MOB_DROPS(13, Material.ROTTEN_FLESH, "Mob Drops", RandomizerSettings.RandomizerSetting.MOB_DROPS),
-        CHEST_LOOT(15, Material.CHEST, "Chest Loot", RandomizerSettings.RandomizerSetting.CHEST_LOOT);
+        BLOCK_DROPS(10, Material.GRASS_BLOCK, "Block Drops", RandomizerSettings.RandomizerSetting.BLOCK_DROPS,
+                List.of(Component.text("Randomize mined block drops").color(NamedTextColor.GRAY))),
+        MOB_DROPS(12, Material.ROTTEN_FLESH, "Mob Drops", RandomizerSettings.RandomizerSetting.MOB_DROPS,
+                List.of(Component.text("Randomize mob drops").color(NamedTextColor.GRAY))),
+        CHEST_LOOT(14, Material.CHEST, "Chest Loot", RandomizerSettings.RandomizerSetting.CHEST_LOOT,
+                List.of(Component.text("Randomize generated chest loot").color(NamedTextColor.GRAY))),
+        SHARED_MAPPINGS(16, Material.PLAYER_HEAD, "Shared Mappings", RandomizerSettings.RandomizerSetting.SHARED_MAPPINGS,
+                List.of(
+                        Component.text("On: every player shares the same mapping").color(NamedTextColor.GRAY),
+                        Component.text("Off: each player gets their own mapping").color(NamedTextColor.GRAY)
+                ));
 
         private final int slot;
         private final Material material;
         private final String label;
         private final RandomizerSettings.RandomizerSetting setting;
+        private final List<Component> description;
 
-        SettingButton(int slot, Material material, String label, RandomizerSettings.RandomizerSetting setting) {
+        SettingButton(int slot, Material material, String label, RandomizerSettings.RandomizerSetting setting,
+                      List<Component> description) {
             this.slot = slot;
             this.material = material;
             this.label = label;
             this.setting = setting;
+            this.description = description;
         }
     }
 
@@ -62,15 +73,16 @@ public class RandomizerSettingsGUI extends MccGUI {
                 public ItemStack getItem(MccPlayer p) {
                     SettingStateType state = getState(button.setting);
                     Component status = state == null ? Component.text("Unknown") : state.getDisplayName();
+                    List<Component> lore = new java.util.ArrayList<>(button.description);
+                    lore.add(Component.empty());
+                    lore.add(Component.text("Current: ").color(NamedTextColor.GRAY).append(status));
+                    lore.add(Component.empty());
+                    lore.add(Component.text("Click to toggle").color(NamedTextColor.YELLOW));
                     return ItemStackCreator.getStack(
                             Component.text(button.label).color(NamedTextColor.AQUA),
                             button.material,
                             1,
-                            List.of(
-                                    Component.text("Current: ").color(NamedTextColor.GRAY).append(status),
-                                    Component.empty(),
-                                    Component.text("Click to toggle").color(NamedTextColor.YELLOW)
-                            )
+                            lore
                     );
                 }
             });

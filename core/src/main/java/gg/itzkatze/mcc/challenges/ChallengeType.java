@@ -6,5 +6,6 @@ public enum ChallengeType {
     DEATH_SWAP(),
     RANDOMIZER(),
     ITEM_RAIN(),
+    TIMER(),
     ;
 }
