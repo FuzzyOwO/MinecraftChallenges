@@ -15,6 +15,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.Team;
+import org.bukkit.scheduler.BukkitTask;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
@@ -25,10 +26,20 @@ import java.util.concurrent.ConcurrentHashMap;
 public class NametagManager {
 
     private static final Map<UUID, Map<UUID, Component>> lastSuffixes = new ConcurrentHashMap<>();
+    private static BukkitTask runningTask;
 
     public static void runTask() {
-        Bukkit.getScheduler().runTaskTimer(MinecraftChallenges.get(), () ->
+        stopTask();
+        runningTask = Bukkit.getScheduler().runTaskTimer(MinecraftChallenges.get(), () ->
                 MccPlayer.PLAYERS.forEach(NametagManager::updateNametag), 0, 3);
+    }
+
+    public static void stopTask() {
+        if (runningTask != null) {
+            runningTask.cancel();
+            runningTask = null;
+        }
+        lastSuffixes.clear();
     }
 
     private static void updateNametag(@NotNull MccPlayer mccPlayer) {

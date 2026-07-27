@@ -57,6 +57,10 @@ public class ForceBattleObjective implements ChallengeObjective {
                 .toList();
     }
 
+    public static void deleteAll() {
+        objectives.clear();
+    }
+
     public void delete() {
         objectives.remove(this);
     }

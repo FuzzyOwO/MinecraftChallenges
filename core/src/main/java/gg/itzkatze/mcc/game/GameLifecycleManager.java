@@ -9,6 +9,7 @@ import org.bukkit.World;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.jetbrains.annotations.NotNull;
 
 public class GameLifecycleManager implements Listener {
@@ -21,6 +22,13 @@ public class GameLifecycleManager implements Listener {
 
         MccPlayer player = MccPlayer.adapt(event.getPlayer());
         sendToLobby(player);
+    }
+
+    @EventHandler
+    public void onPlayerQuit(@NotNull PlayerQuitEvent event) {
+        if (!ChallengeManager.isGameStarted()) {
+            MccPlayer.remove(event.getPlayer().getUniqueId());
+        }
     }
 
     public static void sendToLobby(@NotNull MccPlayer player) {
@@ -59,6 +67,7 @@ public class GameLifecycleManager implements Listener {
     public static void resetGame() {
         MinecraftChallenges.getTimer().stop();
         ChallengeManager.resetGameState();
+        MccPlayer.removeOfflinePlayers();
 
         for (MccPlayer player : MccPlayer.getOnlinePlayers()) {
             sendToLobby(player);

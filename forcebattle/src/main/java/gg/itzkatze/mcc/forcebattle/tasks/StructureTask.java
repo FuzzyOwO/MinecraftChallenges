@@ -23,14 +23,34 @@ import org.bukkit.generator.structure.Structure;
 import org.bukkit.generator.structure.StructurePiece;
 import org.bukkit.util.BoundingBox;
 
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class StructureTask implements ForceTask {
 
-    private static final Map<String, Set<BoundingBox>> STRUCTURE_CACHE = new ConcurrentHashMap<>();
+    private static final int MAX_CACHE_ENTRIES = 128;
+    private static final int MAX_BOXES_PER_ENTRY = 512;
+    private static final int MAX_IN_FLIGHT_SCANS = 8;
+    private static final Map<String, Set<BoundingBox>> STRUCTURE_CACHE =
+            Collections.synchronizedMap(new LinkedHashMap<>(16, 0.75f, true) {
+                @Override
+                protected boolean removeEldestEntry(Map.Entry<String, Set<BoundingBox>> eldest) {
+                    return size() > MAX_CACHE_ENTRIES;
+                }
+            });
+    private static final Set<String> IN_FLIGHT_SCANS = new HashSet<>();
+    private static long cacheGeneration;
+
+    public static void clearCache() {
+        synchronized (STRUCTURE_CACHE) {
+            STRUCTURE_CACHE.clear();
+            IN_FLIGHT_SCANS.clear();
+            cacheGeneration++;
+        }
+    }
 
     @Override
     public void runTick() {
@@ -96,7 +116,11 @@ public class StructureTask implements ForceTask {
 
         String worldName = player.getWorld().getName();
         String cacheKey = worldName + ":" + structureKey;
-        Set<BoundingBox> cachedBoxes = STRUCTURE_CACHE.get(cacheKey);
+        Set<BoundingBox> cachedBoxes;
+        synchronized (STRUCTURE_CACHE) {
+            Set<BoundingBox> boxes = STRUCTURE_CACHE.get(cacheKey);
+            cachedBoxes = boxes == null ? null : Set.copyOf(boxes);
+        }
         Location playerLoc = player.getLocation();
 
         if (cachedBoxes != null) {
@@ -105,10 +129,22 @@ public class StructureTask implements ForceTask {
             }
         }
 
-        Bukkit.getScheduler().runTaskAsynchronously(MinecraftChallenges.get(), () -> {
+        Chunk center = playerLoc.getChunk();
+        String scanRegion = cacheKey + ":" + center.getX() + ":" + center.getZ();
+        final long generation;
+        final String scanKey;
+        synchronized (STRUCTURE_CACHE) {
+            generation = cacheGeneration;
+            scanKey = scanRegion + ":" + generation;
+            if (IN_FLIGHT_SCANS.size() >= MAX_IN_FLIGHT_SCANS || !IN_FLIGHT_SCANS.add(scanKey)) {
+                return false;
+            }
+        }
+
+        Bukkit.getScheduler().runTask(MinecraftChallenges.get(), () -> {
             try {
-                World world = player.getWorld();
-                Chunk center = playerLoc.getChunk();
+                World world = Bukkit.getWorld(worldName);
+                if (world == null) return;
                 int radius = 6;
 
                 Set<BoundingBox> newBoxes = new HashSet<>();
@@ -123,14 +159,21 @@ public class StructureTask implements ForceTask {
                     }
                 }
 
-                if (!newBoxes.isEmpty()) {
-                    STRUCTURE_CACHE.compute(cacheKey, (key, oldSet) -> {
-                        if (oldSet == null) return newBoxes;
-                        oldSet.addAll(newBoxes);
-                        return oldSet;
-                    });
+                synchronized (STRUCTURE_CACHE) {
+                    if (generation != cacheGeneration || newBoxes.isEmpty()) return;
+                    Set<BoundingBox> boxes =
+                            STRUCTURE_CACHE.computeIfAbsent(cacheKey, key -> new HashSet<>());
+                    for (BoundingBox box : newBoxes) {
+                        if (boxes.size() >= MAX_BOXES_PER_ENTRY) break;
+                        boxes.add(box);
+                    }
                 }
             } catch (Exception ignored) {}
+            finally {
+                synchronized (STRUCTURE_CACHE) {
+                    IN_FLIGHT_SCANS.remove(scanKey);
+                }
+            }
         });
 
         return false;

@@ -113,6 +113,28 @@ public class MccPlayer implements CommandCaller {
         return Optional.empty();
     }
 
+    public static void remove(UUID uuid) {
+        List<MccPlayer> matches = PLAYERS.stream()
+                .filter(player -> player.uuid.equals(uuid))
+                .toList();
+        for (MccPlayer player : matches) {
+            MccTeam team = player.getTeam();
+            if (team != null) {
+                team.getPlayers().remove(player);
+                if (team.getPlayers().isEmpty()) team.delete();
+            }
+            PLAYERS.remove(player);
+        }
+    }
+
+    public static void removeOfflinePlayers() {
+        PLAYERS.stream()
+                .filter(MccPlayer::isOffline)
+                .map(MccPlayer::getUuid)
+                .toList()
+                .forEach(MccPlayer::remove);
+    }
+
     /**
      * Replaces all player wrappers for the given challenge type with base MccPlayer.
      * Call from the challenge's {@code onDisable}.

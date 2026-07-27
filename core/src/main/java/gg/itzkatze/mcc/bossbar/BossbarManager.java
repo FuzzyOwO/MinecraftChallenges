@@ -5,18 +5,19 @@ import gg.itzkatze.mcc.challenges.Challenge;
 import gg.itzkatze.mcc.challenges.ChallengeManager;
 import gg.itzkatze.mcc.player.MccPlayer;
 import net.kyori.adventure.bossbar.BossBar;
+import org.bukkit.Bukkit;
+import org.bukkit.scheduler.BukkitTask;
 
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.Timer;
-import java.util.TimerTask;
 
 public class BossbarManager {
 
     /** All bars shown per challenge. Cleared when challenge is disabled. */
     private static final Map<Challenge, Map<MccPlayer, Set<BossBar>>> barsByChallenge = new HashMap<>();
+    private static BukkitTask runningTask;
 
     /**
      * Hides all bossbars for the given challenge. Call from {@link Challenge#onDisable()}.
@@ -40,38 +41,45 @@ public class BossbarManager {
     }
 
     public static void runTask() {
-        TimerTask task = new TimerTask() {
-            @Override
-            public void run() {
-                Set<Challenge> activeChallenges = ChallengeManager.getActiveChallenges();
-                if (activeChallenges.isEmpty()) return;
+        stopTask();
+        runningTask = Bukkit.getScheduler().runTaskTimer(MinecraftChallenges.get(), () -> {
+            Set<Challenge> activeChallenges = ChallengeManager.getActiveChallenges();
+            if (activeChallenges.isEmpty()) return;
 
-                boolean timerRunning = MinecraftChallenges.getTimer().isRunning();
-                BossbarKind showKind = timerRunning ? BossbarKind.RUNNING : BossbarKind.NOT_RUNNING;
+            boolean timerRunning = MinecraftChallenges.getTimer().isRunning();
+            BossbarKind showKind = timerRunning ? BossbarKind.RUNNING : BossbarKind.NOT_RUNNING;
 
-                for (MccPlayer player : MccPlayer.getOnlinePlayers()) {
-                    if (player.isExcluded()) {
-                        hideAllBarsForPlayer(player);
-                        continue;
-                    }
+            for (MccPlayer player : MccPlayer.getOnlinePlayers()) {
+                if (player.isExcluded()) {
+                    hideAllBarsForPlayer(player);
+                    continue;
+                }
 
-                    for (Challenge challenge : activeChallenges) {
-                        clearChallengeBarsForPlayer(player, challenge);
-                    }
+                for (Challenge challenge : activeChallenges) {
+                    clearChallengeBarsForPlayer(player, challenge);
+                }
 
-                    for (Challenge challenge : activeChallenges) {
-                        for (BossbarContent content : challenge.getBossbarContents()) {
-                            if (content.getKind() != showKind) continue;
-                            BossBar bar = content.getBossbar(player);
-                            if (bar != null) {
-                                addBossBar(player, bar, challenge);
-                            }
+                for (Challenge challenge : activeChallenges) {
+                    for (BossbarContent content : challenge.getBossbarContents()) {
+                        if (content.getKind() != showKind) continue;
+                        BossBar bar = content.getBossbar(player);
+                        if (bar != null) {
+                            addBossBar(player, bar, challenge);
                         }
                     }
                 }
             }
-        };
-        new Timer("challenge/bossbar").scheduleAtFixedRate(task, 150, 150);
+        }, 3L, 3L);
+    }
+
+    public static void stopTask() {
+        if (runningTask != null) {
+            runningTask.cancel();
+            runningTask = null;
+        }
+        for (Challenge challenge : Set.copyOf(barsByChallenge.keySet())) {
+            hideAndClearBarsForChallenge(challenge, barsByChallenge);
+        }
     }
 
     private static void hideAllBarsForPlayer(MccPlayer player) {

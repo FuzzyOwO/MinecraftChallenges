@@ -13,11 +13,14 @@ import gg.itzkatze.mcc.forcebattle.bossbar.ForceBattlePlayerObjectiveBossbar;
 import gg.itzkatze.mcc.forcebattle.bossbar.ForceBattleTeamObjectiveBossbar;
 import gg.itzkatze.mcc.forcebattle.bossbar.ForceBattleWaitingBossbar;
 import gg.itzkatze.mcc.forcebattle.gui.ForceBattleSettingsGUI;
+import gg.itzkatze.mcc.forcebattle.tasks.StructureTask;
 import gg.itzkatze.mcc.commands.framework.MccCommand;
 import gg.itzkatze.mcc.configuration.ChallengeSettingsManager;
 import gg.itzkatze.mcc.gui.MccGUI;
 import gg.itzkatze.mcc.scoreboard.ScoreboardContent;
 import net.kyori.adventure.text.Component;
+import org.bukkit.Bukkit;
+import org.bukkit.GameRules;
 import org.bukkit.Material;
 import org.bukkit.event.Listener;
 import org.jetbrains.annotations.NotNull;
@@ -47,6 +50,10 @@ public class ForceBattle implements Challenge {
     @Override
     public void onDisable() {
         ForceBattleGameListener.startPhase = true;
+        gameListener.clearPendingRestores();
+        NametagManager.stopTask();
+        StructureTask.clearCache();
+        ForceBattleObjective.deleteAll();
         BossbarManager.hideBarsForChallenge(this);
         ForceBattleTeam.deleteAll();
         MccTeam.downgrade(ChallengeType.FORCE_BATTLE);
@@ -57,12 +64,21 @@ public class ForceBattle implements Challenge {
 
     @Override
     public void onGameStart() {
+        Bukkit.getWorlds().forEach(world ->
+                world.setGameRule(GameRules.SHOW_ADVANCEMENT_MESSAGES, false));
         gameListener.startGame();
     }
 
     @Override
     public void onGameReset() {
         ForceBattleGameListener.startPhase = true;
+        gameListener.clearPendingRestores();
+        StructureTask.clearCache();
+        ForceBattleObjective.deleteAll();
+        MccTeam.teams.stream()
+                .filter(ForceBattleTeam.class::isInstance)
+                .map(ForceBattleTeam.class::cast)
+                .forEach(team -> team.setObjective(null));
         MccPlayer.PLAYERS.stream()
                 .filter(ForceBattlePlayer.class::isInstance)
                 .map(ForceBattlePlayer.class::cast)

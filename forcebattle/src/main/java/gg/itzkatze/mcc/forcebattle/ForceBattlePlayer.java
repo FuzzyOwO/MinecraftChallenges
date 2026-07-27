@@ -81,6 +81,7 @@ public class ForceBattlePlayer extends MccPlayer {
         ObjectiveUpdateEvent updateEvent = new ObjectiveUpdateEvent(this, newObjective);
         Bukkit.getPluginManager().callEvent(updateEvent);
         if (updateEvent.isCancelled()) {
+            if (newObjective != null) newObjective.delete();
             logger.info("ObjectiveUpdateEvent has been denied by an external plugin.");
             return;
         }

@@ -2,6 +2,7 @@ package gg.itzkatze.mcc;
 
 import lombok.Getter;
 import gg.itzkatze.mcc.bossbar.BossbarManager;
+import gg.itzkatze.mcc.challenges.ChallengeManager;
 import gg.itzkatze.mcc.chat.TeamChatManager;
 import gg.itzkatze.mcc.commands.framework.MccCommand;
 import gg.itzkatze.mcc.commands.framework.CommandHandler;
@@ -15,6 +16,7 @@ import gg.itzkatze.mcc.gui.sign.SignInput;
 import gg.itzkatze.mcc.configuration.SettingsFile;
 import gg.itzkatze.mcc.game.GameTimer;
 import gg.itzkatze.mcc.game.TimerRegistry;
+import gg.itzkatze.mcc.game.TaskManager;
 import gg.itzkatze.mcc.scoreboard.ScoreboardManager;
 import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 import net.kyori.adventure.text.Component;
@@ -82,6 +84,9 @@ public final class MinecraftChallenges extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        BossbarManager.stopTask();
+        ChallengeManager.unloadAllChallenges();
+        TaskManager.stopAll();
         try {
             SettingsFile.saveToFile(new File(getDataDirectory(), "data/settings.json"));
         } catch (IOException e) {

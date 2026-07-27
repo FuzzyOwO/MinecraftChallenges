@@ -50,6 +50,10 @@ public class ForceBattleGameListener implements Listener {
     public static boolean startPhase = true;
     private final Map<UUID, List<ItemStack>> pendingJokerRestore = new HashMap<>();
 
+    public void clearPendingRestores() {
+        pendingJokerRestore.clear();
+    }
+
     public ForceBattleGameListener() {
         // Tasks are now managed by the Challenge system
     }
