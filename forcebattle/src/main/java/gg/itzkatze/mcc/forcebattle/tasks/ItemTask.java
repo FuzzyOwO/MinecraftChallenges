@@ -67,6 +67,7 @@ public class ItemTask implements ForceTask {
         if (player.isInTeam() && SettingsManager.isEnabled(GlobalSetting.EXTRA_TEAM_OBJECTIVE)) {
             player.getTeam().getPlayers().stream()
                     .filter(teammate -> teammate != player)
+                    .filter(teammate -> !teammate.isOffline())
                     .forEach(teammate -> {
                         teammate.sendMessage(Component.text(player.getName() + " has finished " + formattedObjective + "."));
                         Toast.display(teammate.getPlayer(), toastIcon, Component.text(formattedObjective).color(NamedTextColor.BLUE), Toast.Style.GOAL, plugin);

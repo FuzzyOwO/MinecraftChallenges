@@ -5,6 +5,8 @@ import gg.itzkatze.mcc.challenges.ChallengeManager;
 import gg.itzkatze.mcc.player.MccPlayer;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
+import org.bukkit.Sound;
+import org.bukkit.SoundCategory;
 import org.bukkit.World;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -61,6 +63,8 @@ public class GameLifecycleManager implements Listener {
             if (world != null) {
                 player.getPlayer().teleport(world.getSpawnLocation());
             }
+
+            player.getPlayer().playSound(player.getPlayer(), Sound.EVENT_RAID_HORN, SoundCategory.MASTER, 100, 1);
         }
     }
 

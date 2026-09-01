@@ -77,7 +77,11 @@ public final class Toast {
         Challenge forceBattle = ChallengeRegistry.getChallenge(ChallengeType.FORCE_BATTLE);
         if (forceBattle instanceof ChallengeSettingsManager) {
             if (!forceBattle.hasSettings()) return;
-            Bukkit.getScheduler().runTaskLater(main, () -> revokeAdvancement(player), 10);
+            Bukkit.getScheduler().runTaskLater(main, () -> {
+                if (player != null && player.isOnline()) {
+                    revokeAdvancement(player);
+                }
+            }, 10);
         }
     }
 
@@ -87,7 +91,12 @@ public final class Toast {
 
         Challenge forceBattle = ChallengeRegistry.getChallenge(ChallengeType.FORCE_BATTLE);
         if (forceBattle instanceof ChallengeSettingsManager) {
-            Bukkit.getScheduler().runTaskLater(main, () -> players.forEach(this::revokeAdvancement), 10);
+            Bukkit.getScheduler().runTaskLater(main, () ->
+                            players.stream()
+                                    .filter(player -> player != null && player.isOnline())
+                                    .forEach(this::revokeAdvancement),
+                    10
+            );
         }
     }
 
@@ -121,18 +130,28 @@ public final class Toast {
     }
 
     private void grantAdvancement(Player player) {
+        if (player == null) {
+            return;
+        }
+
         Advancement advancement = Bukkit.getAdvancement(key);
         if (advancement == null) {
             throw new RuntimeException("Advancement is null! Make sure to create an advancement before granting it to players!");
         }
+
         player.getAdvancementProgress(advancement).awardCriteria("trigger");
     }
 
     private void revokeAdvancement(Player player) {
+        if (player == null) {
+            return;
+        }
+
         Advancement advancement = Bukkit.getAdvancement(key);
         if (advancement == null) {
             throw new RuntimeException("Advancement is null! Make sure to create an advancement before revoking it!");
         }
+
         player.getAdvancementProgress(advancement).revokeCriteria("trigger");
     }
 

@@ -143,7 +143,7 @@ public class ForceBattleGameListener implements Listener {
 
         for (MccPlayer mccPlayer : MccPlayer.getOnlinePlayers()) {
             ForceBattlePlayer player = (ForceBattlePlayer) mccPlayer;
-            if (player.getPlayer() == null) return;
+            if (player.getPlayer() == null) continue;
 
             if (player.getObjective() == null) {
                 player.updateObjective(false, false);
@@ -151,7 +151,6 @@ public class ForceBattleGameListener implements Listener {
             if (player.isInTeam() && player.getTeam().getObjective() == null) {
                 player.getTeam().updateObjective(player, false, false);
             }
-            player.getPlayer().playSound(player.getPlayer(), Sound.EVENT_RAID_HORN, SoundCategory.MASTER, 100, 1);
 
             player.getPlayer().getInventory().addItem(Joker.getPlayerSkipItem(MinecraftChallenges.get().getConfig().getInt("playerSkips", 3)));
             player.getPlayer().getInventory().addItem(Joker.getSwapItem(MinecraftChallenges.get().getConfig().getInt("swaps", 1)));

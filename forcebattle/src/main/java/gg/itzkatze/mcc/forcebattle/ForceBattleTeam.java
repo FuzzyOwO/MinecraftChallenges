@@ -98,7 +98,7 @@ public class ForceBattleTeam extends MccTeam {
         ObjectiveUpdateEvent updateEvent = new ObjectiveUpdateEvent(this, newObjective);
         Bukkit.getPluginManager().callEvent(updateEvent);
         if (updateEvent.isCancelled()) {
-            if (newObjective != null) newObjective.delete();
+            newObjective.delete();
             return;
         }
 

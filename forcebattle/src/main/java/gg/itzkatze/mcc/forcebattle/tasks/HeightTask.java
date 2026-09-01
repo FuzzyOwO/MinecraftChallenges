@@ -71,6 +71,7 @@ public class HeightTask implements ForceTask {
         if (player.isInTeam() && SettingsManager.isEnabled(GlobalSetting.EXTRA_TEAM_OBJECTIVE)) {
             player.getTeam().getPlayers().stream()
                     .filter(teammate -> teammate != player)
+                    .filter(teammate -> !teammate.isOffline())
                     .forEach(teammate -> {
                         teammate.sendMessage(Component.text(player.getName() + " has finished " + heightDisplay + "."));
                         Toast.display(teammate.getPlayer(), toastIcon, Component.text(heightDisplay).color(NamedTextColor.BLUE), Toast.Style.GOAL, plugin);

@@ -28,13 +28,13 @@ public class DeathSwap implements Challenge {
     }
 
     @Override
-    public void onGameStart() {
-        gameListener.startGame();
+    public void onDisable() {
+        gameListener.cleanup();
     }
 
     @Override
-    public void onDisable() {
-        gameListener.cleanup();
+    public void onGameStart() {
+        gameListener.startGame();
     }
 
     @Override
