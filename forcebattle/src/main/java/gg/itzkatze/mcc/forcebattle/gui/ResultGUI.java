@@ -1,5 +1,7 @@
 package gg.itzkatze.mcc.forcebattle.gui;
 
+import gg.itzkatze.mcc.data.MccStructure;
+import gg.itzkatze.mcc.data.MobsSimplified;
 import gg.itzkatze.mcc.forcebattle.ForceBattleObjective;
 import gg.itzkatze.mcc.data.BiomeSimplified;
 import gg.itzkatze.mcc.data.MccAdvancement;
@@ -286,12 +288,12 @@ public class ResultGUI extends MccGUI {
             Object obj = objective.getObjectiveValue();
 
             if (obj instanceof Material m) material = m;
-            else if (obj instanceof EntityType) material = Material.SPIDER_SPAWN_EGG;
+            else if (obj instanceof EntityType || obj instanceof MobsSimplified) material = Material.SPIDER_SPAWN_EGG;
             else if (obj instanceof Biome || obj instanceof BiomeSimplified) material = Material.GRASS_BLOCK;
             else if (obj instanceof MccAdvancement) material = Material.BREWING_STAND;
             else if (obj instanceof Integer) material = Material.SCAFFOLDING;
             else if (obj instanceof Location) material = Material.DIAMOND_BOOTS;
-            else if (obj instanceof StructureSimplified) material = Material.STRUCTURE_BLOCK;
+            else if (obj instanceof MccStructure || obj instanceof StructureSimplified) material = Material.STRUCTURE_BLOCK;
 
             List<Component> lore = new ArrayList<>();
             lore.add(Component.empty());

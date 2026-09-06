@@ -3,12 +3,15 @@ import gg.itzkatze.mcc.util.StructureUtil;
 import lombok.Getter;
 import org.bukkit.Bukkit;
 import java.io.IOException;
+
+import org.bukkit.Difficulty;
 import org.bukkit.GameRules;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.block.structure.StructureRotation;
 import org.bukkit.entity.EntityType;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -32,7 +35,8 @@ public class SpawnManager implements Listener {
     public static void createSpawnIfNeeded() {
         World world = Bukkit.getWorld("world");
         if (!existsSpawn && world != null) {
-            StructureUtil.createSpawn();
+            Location spawnLoc = new Location(Bukkit.getWorld("world"), -27.5, 192, 26);
+            StructureUtil.loadAndPlaceStructure(spawnLoc, "spawn", StructureRotation.COUNTERCLOCKWISE_90);
             existsSpawn = true;
 
             world.setTime(6000);
@@ -133,7 +137,7 @@ public class SpawnManager implements Listener {
             world.setStorm(false);
             world.setThundering(false);
             world.setWeatherDuration(0);
-            world.setDifficulty(org.bukkit.Difficulty.NORMAL);
+            world.setDifficulty(Difficulty.NORMAL);
             world.setGameRule(GameRules.LOCATOR_BAR, false);
         }
     }

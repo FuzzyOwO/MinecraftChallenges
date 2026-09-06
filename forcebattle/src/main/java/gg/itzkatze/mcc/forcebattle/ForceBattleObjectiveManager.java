@@ -9,6 +9,7 @@ import gg.itzkatze.mcc.configuration.states.PlayerTeamBothState;
 import gg.itzkatze.mcc.configuration.GlobalSetting;
 import gg.itzkatze.mcc.challenges.ChallengeRegistry;
 import gg.itzkatze.mcc.configuration.states.SettingStateType;
+import gg.itzkatze.mcc.data.MobsSimplified;
 import io.papermc.paper.registry.RegistryAccess;
 import io.papermc.paper.registry.RegistryKey;
 import lombok.Getter;
@@ -157,7 +158,13 @@ public class ForceBattleObjectiveManager {
         List<ObjectiveSeed> list = new ArrayList<>();
         switch (battleType) {
             case FORCE_ITEM -> getAvailableItems().forEach(material -> list.add(new ObjectiveSeed(battleType, material)));
-            case FORCE_MOB -> getAvailableMobs().forEach(entityType -> list.add(new ObjectiveSeed(battleType, entityType)));
+            case FORCE_MOB -> {
+                if (SettingsManager.isEnabled(GlobalSetting.SIMPLIFIED_OBJECTIVES)) {
+                    getAvailableMobsSimplified().forEach(entitySimplified -> list.add(new ObjectiveSeed(battleType, entitySimplified)));
+                } else {
+                    getAvailableMobs().forEach(entityType -> list.add(new ObjectiveSeed(battleType, entityType)));
+                }
+            }
             case FORCE_BIOME -> {
                 if (SettingsManager.isEnabled(GlobalSetting.SIMPLIFIED_OBJECTIVES)) {
                     getAvailableBiomesSimplified().forEach(biomeSimplified -> list.add(new ObjectiveSeed(battleType, biomeSimplified)));
@@ -373,6 +380,22 @@ public class ForceBattleObjectiveManager {
         return availableMobs;
     }
 
+    public List<MobsSimplified> getAvailableMobsSimplified() {
+        List<MobsSimplified> availableMobs = new ArrayList<>();
+        ChallengeSettingsManager settingsManager = getForceBattleSettingsManager();
+        boolean excludeEndMobs = settingsManager != null && settingsManager.isEnabled(ForceBattleSettings.EXCLUDE_END);
+
+        List<String> mobsToExclude = MinecraftChallenges.get().getConfig().getStringList("exclude.mobs");
+
+        for (MobsSimplified simplified : MobsSimplified.values()) {
+            if (mobsToExclude.contains(simplified.name().toUpperCase(Locale.ROOT))) continue;
+            if (excludeEndMobs && ENDMOBSSIMPLIFIED.contains(simplified)) continue;
+
+            availableMobs.add(simplified);
+        }
+        return availableMobs;
+    }
+
     public List<Biome> getAvailableBiomes() {
         List<Biome> availableBiomes = new ArrayList<>();
 
@@ -497,6 +520,9 @@ public class ForceBattleObjectiveManager {
     );
     private final List<EntityType> ENDMOBS = List.of(
             EntityType.ENDER_DRAGON, EntityType.SHULKER, EntityType.SHULKER_BULLET, EntityType.DRAGON_FIREBALL
+    );
+    private final List<MobsSimplified> ENDMOBSSIMPLIFIED = List.of(
+            MobsSimplified.ENDER
     );
     private final List<Biome> ENDBIOMES = List.of(
             Biome.THE_END, Biome.END_BARRENS, Biome.END_HIGHLANDS, Biome.END_MIDLANDS, Biome.SMALL_END_ISLANDS

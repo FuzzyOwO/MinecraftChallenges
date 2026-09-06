@@ -5,6 +5,7 @@ import gg.itzkatze.mcc.challenges.ChallengeObjective;
 import gg.itzkatze.mcc.data.BiomeSimplified;
 import gg.itzkatze.mcc.data.MccAdvancement;
 import gg.itzkatze.mcc.data.MccStructure;
+import gg.itzkatze.mcc.data.MobsSimplified;
 import gg.itzkatze.mcc.data.StructureSimplified;
 import gg.itzkatze.mcc.player.MccPlayer;
 import lombok.Getter;
@@ -87,12 +88,12 @@ public class ForceBattleObjective implements ChallengeObjective {
 
     public @NotNull Material getToastIcon() {
         if (objectiveValue instanceof Material material) return material;
-        if (objectiveValue instanceof EntityType) return Material.SPIDER_SPAWN_EGG;
+        if (objectiveValue instanceof EntityType || objectiveValue instanceof MobsSimplified) return Material.SPIDER_SPAWN_EGG;
         if (objectiveValue instanceof Biome || objectiveValue instanceof BiomeSimplified) return Material.GRASS_BLOCK;
         if (objectiveValue instanceof MccAdvancement) return Material.BREWING_STAND;
         if (objectiveValue instanceof Integer) return Material.SCAFFOLDING;
         if (objectiveValue instanceof Location) return Material.COMPASS;
-        if (objectiveValue instanceof StructureSimplified || objectiveValue instanceof MccStructure) return Material.STRUCTURE_BLOCK;
+        if (objectiveValue instanceof MccStructure || objectiveValue instanceof StructureSimplified) return Material.STRUCTURE_BLOCK;
         return Material.BOOK;
     }
 
@@ -105,7 +106,11 @@ public class ForceBattleObjective implements ChallengeObjective {
 
         return switch (battleType) {
             case FORCE_ITEM -> value instanceof Material material ? material.name() : value.toString();
-            case FORCE_MOB -> value instanceof EntityType entityType ? entityType.name() : value.toString();
+            case FORCE_MOB -> {
+                if (value instanceof MobsSimplified simplified) yield simplified.getName();
+                if (value instanceof EntityType entityType) yield entityType.name();
+                yield value.toString();
+            }
             case FORCE_BIOME -> {
                 if (value instanceof BiomeSimplified simplified) yield simplified.getName();
                 if (value instanceof Biome biome) yield biome.getKey().toString();

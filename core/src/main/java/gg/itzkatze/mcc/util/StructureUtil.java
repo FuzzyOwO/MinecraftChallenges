@@ -37,10 +37,4 @@ public class StructureUtil {
             structure.place(loc, true, rotation, Mirror.NONE, 0, 1.0f, new Random());
         }
     }
-
-    public static void createSpawn() {
-        Location spawnLoc = new Location(Bukkit.getWorld("world"), -27.5, 192, 26);
-        loadAndPlaceStructure(spawnLoc, "spawn", StructureRotation.COUNTERCLOCKWISE_90);
-    }
-
 }

@@ -33,3 +33,5 @@ commands:
         aliases: [ allitems, allitemsconfig ]
     leaderboard:
     start:
+    info:
+        aliases: [ information ]
