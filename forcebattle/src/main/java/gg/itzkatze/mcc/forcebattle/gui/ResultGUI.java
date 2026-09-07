@@ -1,5 +1,7 @@
 package gg.itzkatze.mcc.forcebattle.gui;
 
+import gg.itzkatze.mcc.data.DamageTypeSimplified;
+import gg.itzkatze.mcc.data.MccDamageType;
 import gg.itzkatze.mcc.data.MccStructure;
 import gg.itzkatze.mcc.data.MobsSimplified;
 import gg.itzkatze.mcc.forcebattle.ForceBattleObjective;
@@ -294,6 +296,7 @@ public class ResultGUI extends MccGUI {
             else if (obj instanceof Integer) material = Material.SCAFFOLDING;
             else if (obj instanceof Location) material = Material.DIAMOND_BOOTS;
             else if (obj instanceof MccStructure || obj instanceof StructureSimplified) material = Material.STRUCTURE_BLOCK;
+            else if (obj instanceof MccDamageType || obj instanceof DamageTypeSimplified) material =  Material.SKELETON_SKULL;
 
             List<Component> lore = new ArrayList<>();
             lore.add(Component.empty());

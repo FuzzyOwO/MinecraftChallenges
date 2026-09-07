@@ -15,6 +15,7 @@ public enum ForceBattleSettings implements Setting {
     FORCE_HEIGHT(true, "Height", PlayerTeamBothState.TEAM),
     FORCE_COORDS(true, "Coords", PlayerTeamBothState.TEAM),
     FORCE_STRUCTURE(true, "Structure", PlayerTeamBothState.TEAM),
+    FORCE_DEATH(true, "Death", PlayerTeamBothState.TEAM),
 
     BACKPACK(false, "Backpack", OnOffState.ON),
     CHAIN_MODE(true, "Chain Mode", OnOffState.OFF),

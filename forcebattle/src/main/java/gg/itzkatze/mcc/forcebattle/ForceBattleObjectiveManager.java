@@ -9,6 +9,8 @@ import gg.itzkatze.mcc.configuration.states.PlayerTeamBothState;
 import gg.itzkatze.mcc.configuration.GlobalSetting;
 import gg.itzkatze.mcc.challenges.ChallengeRegistry;
 import gg.itzkatze.mcc.configuration.states.SettingStateType;
+import gg.itzkatze.mcc.data.DamageTypeSimplified;
+import gg.itzkatze.mcc.data.MccDamageType;
 import gg.itzkatze.mcc.data.MobsSimplified;
 import io.papermc.paper.registry.RegistryAccess;
 import io.papermc.paper.registry.RegistryKey;
@@ -183,6 +185,13 @@ public class ForceBattleObjectiveManager {
                     getAvailableStructuresSimplified().forEach(structureSimplified -> list.add(new ObjectiveSeed(battleType, structureSimplified)));
                 } else {
                     getAvailableStructures().forEach(structure -> list.add(new ObjectiveSeed(battleType, structure)));
+                }
+            }
+            case FORCE_DEATH -> {
+                if (SettingsManager.isEnabled(GlobalSetting.SIMPLIFIED_OBJECTIVES)) {
+                    getAvailableDeathsSimplified().forEach(deathSimplified -> list.add(new ObjectiveSeed(battleType, deathSimplified)));
+                } else {
+                    getAvailableDeaths().forEach(death -> list.add(new ObjectiveSeed(battleType, death)));
                 }
             }
         }
@@ -506,6 +515,14 @@ public class ForceBattleObjectiveManager {
             availableStructures.add(simplified);
         }
         return availableStructures;
+    }
+
+    public List<MccDamageType> getAvailableDeaths() {
+        return new ArrayList<>(Arrays.asList(MccDamageType.values()));
+    }
+
+    public List<DamageTypeSimplified> getAvailableDeathsSimplified() {
+        return new ArrayList<>(Arrays.asList(DamageTypeSimplified.values()));
     }
 
     private final List<Material> ENDITEMS = List.of(

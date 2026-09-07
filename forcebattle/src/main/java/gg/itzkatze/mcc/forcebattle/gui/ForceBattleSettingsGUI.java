@@ -50,6 +50,9 @@ public class ForceBattleSettingsGUI extends MccGUI {
                 "Click to toggle ForceCoords.", "ForceCoords"),
         FORCE_STRUCTURE(6, Material.STRUCTURE_BLOCK, ForceBattleSettings.FORCE_STRUCTURE, true, "Force Structure",
                 "Click to toggle ForceStructure.", "ForceStructure"),
+        FORCE_DEATH(7, Material.SKELETON_SKULL, ForceBattleSettings.FORCE_DEATH, true, "Force Death",
+                "Click to toggle ForceDeath.", "ForceDeath"),
+
 
         NO_HUNGER(18, Material.COOKED_BEEF, GlobalSetting.NO_HUNGER, false, "No Hunger",
                 "Click to toggle no Hunger.", "No Hunger"),

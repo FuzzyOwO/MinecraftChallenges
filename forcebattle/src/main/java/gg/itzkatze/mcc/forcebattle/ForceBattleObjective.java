@@ -3,7 +3,9 @@ package gg.itzkatze.mcc.forcebattle;
 import gg.itzkatze.mcc.MinecraftChallenges;
 import gg.itzkatze.mcc.challenges.ChallengeObjective;
 import gg.itzkatze.mcc.data.BiomeSimplified;
+import gg.itzkatze.mcc.data.DamageTypeSimplified;
 import gg.itzkatze.mcc.data.MccAdvancement;
+import gg.itzkatze.mcc.data.MccDamageType;
 import gg.itzkatze.mcc.data.MccStructure;
 import gg.itzkatze.mcc.data.MobsSimplified;
 import gg.itzkatze.mcc.data.StructureSimplified;
@@ -94,6 +96,7 @@ public class ForceBattleObjective implements ChallengeObjective {
         if (objectiveValue instanceof Integer) return Material.SCAFFOLDING;
         if (objectiveValue instanceof Location) return Material.COMPASS;
         if (objectiveValue instanceof MccStructure || objectiveValue instanceof StructureSimplified) return Material.STRUCTURE_BLOCK;
+        if (objectiveValue instanceof MccDamageType || objectiveValue instanceof DamageTypeSimplified) return Material.SKELETON_SKULL;
         return Material.BOOK;
     }
 
@@ -127,6 +130,11 @@ public class ForceBattleObjective implements ChallengeObjective {
             case FORCE_STRUCTURE -> {
                 if (value instanceof StructureSimplified simplified) yield simplified.getName();
                 if (value instanceof MccStructure structure) yield structure.name();
+                yield value.toString();
+            }
+            case FORCE_DEATH -> {
+                if (value instanceof DamageTypeSimplified simplified) yield simplified.getName();
+                if (value instanceof MccDamageType damageType) yield damageType.name();
                 yield value.toString();
             }
         };

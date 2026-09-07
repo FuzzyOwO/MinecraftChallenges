@@ -2,6 +2,7 @@ package gg.itzkatze.mcc.forcebattle.gui.info;
 
 import gg.itzkatze.mcc.data.MccStructure;
 import gg.itzkatze.mcc.data.StructureSimplified;
+import gg.itzkatze.mcc.gui.GUIClickableItem;
 import gg.itzkatze.mcc.gui.GUIItem;
 import gg.itzkatze.mcc.gui.GUIMaterial;
 import gg.itzkatze.mcc.gui.MccGUI;
@@ -21,6 +22,10 @@ public class InfoSimplifiedStructuresGUI extends MccGUI {
 
     @Override
     public void setItems(final MccPlayer player) {
+        fill(ItemStackCreator.fillerItem());
+        set(GUIClickableItem.getGoBackItem(21, new InfoGUI()));
+        set(GUIClickableItem.getCloseItem(22));
+
         int index = 0;
         for (StructureSimplified simplified : StructureSimplified.values()) {
             set(new GUIItem(index) {

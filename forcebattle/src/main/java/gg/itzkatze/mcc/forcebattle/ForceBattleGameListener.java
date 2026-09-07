@@ -43,10 +43,10 @@ import java.util.UUID;
 public class ForceBattleGameListener implements Listener {
 
     public static boolean startPhase = true;
-    private final Map<UUID, List<ItemStack>> pendingJokerRestore = new HashMap<>();
+    private final Map<UUID, List<ItemStack>> pendingItemRestores = new HashMap<>();
 
     public void clearPendingRestores() {
-        pendingJokerRestore.clear();
+        pendingItemRestores.clear();
     }
 
     public ForceBattleGameListener() {
@@ -368,6 +368,8 @@ public class ForceBattleGameListener implements Listener {
         if (!(MccPlayer.adapt(event.getEntity()) instanceof ForceBattlePlayer mccPlayer)) return;
         if (!MinecraftChallenges.getTimer().isRunning() || mccPlayer.isExcluded()) return;
 
+        DeathTask.onDeath(event);
+
         List<ItemStack> jokers = new ArrayList<>();
         event.getDrops().removeIf(item -> {
             if (item == null) return false;
@@ -377,13 +379,13 @@ public class ForceBattleGameListener implements Listener {
         });
 
         if (!jokers.isEmpty()) {
-            pendingJokerRestore.put(event.getEntity().getUniqueId(), jokers);
+            pendingItemRestores.put(event.getEntity().getUniqueId(), jokers);
         }
     }
 
     @EventHandler
     public void onPlayerRespawn(PlayerRespawnEvent event) {
-        List<ItemStack> jokers = pendingJokerRestore.remove(event.getPlayer().getUniqueId());
+        List<ItemStack> jokers = pendingItemRestores.remove(event.getPlayer().getUniqueId());
         if (jokers == null || jokers.isEmpty()) return;
 
         Bukkit.getScheduler().runTask(MinecraftChallenges.get(), () ->

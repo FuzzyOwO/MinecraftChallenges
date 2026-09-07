@@ -17,7 +17,9 @@ public enum ForceBattleType {
     FORCE_ADVANCEMENT("Advancement", "Advancement", ForceBattleSettings.FORCE_ADVANCEMENT),
     FORCE_HEIGHT("Height", "Höhe", ForceBattleSettings.FORCE_HEIGHT),
     FORCE_COORDS("Coords", "Koordinaten", ForceBattleSettings.FORCE_COORDS),
-    FORCE_STRUCTURE("Structure", "Struktur", ForceBattleSettings.FORCE_STRUCTURE);
+    FORCE_STRUCTURE("Structure", "Struktur", ForceBattleSettings.FORCE_STRUCTURE),
+    FORCE_DEATH("Death", "Tod", ForceBattleSettings.FORCE_DEATH),
+    ;
 
     private final String englishPrefix;
     private final String germanPrefix;

@@ -79,12 +79,13 @@ public class ForceBattleScoreboardContent implements ScoreboardContent {
     private String getObjectiveDisplay(ForceBattleObjective objective) {
         String icon = switch (objective.getBattleType()) {
             case FORCE_ITEM -> "✦";
-            case FORCE_MOB -> "☠";
+            case FORCE_MOB -> "☮";
             case FORCE_ADVANCEMENT -> "★";
             case FORCE_HEIGHT -> "⛰";
             case FORCE_COORDS -> "⚑";
             case FORCE_STRUCTURE -> "⌂";
             case FORCE_BIOME -> "☀";
+            case FORCE_DEATH -> "☠";
         };
         return "[" + icon + "] " + StringUtility.formatName(objective.getObjectiveString());
     }
