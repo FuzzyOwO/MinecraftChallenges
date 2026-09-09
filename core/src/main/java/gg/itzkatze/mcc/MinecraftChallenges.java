@@ -117,11 +117,7 @@ public final class MinecraftChallenges extends JavaPlugin {
             bukkitAudiences.all().sendMessage(message);
         }
     }
-
-    /**
-     * Scans a package for subtypes of the given class and instantiates them.
-     * Used for core-only discovery (e.g. commands in core module).
-     */
+    
     public static <T> Stream<T> loopThroughPackage(String packageName, Class<T> clazz) {
         Reflections reflections = new Reflections(packageName);
         Set<Class<? extends T>> subTypes = reflections.getSubTypesOf(clazz);

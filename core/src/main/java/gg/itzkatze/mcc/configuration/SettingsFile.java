@@ -15,12 +15,8 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Objects;
 
-/**
- * Handles loading and saving all MinecraftChallenges settings to a JSON file.
- * Dynamically loads settings from all registered challenges without hardcoding specific challenges.
- * When a new challenge is added, its settings are automatically included without code changes.
- */
 public class SettingsFile {
 
     private static final Logger logger = LoggerFactory.getLogger("ForceBattle/" + SettingsFile.class.getSimpleName());
@@ -29,30 +25,21 @@ public class SettingsFile {
             .setPrettyPrinting()
             .create();
 
-    /**
-     * Loads all settings from the JSON file.
-     * Dynamically loads settings from all registered challenges via ChallengeRegistry.
-     */
     public static void loadSettingsFromFile(File jsonFile) throws IOException {
         try (FileReader reader = new FileReader(jsonFile)) {
             JsonObject settingsObject = JsonParser.parseReader(reader).getAsJsonObject();
 
-            // Load settings from all registered challenges dynamically
             for (Challenge challenge : ChallengeRegistry.getAllChallenges()) {
                 loadChallengeSettings(challenge, settingsObject);
             }
         }
     }
 
-    /**
-     * Loads settings for a specific challenge from the JSON object.
-     */
     private static void loadChallengeSettings(Challenge challenge, JsonObject settingsObject) {
         ChallengeSettingsManager settingsManager = challenge.getSettingsManager();
         if (settingsManager == null) return;
 
         try {
-            // Load each setting from the challenge
             for (Setting enumValue : settingsManager.getAllSettings()) {
                 if (enumValue instanceof Setting setting) {
                     String key = setting.getId();
@@ -70,21 +57,15 @@ public class SettingsFile {
                             } else {
                                 parsedState = parseState(defaultState.getClass(), stateStr);
                             }
-                            if (parsedState != null) {
-                                settingsManager.setState(enumValue, parsedState);
-                            } else {
-                                settingsManager.setState(enumValue, defaultState);
-                            }
+                            settingsManager.setState(enumValue, Objects.requireNonNullElse(parsedState, defaultState));
                         } catch (IllegalArgumentException e) {
                             logger.warn(
                                     "Invalid state '{}' for setting {} in {}, using default state",
                                     stateStr, setting.getId(), challenge.getName()
                             );
-                            // Set to default state
                             settingsManager.setState(enumValue, defaultState);
                         }
                     } else {
-                        // Setting not in file, use default
                         settingsManager.setState(enumValue, defaultState);
                     }
                 }
@@ -111,14 +92,9 @@ public class SettingsFile {
         return null;
     }
 
-    /**
-     * Saves all settings to the JSON file.
-     * Dynamically saves settings from all registered challenges via ChallengeRegistry.
-     */
     public static void saveToFile(File jsonFile) throws IOException {
         JsonObject settingsObject = new JsonObject();
 
-        // Save settings from all registered challenges dynamically
         for (Challenge challenge : ChallengeRegistry.getAllChallenges()) {
             saveChallengeSettings(challenge, settingsObject);
         }
@@ -128,15 +104,11 @@ public class SettingsFile {
         }
     }
 
-    /**
-     * Saves settings for a specific challenge to the JSON object.
-     */
     private static void saveChallengeSettings(Challenge challenge, JsonObject settingsObject) {
         ChallengeSettingsManager settingsManager = challenge.getSettingsManager();
         if (settingsManager == null) return;
 
         try {
-            // Save each setting from the challenge
             for (Setting setting : settingsManager.getAllSettings()) {
                 SettingStateType state = settingsManager.getState(setting);
                 if (state instanceof Enum<?> enumState) {

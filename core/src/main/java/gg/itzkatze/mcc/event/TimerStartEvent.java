@@ -2,6 +2,7 @@ package gg.itzkatze.mcc.event;
 
 import lombok.Getter;
 import gg.itzkatze.mcc.util.EventLogger;
+import lombok.Setter;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
@@ -10,7 +11,8 @@ import org.jetbrains.annotations.NotNull;
 public class TimerStartEvent extends Event implements Cancellable {
 
     private static final HandlerList HANDLERS = new HandlerList();
-
+    @Getter
+    @Setter
     private boolean cancelled;
     @Getter
     private int startTime;
@@ -24,16 +26,6 @@ public class TimerStartEvent extends Event implements Cancellable {
             EventLogger.LOGGER.info("TimerStartEvent: value startTime has been changed to {}.", startTime);
             this.startTime = startTime;
         }
-    }
-
-    @Override
-    public boolean isCancelled() {
-        return cancelled;
-    }
-
-    @Override
-    public void setCancelled(boolean cancelled) {
-        this.cancelled = cancelled;
     }
 
     @Override

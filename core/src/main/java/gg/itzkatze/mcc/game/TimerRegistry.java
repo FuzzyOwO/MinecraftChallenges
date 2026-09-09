@@ -1,17 +1,15 @@
 package gg.itzkatze.mcc.game;
 
 import lombok.Getter;
+import lombok.Setter;
 
 public final class TimerRegistry {
 
     @Getter
+    @Setter
     private static GameTimer timer = new NoOpTimer();
 
     private TimerRegistry() {
-    }
-
-    public static void setTimer(GameTimer timer) {
-        TimerRegistry.timer = timer;
     }
 
     public static void resetToNoOp() {

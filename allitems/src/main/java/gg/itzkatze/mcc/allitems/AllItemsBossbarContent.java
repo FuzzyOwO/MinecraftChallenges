@@ -12,9 +12,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Bossbar content for the All Items challenge progress.
- */
 public class AllItemsBossbarContent implements BossbarContent {
 
     private final AllItemsData data;
@@ -40,6 +37,7 @@ public class AllItemsBossbarContent implements BossbarContent {
         AllItemsObjectiveType type = enabled.get(index);
         double percent = data.getProgressPercentage(type, player.getPlayer().getUniqueId());
         int found = data.getFoundCount(type, player.getPlayer().getUniqueId());
+
         int total = switch (type) {
             case ITEM -> data.getTotalAvailableItems();
             case BIOME -> data.getTotalAvailableBiomes();
@@ -54,7 +52,7 @@ public class AllItemsBossbarContent implements BossbarContent {
 
         return BossBar.bossBar(
                 Component.text(title),
-                (float) Math.max(0.0, Math.min(1.0, percent / 100.0)),
+                (float) Math.clamp(percent / 100.0, 0.0, 1.0),
                 BossBar.Color.GREEN,
                 BossBar.Overlay.PROGRESS
         );

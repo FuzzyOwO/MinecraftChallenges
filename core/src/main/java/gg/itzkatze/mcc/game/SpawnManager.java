@@ -52,19 +52,15 @@ public class SpawnManager implements Listener {
         World world = Bukkit.getWorld("world");
         if (world == null) return;
 
-        // Reset world data
         setWorldData("world");
         setWorldData("world_nether");
         setWorldData("world_the_end");
 
-        // Delete spawn structure
         try {
             Bukkit.getStructureManager().deleteStructure(new NamespacedKey("forcebattle", "spawn"), true);
         } catch (IOException e) {
-            // Structure deletion failed, but this is not critical
         }
 
-        // Reset game rules
         world.setGameRule(GameRules.RANDOM_TICK_SPEED, 20);
         world.setGameRule(GameRules.ADVANCE_TIME, true);
         world.setGameRule(GameRules.ADVANCE_WEATHER, true);
@@ -130,7 +126,6 @@ public class SpawnManager implements Listener {
     private static void setWorldData(String worldName) {
         World world = Bukkit.getWorld(worldName);
         if (world != null) {
-            // Nether and End dimensions do not have a world clock in modern Paper.
             if (world.getEnvironment() == World.Environment.NORMAL) {
                 world.setTime(0);
             }

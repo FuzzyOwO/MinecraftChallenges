@@ -10,9 +10,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * Command to configure All Items challenge settings
- */
 public class AllItemsSettingsCommand extends MccCommand {
 
     public AllItemsSettingsCommand() {

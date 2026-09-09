@@ -17,9 +17,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * Command to check progress in the All Items challenge
- */
 public class AllItemsProgressCommand extends MccCommand {
 
     public AllItemsProgressCommand() {
@@ -77,7 +74,6 @@ public class AllItemsProgressCommand extends MccCommand {
         String mode = AllItemsSettings.isTeamMode() ? "Team" : "Individual";
         caller.sendMessage(Component.text("Current mode: " + mode));
 
-        // Show recent discoveries if any
         List<AllItemsData.FoundObjective> recentItems = data.getRecentFinds(5).stream()
                 .sorted((a, b) -> b.entry().foundTime().compareTo(a.entry().foundTime()))
                 .toList();

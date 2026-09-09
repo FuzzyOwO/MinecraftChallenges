@@ -7,34 +7,21 @@ import gg.itzkatze.mcc.configuration.states.SettingStateType;
 import lombok.Getter;
 import lombok.Setter;
 
-/**
- * Settings for the All Items challenge
- * Includes both the legacy GameMode and the new generic Setting system.
- */
 public class AllItemsSettings {
 
-    /**
-     * Game modes for the challenge (legacy)
-     */
     public enum GameMode {
-        TEAM,     // All players collect items together
-        INDIVIDUAL // Each player collects items separately
+        TEAM,
+        INDIVIDUAL
     }
 
     @Setter
     @Getter
     private static GameMode gameMode = GameMode.TEAM;
 
-    /**
-     * Checks if the challenge is in team mode
-     */
     public static boolean isTeamMode() {
         return gameMode == GameMode.TEAM;
     }
 
-    /**
-     * Checks if the challenge is in individual mode
-     */
     public static boolean isIndividualMode() {
         return gameMode == GameMode.INDIVIDUAL;
     }
@@ -63,9 +50,6 @@ public class AllItemsSettings {
         return SettingsManager.isEnabled(AllItemsSetting.CHAIN_MODE);
     }
 
-    /**
-     * Configurable settings for the All Items challenge using the generic settings system
-     */
     @Getter
     public enum AllItemsSetting implements Setting {
         ITEMS(false, "Items", OnOffState.ON),

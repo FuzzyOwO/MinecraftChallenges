@@ -5,6 +5,7 @@ import gg.itzkatze.mcc.challenges.ChallengeObjective;
 import gg.itzkatze.mcc.team.MccTeam;
 import gg.itzkatze.mcc.player.MccPlayer;
 import gg.itzkatze.mcc.util.EventLogger;
+import lombok.Setter;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
@@ -20,6 +21,8 @@ public class ObjectiveUpdateEvent extends Event implements Cancellable {
     private final MccTeam team;
     @Getter
     private ChallengeObjective newObjective;
+    @Getter
+    @Setter
     private boolean cancelled;
 
     public ObjectiveUpdateEvent(@NotNull MccPlayer mccPlayer, @NotNull ChallengeObjective newObjective) {
@@ -47,16 +50,6 @@ public class ObjectiveUpdateEvent extends Event implements Cancellable {
 
     public boolean isPlayerEvent() {
         return mccPlayer != null;
-    }
-
-    @Override
-    public boolean isCancelled() {
-        return cancelled;
-    }
-
-    @Override
-    public void setCancelled(boolean cancelled) {
-        this.cancelled = cancelled;
     }
 
     @Override

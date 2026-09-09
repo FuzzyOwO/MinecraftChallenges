@@ -2,6 +2,7 @@ package gg.itzkatze.mcc.event;
 
 import lombok.Getter;
 import gg.itzkatze.mcc.util.EventLogger;
+import lombok.Setter;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
@@ -10,9 +11,9 @@ import org.jetbrains.annotations.NotNull;
 public class TimerPauseEvent extends Event implements Cancellable {
 
     private static final HandlerList HANDLERS = new HandlerList();
-
+    @Getter
+    @Setter
     private boolean cancelled;
-
     @Getter
     private int pauseTime;
 
@@ -25,16 +26,6 @@ public class TimerPauseEvent extends Event implements Cancellable {
             EventLogger.LOGGER.info("TimerPauseEvent: value pauseTime has been changed to {}.", pauseTime);
             this.pauseTime = pauseTime;
         }
-    }
-
-    @Override
-    public boolean isCancelled() {
-        return cancelled;
-    }
-
-    @Override
-    public void setCancelled(boolean cancelled) {
-        this.cancelled = cancelled;
     }
 
     @Override

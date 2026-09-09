@@ -11,9 +11,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * Scoreboard content for the All Items challenge
- */
 public class AllItemsScoreboardContent implements ScoreboardContent {
 
     private final AllItemsData data;
@@ -31,7 +28,6 @@ public class AllItemsScoreboardContent implements ScoreboardContent {
     @NotNull public Component[] getLines(@NotNull MccPlayer player) {
         List<Component> lines = new ArrayList<>();
 
-        // Game mode
         String mode = AllItemsSettings.isTeamMode() ? "Team" : "Individual";
         lines.add(Component.text("Mode: ").color(NamedTextColor.YELLOW)
                 .append(Component.text(mode).color(NamedTextColor.WHITE)));
@@ -54,10 +50,8 @@ public class AllItemsScoreboardContent implements ScoreboardContent {
             lines.add(buildProgressLine("Adv", AllItemsObjectiveType.ADVANCEMENT, playerId));
         }
 
-        // Spacer
         lines.add(Component.text(" "));
 
-        // Recent finds (last 3)
         List<AllItemsData.FoundObjective> recentItems = data.getRecentFinds(3);
         if (!recentItems.isEmpty()) {
             lines.add(Component.text("Recent Finds:").color(NamedTextColor.GOLD));
@@ -70,7 +64,6 @@ public class AllItemsScoreboardContent implements ScoreboardContent {
             }
         }
 
-        // Player's personal stats (if individual mode)
         if (AllItemsSettings.isChainModeEnabled()) {
             AllItemsObjective objective = data.getCurrentObjective(player.getPlayer());
             if (objective != null) {

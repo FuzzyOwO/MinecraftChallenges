@@ -58,15 +58,11 @@ public class PauseManager implements Listener {
 
         for (World world : Bukkit.getWorlds()) {
             Integer randomTickSpeed = world.getGameRuleValue(GameRules.RANDOM_TICK_SPEED);
-            randomTickSpeedByWorld.put(world.getName(), randomTickSpeed == null ? 20 : randomTickSpeed);
+            randomTickSpeedByWorld.put(world.getName(), randomTickSpeed);
 
             world.setGameRule(GameRules.RANDOM_TICK_SPEED, 0);
-            if (world.getGameRuleValue(GameRules.ADVANCE_TIME) != null) {
-                world.setGameRule(GameRules.ADVANCE_TIME, false);
-            }
-            if (world.getGameRuleValue(GameRules.ADVANCE_WEATHER) != null) {
-                world.setGameRule(GameRules.ADVANCE_WEATHER, false);
-            }
+            world.setGameRule(GameRules.ADVANCE_TIME, false);
+            world.setGameRule(GameRules.ADVANCE_WEATHER, false);
 
             for (Entity entity : world.getEntities()) {
                 entity.setVelocity(new Vector(0, 0, 0));
@@ -88,13 +84,10 @@ public class PauseManager implements Listener {
 
         for (World world : Bukkit.getWorlds()) {
             Integer randomTickSpeed = randomTickSpeedByWorld.get(world.getName());
+
             world.setGameRule(GameRules.RANDOM_TICK_SPEED, randomTickSpeed == null ? 20 : randomTickSpeed);
-            if (world.getGameRuleValue(GameRules.ADVANCE_TIME) != null) {
-                world.setGameRule(GameRules.ADVANCE_TIME, true);
-            }
-            if (world.getGameRuleValue(GameRules.ADVANCE_WEATHER) != null) {
-                world.setGameRule(GameRules.ADVANCE_WEATHER, true);
-            }
+            world.setGameRule(GameRules.ADVANCE_TIME, true);
+            world.setGameRule(GameRules.ADVANCE_WEATHER, true);
 
             for (Entity entity : world.getEntities()) {
                 restoreEntityAI(entity);
