@@ -117,7 +117,7 @@ public final class MinecraftChallenges extends JavaPlugin {
             bukkitAudiences.all().sendMessage(message);
         }
     }
-    
+
     public static <T> Stream<T> loopThroughPackage(String packageName, Class<T> clazz) {
         Reflections reflections = new Reflections(packageName);
         Set<Class<? extends T>> subTypes = reflections.getSubTypesOf(clazz);

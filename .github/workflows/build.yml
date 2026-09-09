@@ -3,9 +3,12 @@ name: Build
 on:
     push:
 
+permissions:
+    contents: write
+
 jobs:
     build:
-        runs-on: ubuntu-latest
+        runs-on: windows-latest
 
         steps:
             - name: Checkout
@@ -18,14 +21,22 @@ jobs:
                   distribution: 'temurin'
                   cache: gradle
 
-            - name: Make Gradle executable
-              run: chmod +x ./gradlew
-
             - name: Build
-              run: ./gradlew :loader:shadowJar
+              run: .\gradlew.bat :loader:shadowJar
 
-            - name: Upload JAR
-              uses: actions/upload-artifact@v4
-              with:
-                  name: MinecraftChallenges
-                  path: loader/build/libs/MinecraftChallenges-*.jar
+            - name: Delete existing latest release
+              env:
+                  GH_TOKEN: ${{ github.token }}
+              run: |
+                  gh release delete latest --yes --cleanup-tag
+              continue-on-error: true
+
+            - name: Create latest release
+              env:
+                  GH_TOKEN: ${{ github.token }}
+              run: |
+                  gh release create latest `
+                    "loader/build/libs/MinecraftChallenges-*.jar" `
+                    --title "MinecraftChallenges - Latest" `
+                    --notes "Automatically built from commit ${{ github.sha }}" `
+                    --target ${{ github.sha }}
