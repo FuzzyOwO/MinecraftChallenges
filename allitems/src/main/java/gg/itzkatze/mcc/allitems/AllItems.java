@@ -12,8 +12,6 @@ import gg.itzkatze.mcc.configuration.ChallengeSettingsManager;
 import gg.itzkatze.mcc.gui.MccGUI;
 import gg.itzkatze.mcc.scoreboard.ScoreboardContent;
 import lombok.Getter;
-import net.kyori.adventure.text.Component;
-import org.bukkit.Material;
 import org.bukkit.event.Listener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,28 +42,8 @@ public class AllItems implements Challenge {
     }
 
     @Override
-    @NotNull public String getName() {
-        return "allitems";
-    }
-
-    @Override
-    @NotNull public Component getDisplayName() {
-        return Component.text("All Items");
-    }
-
-    @Override
     public @NotNull ChallengeType getType() {
         return ChallengeType.ALL_ITEMS;
-    }
-
-    @Override
-    @NotNull public Material getMaterial() {
-        return Material.CHEST;
-    }
-
-    @Override
-    @NotNull public String getDescription() {
-        return "Collect every item in Minecraft";
     }
 
     @Override

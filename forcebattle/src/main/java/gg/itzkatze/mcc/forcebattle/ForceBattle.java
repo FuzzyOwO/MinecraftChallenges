@@ -18,10 +18,8 @@ import gg.itzkatze.mcc.commands.framework.MccCommand;
 import gg.itzkatze.mcc.configuration.ChallengeSettingsManager;
 import gg.itzkatze.mcc.gui.MccGUI;
 import gg.itzkatze.mcc.scoreboard.ScoreboardContent;
-import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.GameRules;
-import org.bukkit.Material;
 import org.bukkit.event.Listener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -102,28 +100,8 @@ public class ForceBattle implements Challenge {
     }
 
     @Override
-    @NotNull public String getName() {
-        return "forcebattle";
-    }
-
-    @Override
-    @NotNull public Component getDisplayName() {
-        return Component.text("Force Battle");
-    }
-
-    @Override
     public @NotNull ChallengeType getType() {
         return ChallengeType.FORCE_BATTLE;
-    }
-
-    @Override
-    @NotNull public Material getMaterial() {
-        return Material.DIAMOND_SWORD;
-    }
-
-    @Override
-    @NotNull public String getDescription() {
-        return "Complete random objectives to score points";
     }
 
     @Override

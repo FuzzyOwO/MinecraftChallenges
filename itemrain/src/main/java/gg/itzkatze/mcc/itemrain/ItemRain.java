@@ -6,8 +6,6 @@ import gg.itzkatze.mcc.commands.framework.MccCommand;
 import gg.itzkatze.mcc.configuration.ChallengeSettingsManager;
 import gg.itzkatze.mcc.gui.MccGUI;
 import gg.itzkatze.mcc.itemrain.gui.ItemRainSettingsGUI;
-import net.kyori.adventure.text.Component;
-import org.bukkit.Material;
 import org.bukkit.event.Listener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,28 +35,8 @@ public class ItemRain implements Challenge {
     }
 
     @Override
-    public @NotNull String getName() {
-        return "itemrain";
-    }
-
-    @Override
-    public @NotNull Component getDisplayName() {
-        return Component.text("Item Rain");
-    }
-
-    @Override
     public @NotNull ChallengeType getType() {
         return ChallengeType.ITEM_RAIN;
-    }
-
-    @Override
-    public @NotNull Material getMaterial() {
-        return Material.DROPPER;
-    }
-
-    @Override
-    public @NotNull String getDescription() {
-        return "Gives each player a random item every few seconds";
     }
 
     @Override

@@ -8,7 +8,6 @@ import gg.itzkatze.mcc.deathswap.gui.DeathSwapSettingsGUI;
 import gg.itzkatze.mcc.gui.MccGUI;
 import gg.itzkatze.mcc.player.MccPlayer;
 import net.kyori.adventure.text.Component;
-import org.bukkit.Material;
 import org.bukkit.event.Listener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,28 +43,8 @@ public class DeathSwap implements Challenge {
     }
 
     @Override
-    public @NotNull String getName() {
-        return "deathswap";
-    }
-
-    @Override
-    public @NotNull Component getDisplayName() {
-        return Component.text("Death Swap");
-    }
-
-    @Override
     public @NotNull ChallengeType getType() {
         return ChallengeType.DEATH_SWAP;
-    }
-
-    @Override
-    public @NotNull Material getMaterial() {
-        return Material.ENDER_PEARL;
-    }
-
-    @Override
-    public @NotNull String getDescription() {
-        return "Players swap locations on a timer until one survives";
     }
 
     @Override

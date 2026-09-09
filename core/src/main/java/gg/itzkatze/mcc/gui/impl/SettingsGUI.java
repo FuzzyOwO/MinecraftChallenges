@@ -5,12 +5,12 @@ import gg.itzkatze.mcc.challenges.ChallengeManager;
 import gg.itzkatze.mcc.challenges.ChallengeRegistry;
 import gg.itzkatze.mcc.challenges.ChallengeSettings;
 import gg.itzkatze.mcc.gui.GUIClickableItem;
+import gg.itzkatze.mcc.gui.GUIMaterial;
 import gg.itzkatze.mcc.gui.MccGUI;
 import gg.itzkatze.mcc.player.MccPlayer;
 import gg.itzkatze.mcc.util.ItemStackCreator;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
-import org.bukkit.Material;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.ItemStack;
@@ -46,13 +46,12 @@ public class SettingsGUI extends MccGUI {
                         if (ChallengeManager.isChallengeActive(challenge.getType())) {
                             ChallengeManager.unloadChallenge(challenge);
                             player.sendMessage(Component.text("Disabled challenge: ").color(NamedTextColor.RED)
-                                    .append(challenge.getDisplayName().color(NamedTextColor.RED)));
+                                    .append(Component.text(challenge.getType().getName()).color(NamedTextColor.RED)));
                         } else {
                             ChallengeManager.loadChallenge(challenge);
                             player.sendMessage(Component.text("Enabled challenge: ").color(NamedTextColor.GREEN)
-                                    .append(challenge.getDisplayName().color(NamedTextColor.GREEN)));
+                                    .append(Component.text(challenge.getType().getName()).color(NamedTextColor.GREEN)));
                         }
-                        // Refresh the GUI
                         new SettingsGUI().open(player);
                     }
                 }
@@ -60,8 +59,8 @@ public class SettingsGUI extends MccGUI {
                 @Override
                 public ItemStack getItem(MccPlayer p) {
                     boolean active = ChallengeManager.isChallengeActive(challenge.getType());
-                    Material material = challenge.getMaterial();
-                    Component displayName = challenge.getDisplayName();
+                    GUIMaterial material = challenge.getType().getMaterial();
+                    Component displayName = Component.text(challenge.getType().getName());
 
                     List<Component> lore = new ArrayList<>();
                     lore.add(Component.text("Status: ").color(NamedTextColor.GRAY)
@@ -82,9 +81,13 @@ public class SettingsGUI extends MccGUI {
 
                     lore.add(Component.empty());
                     lore.add(Component.text("Description: ").color(NamedTextColor.GRAY)
-                            .append(Component.text(challenge.getDescription()).color(NamedTextColor.WHITE)));
+                            .append(Component.text(challenge.getType().getDescription()).color(NamedTextColor.WHITE)));
 
-                    return ItemStackCreator.getStack(displayName, material, 1, lore);
+                    if (material.hasSkull()) {
+                        return ItemStackCreator.getSkull(material.skull(), displayName, 1, lore);
+                    } else {
+                        return ItemStackCreator.getStack(displayName, material.material(), 1, lore);
+                    }
                 }
             });
 

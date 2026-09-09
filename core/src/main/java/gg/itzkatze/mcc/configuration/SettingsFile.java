@@ -37,6 +37,7 @@ public class SettingsFile {
 
     private static void loadChallengeSettings(Challenge challenge, JsonObject settingsObject) {
         ChallengeSettingsManager settingsManager = challenge.getSettingsManager();
+        String challengeKey = challenge.getType().name().toLowerCase();
         if (settingsManager == null) return;
 
         try {
@@ -61,7 +62,7 @@ public class SettingsFile {
                         } catch (IllegalArgumentException e) {
                             logger.warn(
                                     "Invalid state '{}' for setting {} in {}, using default state",
-                                    stateStr, setting.getId(), challenge.getName()
+                                    stateStr, setting.getId(), challengeKey
                             );
                             settingsManager.setState(enumValue, defaultState);
                         }
@@ -71,7 +72,7 @@ public class SettingsFile {
                 }
             }
         } catch (Exception e) {
-            logger.warn("Failed to load settings for challenge {}: {}", challenge.getName(), e.getMessage());
+            logger.warn("Failed to load settings for challenge {}: {}", challengeKey, e.getMessage());
         }
     }
 
@@ -106,6 +107,7 @@ public class SettingsFile {
 
     private static void saveChallengeSettings(Challenge challenge, JsonObject settingsObject) {
         ChallengeSettingsManager settingsManager = challenge.getSettingsManager();
+        String challengeKey = challenge.getType().name().toLowerCase();
         if (settingsManager == null) return;
 
         try {
@@ -118,7 +120,7 @@ public class SettingsFile {
                 }
             }
         } catch (Exception e) {
-            logger.warn("Failed to save settings for challenge {}: {}", challenge.getName(), e.getMessage());
+            logger.warn("Failed to save settings for challenge {}: {}", challengeKey, e.getMessage());
         }
     }
 

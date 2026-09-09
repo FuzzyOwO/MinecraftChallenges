@@ -8,8 +8,6 @@ import gg.itzkatze.mcc.configuration.Setting;
 import gg.itzkatze.mcc.configuration.states.SettingStateType;
 import gg.itzkatze.mcc.gui.MccGUI;
 import gg.itzkatze.mcc.randomizer.gui.RandomizerSettingsGUI;
-import net.kyori.adventure.text.Component;
-import org.bukkit.Material;
 import org.bukkit.event.Listener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,28 +37,8 @@ public class Randomizer implements Challenge {
     }
 
     @Override
-    public @NotNull String getName() {
-        return "randomizer";
-    }
-
-    @Override
-    public @NotNull Component getDisplayName() {
-        return Component.text("Randomizer");
-    }
-
-    @Override
     public @NotNull ChallengeType getType() {
         return ChallengeType.RANDOMIZER;
-    }
-
-    @Override
-    public @NotNull Material getMaterial() {
-        return Material.SNIFFER_EGG;
-    }
-
-    @Override
-    public @NotNull String getDescription() {
-        return "Randomizes drops and chest loot";
     }
 
     @Override

@@ -32,6 +32,6 @@ public class ChallengeRegistry {
     }
 
     public static boolean hasChallenge(@NotNull String name) {
-        return challenges.values().stream().anyMatch(c -> c.getName().equalsIgnoreCase(name));
+        return challenges.values().stream().anyMatch(c -> c.getType().name().equalsIgnoreCase(name));
     }
 }
