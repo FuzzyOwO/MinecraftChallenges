@@ -78,3 +78,11 @@ Want to contribute? Here is how you can help:
 
 This project is licensed under the **GNU GPLv3**.  
 See the [LICENSE](https://www.gnu.org/licenses/gpl-3.0) file for details.
+
+---
+
+## ⚠️ Disclaimer
+
+MinecraftChallenges is an independent open-source project and is **NOT AN OFFICIAL MINECRAFT PRODUCT. NOT APPROVED BY OR ASSOCIATED WITH MOJANG OR MICROSOFT.**  
+Minecraft is a registered trademark of Mojang Synergies AB / Microsoft Corporation.
+
