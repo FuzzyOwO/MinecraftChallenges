@@ -1,6 +1,8 @@
 package gg.itzkatze.mcc.deathswap;
 
 import gg.itzkatze.mcc.MinecraftChallenges;
+import gg.itzkatze.mcc.game.ChallengeTimer;
+import gg.itzkatze.mcc.game.GameTimer;
 import gg.itzkatze.mcc.player.MccPlayer;
 import gg.itzkatze.mcc.util.StringUtility;
 import net.kyori.adventure.text.Component;
@@ -32,23 +34,27 @@ public class DeathSwapGameListener implements Listener {
     private final Random random = new Random();
     private boolean started = false;
     private boolean finished = false;
-    private long elapsedMillis = 0L;
-    private long lastUpdateMillis = 0L;
-    private long remainingSwapMillis = 0L;
-    private int lastIntervalMinutes = -1;
     private int swapCount = 0;
     private UUID winnerId = null;
+
+    private ChallengeTimer elapsedTimer;
+    private ChallengeTimer swapTimer;
+
+    private int lastIntervalMinutes = -1;
+    private int elapsedSeconds = 0;
+    private int lastPlayedCountdownSecond = -1;
 
     public void initialize() {
         eliminatedPlayers.clear();
         started = false;
         finished = false;
-        elapsedMillis = 0L;
-        lastUpdateMillis = 0L;
-        remainingSwapMillis = 0L;
-        lastIntervalMinutes = -1;
         swapCount = 0;
         winnerId = null;
+        lastIntervalMinutes = -1;
+        elapsedSeconds = 0;
+        lastPlayedCountdownSecond = -1;
+        elapsedTimer = null;
+        swapTimer = null;
     }
 
     public void cleanup() {
@@ -58,43 +64,55 @@ public class DeathSwapGameListener implements Listener {
     public void startGame() {
         initialize();
         started = true;
-        lastUpdateMillis = System.currentTimeMillis();
-        resetSwapCountdown();
+        elapsedTimer = new ChallengeTimer(1_000L);
+        swapTimer = new ChallengeTimer(getSwapIntervalMillis());
     }
 
     public void runTask() {
         if (!started || finished) return;
 
-        int intervalMinutes = Math.max(1, DeathSwapSettings.getSwapIntervalMinutes());
-        if (intervalMinutes != lastIntervalMinutes) {
-            lastIntervalMinutes = intervalMinutes;
-            resetSwapCountdown();
-        }
-
-        long now = System.currentTimeMillis();
-        if (lastUpdateMillis == 0L) {
-            lastUpdateMillis = now;
-        }
-
-        long deltaMillis = Math.max(0L, now - lastUpdateMillis);
-        lastUpdateMillis = now;
-
-        if (!MinecraftChallenges.getTimer().isRunning()) {
+        if (MinecraftChallenges.getTimer().getMode() != GameTimer.Mode.DISABLED
+                && !MinecraftChallenges.getTimer().isRunning()) {
+            elapsedTimer.resetBaseline();
+            swapTimer.resetBaseline();
             return;
         }
 
-        elapsedMillis += deltaMillis;
-        remainingSwapMillis -= deltaMillis;
+        int intervalMinutes = Math.max(1, DeathSwapSettings.getSwapIntervalMinutes());
+        if (intervalMinutes != lastIntervalMinutes) {
+            lastIntervalMinutes = intervalMinutes;
+            swapTimer = new ChallengeTimer(getSwapIntervalMillis());
+        }
 
-        while (remainingSwapMillis <= 0L) {
+        // Tick both timers (they share the same wall clock).
+        elapsedTimer.tick();
+        if (elapsedTimer.hasElapsed()) {
+            elapsedSeconds++;
+            elapsedTimer.consumeElapsed();
+        }
+
+        swapTimer.tick();
+
+        int secondsUntilSwap = swapTimer.getSecondsRemaining();
+        if (secondsUntilSwap <= 10 && secondsUntilSwap > 0 && secondsUntilSwap != lastPlayedCountdownSecond) {
+            lastPlayedCountdownSecond = secondsUntilSwap;
+            net.kyori.adventure.sound.Sound sound = net.kyori.adventure.sound.Sound.sound(
+                    net.kyori.adventure.key.Key.key("block.note_block.bass"),
+                    net.kyori.adventure.sound.Sound.Source.MASTER,
+                    20f,
+                    20f
+            );
+            MccPlayer.getOnlinePlayers().forEach(p -> p.playSound(sound));
+        } else if (secondsUntilSwap > 10) {
+            lastPlayedCountdownSecond = -1;
+        }
+
+        while (swapTimer.hasElapsed()) {
+            lastPlayedCountdownSecond = -1;
             boolean swapped = swapAlivePlayers();
-            if (swapped) {
-                swapCount++;
-            }
-            remainingSwapMillis += getSwapIntervalMillis();
-            if (!swapped) {
-                break;
-            }
+            if (swapped) swapCount++;
+            swapTimer.consumeElapsed();
+            if (!swapped) break;
         }
     }
 
@@ -145,18 +163,18 @@ public class DeathSwapGameListener implements Listener {
 
         Component message = Component.text()
                 .append(Component.text("Elapsed: ").color(NamedTextColor.GRAY))
-                .append(Component.text(formatElapsedTime()).color(NamedTextColor.AQUA))
+                .append(Component.text(StringUtility.formatTime(elapsedSeconds).trim()).color(NamedTextColor.AQUA))
                 .append(Component.text(" | ").color(NamedTextColor.DARK_GRAY))
                 .append(Component.text("Swaps: ").color(NamedTextColor.GRAY))
                 .append(Component.text(swapCount).color(NamedTextColor.LIGHT_PURPLE))
                 .build();
 
-        int secondsUntilSwap = getSecondsUntilNextSwap();
+        int secondsUntilSwap = swapTimer != null ? swapTimer.getSecondsRemaining() : 0;
         if (secondsUntilSwap <= 10) {
             message = message.append(Component.text(" | ").color(NamedTextColor.DARK_GRAY))
                     .append(Component.text("Next swap: ").color(NamedTextColor.GRAY))
                     .append(Component.text(secondsUntilSwap + "s").color(NamedTextColor.RED));
-        } else if (!timerRunning) {
+        } else if (MinecraftChallenges.getTimer().getMode() != GameTimer.Mode.DISABLED && !timerRunning) {
             message = message.append(Component.text(" | ").color(NamedTextColor.DARK_GRAY))
                     .append(Component.text("Paused").color(NamedTextColor.BLUE));
         }
@@ -201,7 +219,7 @@ public class DeathSwapGameListener implements Listener {
 
         finished = true;
 
-        Player winner = alivePlayers.get(0);
+        Player winner = alivePlayers.getFirst();
         if (winnerId != null && winnerId.equals(winner.getUniqueId())) {
             return;
         }
@@ -217,24 +235,12 @@ public class DeathSwapGameListener implements Listener {
                 Title.Times.times(Duration.ofSeconds(1), Duration.ofSeconds(3), Duration.ofSeconds(1))
         );
 
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            player.showTitle(title);
+        for (Player p : Bukkit.getOnlinePlayers()) {
+            p.showTitle(title);
         }
-    }
-
-    private void resetSwapCountdown() {
-        remainingSwapMillis = getSwapIntervalMillis();
     }
 
     private long getSwapIntervalMillis() {
         return Math.max(1, DeathSwapSettings.getSwapIntervalMinutes()) * 60_000L;
-    }
-
-    private String formatElapsedTime() {
-        return StringUtility.formatTime((int) (elapsedMillis / 1000L)).trim();
-    }
-
-    private int getSecondsUntilNextSwap() {
-        return (int) Math.max(0L, Math.ceil(remainingSwapMillis / 1000.0D));
     }
 }

@@ -3,6 +3,7 @@ package gg.itzkatze.mcc.bossbar;
 import gg.itzkatze.mcc.MinecraftChallenges;
 import gg.itzkatze.mcc.challenges.Challenge;
 import gg.itzkatze.mcc.challenges.ChallengeManager;
+import gg.itzkatze.mcc.game.GameTimer;
 import gg.itzkatze.mcc.player.MccPlayer;
 import net.kyori.adventure.bossbar.BossBar;
 import org.bukkit.Bukkit;
@@ -15,13 +16,9 @@ import java.util.Set;
 
 public class BossbarManager {
 
-    /** All bars shown per challenge. Cleared when challenge is disabled. */
     private static final Map<Challenge, Map<MccPlayer, Set<BossBar>>> barsByChallenge = new HashMap<>();
     private static BukkitTask runningTask;
 
-    /**
-     * Hides all bossbars for the given challenge. Call from {@link Challenge#onDisable()}.
-     */
     public static void hideBarsForChallenge(Challenge challenge) {
         hideAndClearBarsForChallenge(challenge, barsByChallenge);
     }
@@ -47,6 +44,8 @@ public class BossbarManager {
             if (activeChallenges.isEmpty()) return;
 
             boolean timerRunning = MinecraftChallenges.getTimer().isRunning();
+            boolean gameActive = ChallengeManager.isGameStarted()
+                    && (MinecraftChallenges.getTimer().getMode() == GameTimer.Mode.DISABLED || timerRunning);
             BossbarKind showKind = timerRunning ? BossbarKind.RUNNING : BossbarKind.NOT_RUNNING;
 
             for (MccPlayer player : MccPlayer.getOnlinePlayers()) {

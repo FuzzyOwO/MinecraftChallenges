@@ -90,7 +90,7 @@ public class ForceBattleGameListener implements Listener {
                     }
                 }
 
-                String formattedTime = StringUtility.formatTime(MinecraftChallenges.getTimer().getTime());
+                String formattedTime = StringUtility.formatTime(MinecraftChallenges.getTimer().getRemainingSeconds());
 
                 Component kickMessage = Component.text("✖ A game is currently running! ✖", NamedTextColor.RED)
                         .decorate(TextDecoration.BOLD)

@@ -27,21 +27,22 @@ public class MccTimer implements GameTimer {
 
     private static final Logger logger = LoggerFactory.getLogger("MinecraftChallenges/" + MccTimer.class.getSimpleName());
 
-    @Getter
-    private int startTime;
-    @Getter
-    private int time;
-    @Getter
-    private boolean running;
-    @Getter
-    private Mode mode;
+    @Getter private int duration;
+    @Getter private Mode mode;
+    @Getter private boolean running;
+
+    private int elapsedSeconds;
+    private int remainingSeconds;
+
     private boolean hitZero;
 
-    public MccTimer(int startTime, boolean running) {
-        this.startTime = startTime;
-        this.time = 0;
+    public MccTimer(int duration, boolean running) {
+        this.duration = duration;
         this.running = running;
         this.mode = Mode.DISABLED;
+        this.elapsedSeconds = 0;
+        this.remainingSeconds = 0;
+        this.hitZero = false;
         runTimerTask();
         runActionbarTask();
     }
@@ -58,19 +59,16 @@ public class MccTimer implements GameTimer {
         Bukkit.getScheduler().runTaskTimer(MinecraftChallenges.get(), () -> {
             if (!running) return;
 
-            if (mode == Mode.COUNT_UP) {
-                time++;
-                return;
-            }
+            elapsedSeconds++;
 
             if (mode == Mode.COUNT_DOWN) {
-                time--;
-                if (time < 11 && time > 0) {
+                remainingSeconds--;
+                if (remainingSeconds < 11 && remainingSeconds > 0) {
                     MccPlayer.PLAYERS.forEach(p ->
                             p.playSound(Sound.sound(Key.key("block.note_block.bass"), Sound.Source.MASTER, 20, 20)));
                 }
-
-                if (time <= 0) {
+                if (remainingSeconds <= 0) {
+                    remainingSeconds = 0;
                     stop();
                 }
             }
@@ -79,11 +77,11 @@ public class MccTimer implements GameTimer {
 
     private Component getActionbarMessage(MccPlayer player) {
         Challenge actionbarChallenge = ChallengeManager.getActiveChallenges().stream()
-                .filter(challenge -> challenge.getActionbar(player, running, time) != null)
+                .filter(challenge -> challenge.getActionbar(player, running, elapsedSeconds) != null)
                 .max(Comparator.comparingInt(Challenge::getActionbarPriority))
                 .orElse(null);
         if (actionbarChallenge != null) {
-            return actionbarChallenge.getActionbar(player, running, time);
+            return actionbarChallenge.getActionbar(player, running, elapsedSeconds);
         }
 
         if (mode == Mode.DISABLED) {
@@ -94,31 +92,47 @@ public class MccTimer implements GameTimer {
             return Component.empty();
         }
 
-        return running
-                ? Component.text(StringUtility.formatTime(time)).color(NamedTextColor.BLUE).style(Style.style(TextDecoration.ITALIC))
-                : Component.text("Timer paused.").color(NamedTextColor.BLUE).style(Style.style(TextDecoration.ITALIC));
-    }
-
-    @Override
-    public void setStartTime(int newStartTime) {
-        TimerStartTimeChangeEvent startTimeChangeEvent = new TimerStartTimeChangeEvent(newStartTime);
-        Bukkit.getPluginManager().callEvent(startTimeChangeEvent);
-        if (startTimeChangeEvent.isCancelled()) {
-            logger.info("TimerStartTimeChangeEvent has been denied by an external plugin.");
-            return;
+        if (running) {
+            String timeStr = mode == Mode.COUNT_DOWN
+                    ? StringUtility.formatTime(remainingSeconds)
+                    : StringUtility.formatTime(elapsedSeconds);
+            return Component.text(timeStr).color(NamedTextColor.BLUE).style(Style.style(TextDecoration.ITALIC));
         }
-        this.startTime = startTimeChangeEvent.getNewStartTime();
+
+        return Component.text("Timer paused.").color(NamedTextColor.BLUE).style(Style.style(TextDecoration.ITALIC));
     }
 
     @Override
-    public void setTime(int newTime) {
-        TimerSetTimeEvent setTimeEvent = new TimerSetTimeEvent(newTime);
+    public int getElapsedSeconds() {
+        return elapsedSeconds;
+    }
+
+    @Override
+    public int getRemainingSeconds() {
+        if (mode != Mode.COUNT_DOWN) return -1;
+        return remainingSeconds;
+    }
+
+    @Override
+    public void setRemainingSeconds(int seconds) {
+        TimerSetTimeEvent setTimeEvent = new TimerSetTimeEvent(seconds);
         Bukkit.getPluginManager().callEvent(setTimeEvent);
         if (setTimeEvent.isCancelled()) {
             logger.info("TimerSetTimeEvent has been denied by an external plugin.");
             return;
         }
-        this.time = setTimeEvent.getNewTime();
+        this.remainingSeconds = setTimeEvent.getNewTime();
+    }
+
+    @Override
+    public void setDuration(int seconds) {
+        TimerStartTimeChangeEvent event = new TimerStartTimeChangeEvent(seconds);
+        Bukkit.getPluginManager().callEvent(event);
+        if (event.isCancelled()) {
+            logger.info("TimerStartTimeChangeEvent has been denied by an external plugin.");
+            return;
+        }
+        this.duration = event.getNewStartTime();
     }
 
     @Override
@@ -134,26 +148,27 @@ public class MccTimer implements GameTimer {
 
     @Override
     public void start() {
-        TimerStartEvent startEvent = new TimerStartEvent(this.time);
+        TimerStartEvent startEvent = new TimerStartEvent(this.remainingSeconds);
         Bukkit.getPluginManager().callEvent(startEvent);
         if (startEvent.isCancelled()) {
             logger.info("TimerStartEvent has been denied by an external plugin.");
             return;
         }
-        this.time = startEvent.getStartTime();
+        this.remainingSeconds = startEvent.getStartTime();
+        this.elapsedSeconds = 0;
         this.hitZero = false;
         this.running = true;
     }
 
     @Override
     public void pause() {
-        TimerPauseEvent pauseEvent = new TimerPauseEvent(this.time);
+        TimerPauseEvent pauseEvent = new TimerPauseEvent(this.remainingSeconds);
         Bukkit.getPluginManager().callEvent(pauseEvent);
         if (pauseEvent.isCancelled()) {
             logger.info("TimerPauseEvent has been denied by an external plugin.");
             return;
         }
-        this.time = pauseEvent.getPauseTime();
+        this.remainingSeconds = pauseEvent.getPauseTime();
         this.running = false;
     }
 

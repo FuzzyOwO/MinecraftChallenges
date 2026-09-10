@@ -1,16 +1,23 @@
 package gg.itzkatze.mcc.gui.impl;
 
+import gg.itzkatze.mcc.MinecraftChallenges;
 import gg.itzkatze.mcc.challenges.Challenge;
 import gg.itzkatze.mcc.challenges.ChallengeManager;
 import gg.itzkatze.mcc.challenges.ChallengeRegistry;
 import gg.itzkatze.mcc.challenges.ChallengeSettings;
+import gg.itzkatze.mcc.configuration.GlobalSetting;
+import gg.itzkatze.mcc.configuration.Setting;
+import gg.itzkatze.mcc.configuration.SettingsManager;
+import gg.itzkatze.mcc.configuration.states.SettingStateType;
 import gg.itzkatze.mcc.gui.GUIClickableItem;
 import gg.itzkatze.mcc.gui.GUIMaterial;
 import gg.itzkatze.mcc.gui.MccGUI;
 import gg.itzkatze.mcc.player.MccPlayer;
 import gg.itzkatze.mcc.util.ItemStackCreator;
+import lombok.Getter;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import org.bukkit.Material;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.ItemStack;
@@ -22,6 +29,35 @@ public class SettingsGUI extends MccGUI {
 
     public SettingsGUI() {
         super("Settings", 54);
+    }
+
+    @Getter
+    public enum GenericSettingButton {
+        NO_HUNGER(45, Material.COOKED_BEEF, GlobalSetting.NO_HUNGER, "No Hunger", "Click to toggle no Hunger.", "No Hunger"),
+        NO_DAMAGE(46, Material.IRON_SWORD, GlobalSetting.NO_DAMAGE, "No Damage", "Click to toggle no Damage.", "No Damage"),
+        MOBILE_CRAFTING(47, Material.CRAFTING_TABLE, GlobalSetting.MOBILE_CRAFTING, "Mobile Crafting", "Click to toggle mobile crafting.", "Mobile Crafting"),
+        HIDE_POINTS(48, Material.IRON_TRAPDOOR, GlobalSetting.HIDE_POINTS, "Hide Points", "Click to toggle Hide Points.", "Hide Points"),
+        HIDE_OBJECTIVES(49, Material.DARK_OAK_DOOR, GlobalSetting.HIDE_OBJECTIVES, "Hide Objectives", "Click to toggle Hide Objectives.", "Hide Objectives"),
+        NO_DUPLICATE_OBJECTIVES(50, Material.NAME_TAG, GlobalSetting.NO_DUPLICATE_OBJECTIVES, "No Duplicate Objectives", "Click to toggle no duplicate objectives.", "No duplicate objectives"),
+        SIMPLIFIED_OBJECTIVES(51, Material.DIRT, GlobalSetting.SIMPLIFIED_OBJECTIVES, "Simplified Objectives", "Click to toggle simplified objectives.", "Simplified objectives"),
+        EXTRA_TEAM_OBJECTIVE(52, Material.ALLAY_SPAWN_EGG, GlobalSetting.EXTRA_TEAM_OBJECTIVE, "Extra Team Objective", "Click to toggle the extra team objective.", "Extra team objective"),
+        SHOW_SCOREBOARD(53, Material.ARMOR_STAND, GlobalSetting.SHOW_SCOREBOARD, "Show Scoreboard", "Click to toggle the scoreboard.", "Show scoreboard");
+
+        private final int slot;
+        private final Material material;
+        private final GlobalSetting setting;
+        private final String nameText;
+        private final String toggleLine;
+        private final String changedMsg;
+
+        GenericSettingButton(int slot, Material material, GlobalSetting setting, String nameText, String toggleLine, String changedMsg) {
+            this.slot = slot;
+            this.material = material;
+            this.setting = setting;
+            this.nameText = nameText;
+            this.toggleLine = toggleLine;
+            this.changedMsg = changedMsg;
+        }
     }
 
     @Override
@@ -92,6 +128,47 @@ public class SettingsGUI extends MccGUI {
             });
 
             slot++;
+        }
+
+        for (GenericSettingButton button : GenericSettingButton.values()) {
+            Setting setting = button.getSetting();
+            String changedMsg = button.getChangedMsg();
+            String toggleLine = button.getToggleLine();
+
+            set(new GUIClickableItem(button.getSlot()) {
+                @Override
+                public void run(InventoryClickEvent event, MccPlayer player) {
+                    SettingStateType nextState = SettingsManager.getState(setting).next();
+                    SettingsManager.setState(setting, nextState);
+
+                    MinecraftChallenges.broadcast(
+                            Component.text(changedMsg + " ").color(NamedTextColor.BLUE)
+                                    .append(Component.text("has been set to ").color(NamedTextColor.GRAY))
+                                    .append(nextState.getDisplayName())
+                                    .append(Component.text("!").color(NamedTextColor.GRAY)));
+
+                    new SettingsGUI().open(player);
+                }
+
+                @Override
+                public ItemStack getItem(MccPlayer p) {
+                    List<Component> loreLines = new ArrayList<>();
+                    if (toggleLine != null && !toggleLine.isBlank()) {
+                        loreLines.add(Component.text(toggleLine).color(NamedTextColor.GRAY));
+                    }
+                    loreLines.add(Component.empty());
+                    loreLines.add(Component.text("Current Status").color(NamedTextColor.BLUE)
+                            .append(Component.text(": ").color(NamedTextColor.DARK_GRAY))
+                            .append(SettingsManager.getState(setting).getDisplayName()));
+
+                    return ItemStackCreator.getStack(
+                            Component.text(button.getNameText()).color(NamedTextColor.BLUE),
+                            button.getMaterial(),
+                            1,
+                            loreLines
+                    );
+                }
+            });
         }
     }
 

@@ -2,23 +2,21 @@ package gg.itzkatze.mcc.forcebattle.gui;
 
 import gg.itzkatze.mcc.MinecraftChallenges;
 import gg.itzkatze.mcc.challenges.Challenge;
+import gg.itzkatze.mcc.challenges.ChallengeRegistry;
 import gg.itzkatze.mcc.challenges.ChallengeType;
+import gg.itzkatze.mcc.configuration.ChallengeSettingsManager;
+import gg.itzkatze.mcc.configuration.Setting;
+import gg.itzkatze.mcc.configuration.states.PlayerTeamBothState;
 import gg.itzkatze.mcc.configuration.states.SettingStateType;
-import lombok.Getter;
 import gg.itzkatze.mcc.forcebattle.ForceBattle;
 import gg.itzkatze.mcc.forcebattle.ForceBattleSettings;
-import gg.itzkatze.mcc.configuration.GlobalSetting;
-import gg.itzkatze.mcc.configuration.SettingsManager;
-import gg.itzkatze.mcc.configuration.states.PlayerTeamBothState;
-import gg.itzkatze.mcc.configuration.Setting;
-import gg.itzkatze.mcc.configuration.ChallengeSettingsManager;
-import gg.itzkatze.mcc.challenges.ChallengeRegistry;
 import gg.itzkatze.mcc.game.GameLifecycleManager;
-import gg.itzkatze.mcc.gui.MccGUI;
 import gg.itzkatze.mcc.gui.GUIClickableItem;
+import gg.itzkatze.mcc.gui.MccGUI;
 import gg.itzkatze.mcc.gui.sign.NumberSignInput;
 import gg.itzkatze.mcc.player.MccPlayer;
 import gg.itzkatze.mcc.util.ItemStackCreator;
+import lombok.Getter;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Material;
@@ -31,7 +29,7 @@ import java.util.List;
 public class ForceBattleSettingsGUI extends MccGUI {
 
     public ForceBattleSettingsGUI() {
-        super("Settings", 36);
+        super("Settings", 27);
     }
 
     @Getter
@@ -53,33 +51,14 @@ public class ForceBattleSettingsGUI extends MccGUI {
         FORCE_DEATH(7, Material.SKELETON_SKULL, ForceBattleSettings.FORCE_DEATH, true, "Force Death",
                 "Click to toggle ForceDeath.", "ForceDeath"),
 
-
-        NO_HUNGER(18, Material.COOKED_BEEF, GlobalSetting.NO_HUNGER, false, "No Hunger",
-                "Click to toggle no Hunger.", "No Hunger"),
-        NO_DAMAGE(19, Material.IRON_SWORD, GlobalSetting.NO_DAMAGE, false, "No Damage",
-                "Click to toggle no Damage.", "No Damage"),
-        MOBILE_CRAFTING(20, Material.CRAFTING_TABLE, GlobalSetting.MOBILE_CRAFTING, false, "Mobile Crafting",
-                "Click to toggle mobile crafting.", "Mobile Crafting"),
-        BATTLE_DURATION(21, Material.CLOCK, null, false, "Battle Duration",
+        BATTLE_DURATION(18, Material.CLOCK, null, false, "Battle Duration",
                 "Click to set battle timer duration in minutes.", "Battle Duration"),
-        CHAIN_MODE(27, Material.IRON_CHAIN, ForceBattleSettings.CHAIN_MODE, false, "Chain Mode",
+        CHAIN_MODE(19, Material.IRON_CHAIN, ForceBattleSettings.CHAIN_MODE, false, "Chain Mode",
                 "Click to toggle Chain Mode.", "Chain Mode"),
-        BACKPACK(28, Material.CHEST, ForceBattleSettings.BACKPACK, false, "Backpacks",
+        BACKPACK(20, Material.CHEST, ForceBattleSettings.BACKPACK, false, "Backpacks",
                 "Click to toggle Backpacks.", "Backpacks"),
-        HIDE_POINTS(29, Material.IRON_TRAPDOOR, GlobalSetting.HIDE_POINTS, false, "Hide Points",
-                "Click to toggle Hide Points.", "Hide Points"),
-        HIDE_OBJECTIVES(30, Material.DARK_OAK_DOOR, GlobalSetting.HIDE_OBJECTIVES, false, "Hide Objectives",
-                "Click to toggle Hide Objectives.", "Hide Objectives"),
-        NO_DUPLICATE_OBJECTIVES(31, Material.NAME_TAG, GlobalSetting.NO_DUPLICATE_OBJECTIVES, false, "No Duplicate Objectives",
-                "Click to toggle no duplicate objectives.", "No duplicate objectives"),
-        SIMPLIFIED_OBJECTIVES(32, Material.DIRT, GlobalSetting.SIMPLIFIED_OBJECTIVES, false, "Simplified Objectives",
-                "Click to toggle simplified objectives.", "Simplified objectives"),
-        EXTRA_TEAM_OBJECTIVE(33, Material.ALLAY_SPAWN_EGG, GlobalSetting.EXTRA_TEAM_OBJECTIVE, false, "Extra Team Objective",
-                "Click to toggle the extra team objective.", "Extra team objective"),
-        SHOW_SCOREBOARD(34, Material.ARMOR_STAND, GlobalSetting.SHOW_SCOREBOARD, false, "Show Scoreboard",
-                "Click to toggle the scoreboard.", "Show scoreboard"),
 
-        RESET(35, Material.BARRIER, null, false, "RESET", null, null);
+        RESET(26, Material.BARRIER, null, false, "RESET", null, null);
 
         private final int slot;
         private final Material material;
@@ -145,9 +124,7 @@ public class ForceBattleSettingsGUI extends MccGUI {
         }
 
         private SettingStateType getSettingState() {
-            if (setting instanceof GlobalSetting globalSetting) {
-                return SettingsManager.getState(globalSetting);
-            } else if (setting instanceof ForceBattleSettings fbSetting) {
+            if (setting instanceof ForceBattleSettings fbSetting) {
                 Challenge forceBattle = ChallengeRegistry.getChallenge(ChallengeType.FORCE_BATTLE);
                 if (forceBattle != null && forceBattle.getSettingsManager() != null) {
                     ChallengeSettingsManager manager = forceBattle.getSettingsManager();
@@ -197,9 +174,7 @@ public class ForceBattleSettingsGUI extends MccGUI {
 
             SettingStateType next = getSettingState().next();
 
-            if (setting instanceof GlobalSetting globalSetting) {
-                SettingsManager.setState(globalSetting, next);
-            } else if (setting instanceof ForceBattleSettings fbSetting) {
+            if (setting instanceof ForceBattleSettings fbSetting) {
                 Challenge forceBattle = ChallengeRegistry.getChallenge(ChallengeType.FORCE_BATTLE);
                 if (forceBattle != null && forceBattle.getSettingsManager() != null) {
                     ChallengeSettingsManager manager = forceBattle.getSettingsManager();
@@ -224,7 +199,6 @@ public class ForceBattleSettingsGUI extends MccGUI {
         fill(ItemStackCreator.fillerItem());
         set(GUIClickableItem.getGoForthItem(8, new ConfigSettingsGUI()));
 
-
         for (SettingButton button : SettingButton.values()) {
             set(new GUIClickableItem(button.getSlot()) {
                 @Override
@@ -244,5 +218,4 @@ public class ForceBattleSettingsGUI extends MccGUI {
     public boolean allowItemMoving() {
         return false;
     }
-
 }

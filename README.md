@@ -5,88 +5,72 @@
 ---
 Supported Minecraft version: 26.1.2
 
-**Only ForceBattle is supported right now!**
+---
+
+## 🎮 Gamemodes & Modules
+
+MinecraftChallenges is a modular plugin providing multiple unique gamemodes and challenge mechanics.
+
+| Gamemode        | Description                                                                                                             | Documentation                       |
+|:----------------|:------------------------------------------------------------------------------------------------------------------------|:------------------------------------|
+| **ForceBattle** | Race against opponents to complete randomized objectives (items, mobs, biomes, coords, etc.) and earn the most points.  | [Read Guide](forcebattle/README.md) |
+| **DeathSwap**   | Players periodically swap locations—build traps and use fall damage or lava to eliminate opponents.                     | [Read Guide](deathswap/README.md)   |
+| **ItemRain**    | Random items periodically fall from the sky or drop directly into your inventory.                                       | [Read Guide](itemrain/README.md)    |
+| **Randomizer**  | Randomize block drops, mob drops, and chest loot tables for a chaotic survival experience.                              | [Read Guide](randomizer/README.md)  |
+| **AllItems**    | Work individually or as a team to collect every single item, biome, mob, structure, and advancement. *(In development)* | [Read Guide](allitems/README.md)    |
 
 ---
 
-## 📖 About ForceBattle
+## ⚙️ Generic Settings
 
-**ForceBattle** is a multiplayer gamemode where players compete to complete randomized objectives and earn points.  
-The player with the most points after the timer ends wins the battle!
+Access global plugin settings anytime in-game using `/settings`:
 
-This is my updated version from the original one by nicolaigrv which is available [here](https://github.com/nicolaigrv/ForceBattle).
-
-**Objective types:**
-
-| Objective Type     | Description                         |
-|:-------------------|:------------------------------------|
-| ForceItem          | Collect an item                     |
-| ForceMob           | Kill a mob                          |
-| ForceBiome         | Discover a biome                    |
-| ForceAdvancement   | Complete an advancement             |
-| ForceHeight        | Reach a certain height              |
-| ForceCoords        | Reach a certain coordinate          |
-| ForceStructure     | Discover a certain structure        |
-| ForceDeath         | Get killed by a certain damage type |
-
-Objective types can be enabled or disabled individually for the players / teams via the plugin's settings menu.
+- **No Hunger**: Disables hunger depletion for all players.
+- **No Damage**: Prevents players from taking environmental or combat damage.
+- **Mobile Crafting**: Grants players a portable crafting table menu.
+- **Show Scoreboard**: Toggles the sidebar scoreboard display.
+- **Timer**: Set the time of the challenge.
+- **Teams**: Create and manage teams with shared objectives and team chat.
 
 ---
 
-## ✨ Features
+## 📋 Core Commands
 
-- Adjustable **battle timer**
-- **Chain Mode** - each player has to complete the same chain of objectives
-- **Team system**
-- Integrated **bossbar** progress display
-- Extensive **settings menu** (in-game GUI)
-- **Simplified** objective settings for easier gameplay
-
-### 📋 Commands
-
-| Command                          | Description                                           |
-|:---------------------------------|:------------------------------------------------------|
-| `/backpack`                      | Opens the personal or team backpack (can be disabled) |
-| `/displayresults`                | Show the final leaderboard (player, team)             |
-| `/exclude <player>`              | Exclude a player from the battle                      |
-| `/help`                          | Display a list of available commands                  |
-| `/joker <player> <amount>`       | Adjust jokers for a player                            |
-| `/language`                      | Open the language selection menu                      |
-| `/points <player> <amount>`      | Modify a player's points                              |
-| `/randomteams <teamsize> <mode>` | Creates random teams with a specific size             |
-| `/recipe <item>`                 | Displays the recipe of an item                        |
-| `/reset [player]`                | Reset the battle or a specific player                 |
-| `/result <player>`               | Show detailed results for a player                    |
-| `/settings`                      | Open the plugin's settings menu                       |
-| `/skip <player>`                 | Skip a player's current objective (for admins)        |
-| `/team`                          | Manage teams                                          |
-| `/timer`                         | Control the timer (start, stop, set duration)         |
+| Command           | Description                                                    |
+|:------------------|:---------------------------------------------------------------|
+| `/start`          | Starts the selected challenge                                  |
+| `/reset [player]` | Resets the game or a specific player                           |
+| `/timer`          | Controls the global timer (start, pause, resume, set duration) |
+| `/settings`       | Opens the global settings GUI                                  |
+| `/team`           | Create, join, or leave teams                                   |
+| `/chat`           | Toggles chat mode (global / local)                             |
+| `/teamchat`       | Sends a message exclusively to your team                       |
 
 ---
 
 ## 🛠️ Building from Source
 
-To build ForceBattle yourself, make sure you have **Gradle** installed.  
-Then clone this repository and run:
+To build MinecraftChallenges yourself, make sure you have **Gradle** installed.  
+Clone this repository and run:
 
 ```bash
 gradle build
 ```
 
-The compiled `.jar` file will be located under `build/libs` inside the `Loader` module.
+The compiled `.jar` file will be located under `build/libs` inside the `loader` module.
 
 ---
 
 ## 🤝 Contributing
 
-Want to contribute? Awesome! Here's how you can help:
+Want to contribute? Here is how you can help:
 
 1. **Fork** this repository.
 2. **Create a new branch** based on your feature or fix.  
    (Example: `feature/new-feature` or `fix/bug-description`)
 3. **Implement your changes**, following `.editorconfig` and standard Java conventions.
-4. **Test your changes** carefully to ensure nothing breaks.
-5. **Push** to your fork and **open a pull request** with a clear description of what you changed.
+4. **Test your changes** carefully.
+5. **Push** to your fork and **open a pull request**.
 
 ---
 

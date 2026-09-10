@@ -60,7 +60,7 @@ public class TimerCommand extends MccCommand {
                 if (newTime == null) {
                     return;
                 }
-                timer.setTime(newTime);
+                timer.setRemainingSeconds(newTime);
                 caller.sendMessage(Component.text("The timer has been set to " + StringUtility.formatTime(newTime) + ".").color(NamedTextColor.BLUE));
                 return;
             }

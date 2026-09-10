@@ -206,7 +206,7 @@ public class ChallengeManager {
 
         if (specs.isEmpty()) {
             timer.setMode(GameTimer.Mode.DISABLED);
-            timer.setTime(0);
+            timer.setRemainingSeconds(0);
             return true;
         }
 
@@ -219,20 +219,20 @@ public class ChallengeManager {
                     .max()
                     .orElse(0);
             timer.setMode(GameTimer.Mode.COUNT_DOWN);
-            timer.setStartTime(longestSeconds);
-            timer.setTime(longestSeconds);
+            timer.setDuration(longestSeconds);
+            timer.setRemainingSeconds(longestSeconds);
             return true;
         }
 
         boolean hasCountUp = specs.stream().anyMatch(spec -> spec.mode() == GameTimer.Mode.COUNT_UP);
         if (hasCountUp) {
             timer.setMode(GameTimer.Mode.COUNT_UP);
-            timer.setTime(0);
+            timer.setRemainingSeconds(0);
             return true;
         }
 
         timer.setMode(GameTimer.Mode.DISABLED);
-        timer.setTime(0);
+        timer.setRemainingSeconds(0);
         return true;
     }
 }

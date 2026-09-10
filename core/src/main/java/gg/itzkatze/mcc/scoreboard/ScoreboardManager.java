@@ -5,6 +5,7 @@ import gg.itzkatze.mcc.challenges.Challenge;
 import gg.itzkatze.mcc.challenges.ChallengeManager;
 import gg.itzkatze.mcc.configuration.SettingsManager;
 import gg.itzkatze.mcc.configuration.GlobalSetting;
+import gg.itzkatze.mcc.game.GameTimer;
 import gg.itzkatze.mcc.player.MccPlayer;
 import io.papermc.paper.scoreboard.numbers.NumberFormat;
 import net.kyori.adventure.text.Component;
@@ -29,10 +30,12 @@ public class ScoreboardManager {
     }
 
     public static void updateAll() {
-        boolean timerRunning = MinecraftChallenges.getTimer().isRunning();
+        boolean gameActive = ChallengeManager.isGameStarted()
+                && (MinecraftChallenges.getTimer().getMode() == GameTimer.Mode.DISABLED
+                    || MinecraftChallenges.getTimer().isRunning());
 
         for (MccPlayer mccPlayer : MccPlayer.getOnlinePlayers()) {
-            boolean shouldHaveScoreboard = !mccPlayer.isExcluded() && timerRunning;
+            boolean shouldHaveScoreboard = !mccPlayer.isExcluded() && gameActive;
             boolean showScoreboard = SettingsManager.isEnabled(GlobalSetting.SHOW_SCOREBOARD);
 
             if (shouldHaveScoreboard && showScoreboard) {

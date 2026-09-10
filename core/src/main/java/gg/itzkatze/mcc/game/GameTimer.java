@@ -8,19 +8,21 @@ public interface GameTimer {
         COUNT_DOWN
     }
 
-    int getStartTime();
-
-    int getTime();
-
-    boolean isRunning();
-
     Mode getMode();
 
-    void setStartTime(int newStartTime);
-
-    void setTime(int newTime);
-
     void setMode(Mode mode);
+
+    int getElapsedSeconds();
+
+    int getRemainingSeconds();
+
+    void setRemainingSeconds(int seconds);
+
+    void setDuration(int seconds);
+
+    int getDuration();
+
+    boolean isRunning();
 
     boolean hasHitZero();
 

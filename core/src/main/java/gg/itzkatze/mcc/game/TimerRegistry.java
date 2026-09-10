@@ -17,22 +17,23 @@ public final class TimerRegistry {
     }
 
     private static final class NoOpTimer implements GameTimer {
-        private int startTime = 5400;
-        private int time = 0;
+        private int duration = 5400;
         private boolean running = false;
         private Mode mode = Mode.DISABLED;
+        private int elapsedSeconds = 0;
+        private int remainingSeconds = 0;
 
-        @Override public int getStartTime() { return startTime; }
-        @Override public int getTime() { return time; }
-        @Override public boolean isRunning() { return running; }
         @Override public Mode getMode() { return mode; }
-        @Override public void setStartTime(int newStartTime) { this.startTime = newStartTime; }
-        @Override public void setTime(int newTime) { this.time = newTime; }
         @Override public void setMode(Mode mode) { this.mode = mode; }
+        @Override public int getElapsedSeconds() { return elapsedSeconds; }
+        @Override public int getRemainingSeconds() { return mode == Mode.COUNT_DOWN ? remainingSeconds : -1; }
+        @Override public void setRemainingSeconds(int seconds) { this.remainingSeconds = seconds; }
+        @Override public void setDuration(int seconds) { this.duration = seconds; }
+        @Override public int getDuration() { return duration; }
+        @Override public boolean isRunning() { return running; }
         @Override public boolean hasHitZero() { return false; }
         @Override public void start() { this.running = true; }
         @Override public void pause() { this.running = false; }
         @Override public void stop() { this.running = false; }
-
     }
 }

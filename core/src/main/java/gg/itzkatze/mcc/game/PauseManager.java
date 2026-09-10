@@ -43,6 +43,7 @@ public class PauseManager implements Listener {
 
     private void updatePauseState() {
         boolean shouldPause = ChallengeManager.isGameStarted() &&
+                MinecraftChallenges.getTimer().getMode() != GameTimer.Mode.DISABLED &&
                 !MinecraftChallenges.getTimer().hasHitZero() &&
                 !MinecraftChallenges.getTimer().isRunning();
         if (shouldPause && !pauseApplied) {

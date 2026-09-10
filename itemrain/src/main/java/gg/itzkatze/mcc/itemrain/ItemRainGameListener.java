@@ -1,6 +1,8 @@
 package gg.itzkatze.mcc.itemrain;
 
 import gg.itzkatze.mcc.MinecraftChallenges;
+import gg.itzkatze.mcc.game.ChallengeTimer;
+import gg.itzkatze.mcc.game.GameTimer;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -10,50 +12,44 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.Vector;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.UUID;
 
 public class ItemRainGameListener implements Listener {
 
     private static final List<Material> ITEM_MATERIALS = buildItemMaterials();
 
     private final Random random = new Random();
-    private final Map<UUID, Long> nextGiveAtMillis = new HashMap<>();
+    private ChallengeTimer dropTimer;
     private int lastIntervalSeconds = -1;
 
     public void reset() {
-        nextGiveAtMillis.clear();
+        dropTimer = null;
         lastIntervalSeconds = -1;
     }
 
     public void runTask() {
-        if (!MinecraftChallenges.getTimer().isRunning()) {
-            reset();
+        if (MinecraftChallenges.getTimer().getMode() != GameTimer.Mode.DISABLED
+                && !MinecraftChallenges.getTimer().isRunning()) {
+            if (dropTimer != null) {
+                dropTimer.resetBaseline();
+            }
             return;
         }
 
         int intervalSeconds = Math.max(1, ItemRainSettings.getIntervalSeconds());
-        long now = System.currentTimeMillis();
-
-        if (intervalSeconds != lastIntervalSeconds) {
+        if (intervalSeconds != lastIntervalSeconds || dropTimer == null) {
             lastIntervalSeconds = intervalSeconds;
-            long nextAt = now + intervalSeconds * 1000L;
-            for (Player player : Bukkit.getOnlinePlayers()) {
-                nextGiveAtMillis.put(player.getUniqueId(), nextAt);
-            }
+            dropTimer = new ChallengeTimer(intervalSeconds * 1000L);
         }
 
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            long nextAt = nextGiveAtMillis.getOrDefault(
-                    player.getUniqueId(),
-                    now + intervalSeconds * 1000L
-            );
-            if (now < nextAt) continue;
-            giveRandomItem(player);
-            nextGiveAtMillis.put(player.getUniqueId(), now + intervalSeconds * 1000L);
+        dropTimer.tick();
+        if (dropTimer.hasElapsed()) {
+            dropTimer.consumeElapsed();
+            for (Player player : Bukkit.getOnlinePlayers()) {
+                giveRandomItem(player);
+            }
         }
     }
 
@@ -79,8 +75,13 @@ public class ItemRainGameListener implements Listener {
         double offsetZ = radius == 0 ? 0 : random.nextDouble(-radius, radius);
 
         Location baseLocation = player.getLocation().clone().add(offsetX, 0, offsetZ);
-        int maxHeight = player.getWorld().getMaxHeight() - 1;
-        double spawnY = Math.min(maxHeight, Math.max(baseLocation.getY() + 16, player.getLocation().getY() + 12));
+        int highestY = player.getWorld().getHighestBlockYAt(baseLocation.getBlockX(), baseLocation.getBlockZ());
+
+        double spawnY = Math.min(
+                player.getWorld().getMaxHeight() - 2,
+                Math.max(player.getLocation().getY() + 15, highestY + 3)
+        );
+
         Location dropLocation = new Location(
                 player.getWorld(),
                 baseLocation.getX(),
@@ -88,8 +89,13 @@ public class ItemRainGameListener implements Listener {
                 baseLocation.getZ()
         );
 
+        while (spawnY > player.getLocation().getY() + 2 && dropLocation.getBlock().getType().isSolid()) {
+            spawnY--;
+            dropLocation.setY(spawnY);
+        }
+
         player.getWorld().dropItem(dropLocation, item, droppedItem -> {
-            droppedItem.setVelocity(new Vector(0, -0.15, 0));
+            droppedItem.setVelocity(new Vector(0, -0.2, 0));
             droppedItem.setCanMobPickup(false);
             droppedItem.setPickupDelay(10);
         });

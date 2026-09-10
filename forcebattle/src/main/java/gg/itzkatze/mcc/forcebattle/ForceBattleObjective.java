@@ -85,7 +85,7 @@ public class ForceBattleObjective implements ChallengeObjective {
 
     public void setFinished(MccPlayer whoFinished) {
         this.whoFinished = whoFinished;
-        this.time = MinecraftChallenges.getTimer().getTime();
+        this.time = MinecraftChallenges.getTimer().getRemainingSeconds();
     }
 
     public @NotNull Material getToastIcon() {
