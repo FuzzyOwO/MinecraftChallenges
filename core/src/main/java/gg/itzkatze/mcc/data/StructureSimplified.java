@@ -13,7 +13,7 @@ public enum StructureSimplified {
     PILLAGER_OUTPOST("Pillager Outpost", new GUIMaterial(Material.DARK_OAK_LOG), List.of(MccStructure.PILLAGER_OUTPOST)),
     RUINED_PORTAL("Ruined Portal", new GUIMaterial(Material.CRYING_OBSIDIAN), List.of(
             MccStructure.RUINED_PORTAL_MOUNTAIN, MccStructure.RUINED_PORTAL_DESERT, MccStructure.RUINED_PORTAL_JUNGLE,
-            MccStructure.RUINED_PORTAL_OCEAN, MccStructure.RUINED_PORTAL_SWAMP, MccStructure.RUINED_PORTAL_NETHER)),
+            MccStructure.RUINED_PORTAL_OCEAN, MccStructure.RUINED_PORTAL_SWAMP, MccStructure.RUINED_PORTAL_NETHER, MccStructure.RUINED_PORTAL)),
     OCEAN_RUIN("Ocean Ruin", new GUIMaterial(Material.MOSSY_STONE_BRICKS), List.of(MccStructure.OCEAN_RUIN_COLD, MccStructure.OCEAN_RUIN_WARM)),
     TRIAL_CHAMBERS("Trial Chambers", new GUIMaterial(Material.WAXED_OXIDIZED_COPPER), List.of(MccStructure.TRIAL_CHAMBERS)),
     SHIPWRECK("Shipwreck", new GUIMaterial(Material.CHEST), List.of(MccStructure.SHIPWRECK, MccStructure.SHIPWRECK_BEACHED)),
