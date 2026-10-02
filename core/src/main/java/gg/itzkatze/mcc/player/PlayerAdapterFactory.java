@@ -1,15 +1,17 @@
 package gg.itzkatze.mcc.player;
 
-import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.UUID;
 
 @FunctionalInterface
 public interface PlayerAdapterFactory {
 
     /**
-     * Creates a challenge-specific player wrapper for the given Bukkit player.
-     * @param player The Bukkit player
-     * @return The wrapped player, or null if this factory does not handle this player
+     * Creates a challenge-specific player wrapper for the given player, who may be offline.
+     * @param uuid The player's UUID
+     * @param name The player's name
+     * @return The wrapped player
      */
-    @NotNull MccPlayer adapt(@NotNull Player player);
+    @NotNull MccPlayer adapt(@NotNull UUID uuid, @NotNull String name);
 }

@@ -7,6 +7,7 @@ import gg.itzkatze.mcc.commands.framework.CommandCaller;
 import gg.itzkatze.mcc.commands.framework.MccCommand;
 import gg.itzkatze.mcc.game.GameLifecycleManager;
 import gg.itzkatze.mcc.game.GameTimer;
+import gg.itzkatze.mcc.game.SessionPersistence;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.permissions.PermissionDefault;
@@ -48,6 +49,7 @@ public class StartCommand extends MccCommand {
         if (MinecraftChallenges.getTimer().getMode() != GameTimer.Mode.DISABLED) {
             MinecraftChallenges.getTimer().start();
         }
+        SessionPersistence.checkpoint();
         caller.sendMessage(Component.text("The game has been started.").color(NamedTextColor.GREEN));
     }
 

@@ -155,6 +155,13 @@ public class ChallengeManager {
         return true;
     }
 
+    /**
+     * Marks a restored game as started without calling {@link Challenge#onGameStart()} again.
+     */
+    public static void markGameStarted() {
+        gameStarted = true;
+    }
+
     public static void resetGameState() {
         gameStarted = false;
         for (Challenge challenge : activeChallenges) {

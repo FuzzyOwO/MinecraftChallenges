@@ -3,8 +3,10 @@ package gg.itzkatze.mcc.deathswap;
 import gg.itzkatze.mcc.MinecraftChallenges;
 import gg.itzkatze.mcc.game.ChallengeTimer;
 import gg.itzkatze.mcc.game.GameTimer;
+import gg.itzkatze.mcc.game.SessionPersistence;
 import gg.itzkatze.mcc.player.MccPlayer;
 import gg.itzkatze.mcc.util.StringUtility;
+import gg.itzkatze.mcc.util.WorldStorage;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.title.Title;
@@ -18,17 +20,21 @@ import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
+import org.jetbrains.annotations.Nullable;
 
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
 
 public class DeathSwapGameListener implements Listener {
+
+    private static final String FILE_NAME = "deathswap_data.json";
 
     private final Set<UUID> eliminatedPlayers = new HashSet<>();
     private final Random random = new Random();
@@ -66,6 +72,46 @@ public class DeathSwapGameListener implements Listener {
         started = true;
         elapsedTimer = new ChallengeTimer(1_000L);
         swapTimer = new ChallengeTimer(getSwapIntervalMillis());
+    }
+
+    public void saveToFile() {
+        SaveData data = new SaveData();
+        data.started = started;
+        data.finished = finished;
+        data.eliminated = eliminatedPlayers.stream().map(UUID::toString).toList();
+        data.swapCount = swapCount;
+        data.winner = winnerId == null ? null : winnerId.toString();
+        data.elapsedSeconds = elapsedSeconds;
+        data.millisUntilSwap = swapTimer == null ? null : swapTimer.getRemainingMillis();
+        WorldStorage.save(FILE_NAME, data);
+    }
+
+    public void loadFromFile() {
+        SaveData data = WorldStorage.load(FILE_NAME, SaveData.class);
+        if (data == null) return;
+
+        initialize();
+        started = data.started;
+        finished = data.finished;
+        if (data.eliminated != null) {
+            data.eliminated.stream().map(DeathSwapGameListener::parseUuid).filter(Objects::nonNull).forEach(eliminatedPlayers::add);
+        }
+        swapCount = data.swapCount;
+        winnerId = parseUuid(data.winner);
+        elapsedSeconds = data.elapsedSeconds;
+
+        if (started) {
+            elapsedTimer = new ChallengeTimer(1_000L);
+            swapTimer = new ChallengeTimer(getSwapIntervalMillis());
+            if (data.millisUntilSwap != null) {
+                swapTimer.setRemainingMillis(data.millisUntilSwap);
+            }
+            lastIntervalMinutes = Math.max(1, DeathSwapSettings.getSwapIntervalMinutes());
+        }
+    }
+
+    public void deleteFile() {
+        WorldStorage.delete(FILE_NAME);
     }
 
     public void runTask() {
@@ -110,7 +156,10 @@ public class DeathSwapGameListener implements Listener {
         while (swapTimer.hasElapsed()) {
             lastPlayedCountdownSecond = -1;
             boolean swapped = swapAlivePlayers();
-            if (swapped) swapCount++;
+            if (swapped) {
+                swapCount++;
+                SessionPersistence.requestSave();
+            }
             swapTimer.consumeElapsed();
             if (!swapped) break;
         }
@@ -122,6 +171,7 @@ public class DeathSwapGameListener implements Listener {
         Player player = event.getEntity();
         if (eliminatedPlayers.add(player.getUniqueId())) {
             checkForWinner();
+            SessionPersistence.requestSave();
         }
     }
 
@@ -153,6 +203,7 @@ public class DeathSwapGameListener implements Listener {
         Player player = event.getPlayer();
         if (eliminatedPlayers.add(player.getUniqueId())) {
             checkForWinner();
+            SessionPersistence.requestSave();
         }
     }
 
@@ -242,5 +293,24 @@ public class DeathSwapGameListener implements Listener {
 
     private long getSwapIntervalMillis() {
         return Math.max(1, DeathSwapSettings.getSwapIntervalMinutes()) * 60_000L;
+    }
+
+    private static @Nullable UUID parseUuid(@Nullable String raw) {
+        if (raw == null) return null;
+        try {
+            return UUID.fromString(raw);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+    }
+
+    private static final class SaveData {
+        boolean started;
+        boolean finished;
+        List<String> eliminated = new ArrayList<>();
+        int swapCount;
+        String winner;
+        int elapsedSeconds;
+        Long millisUntilSwap;
     }
 }

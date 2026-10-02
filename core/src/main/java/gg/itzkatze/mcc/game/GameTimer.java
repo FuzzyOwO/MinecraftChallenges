@@ -31,4 +31,6 @@ public interface GameTimer {
     void pause();
 
     void stop();
+
+    void restore(Mode mode, int durationSeconds, int remainingSeconds, int elapsedSeconds, boolean hitZero);
 }

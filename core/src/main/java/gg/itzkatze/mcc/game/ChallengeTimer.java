@@ -1,11 +1,13 @@
 package gg.itzkatze.mcc.game;
 
 import lombok.Getter;
+import lombok.Setter;
 
 public class ChallengeTimer {
 
     private final long intervalMillis;
     @Getter
+    @Setter
     private long remainingMillis;
     private long lastTickMillis = 0L;
 

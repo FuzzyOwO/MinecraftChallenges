@@ -1,12 +1,14 @@
 package gg.itzkatze.mcc.configuration;
 
 import gg.itzkatze.mcc.challenges.Challenge;
+import gg.itzkatze.mcc.configuration.states.ConfigurableSettingState;
 import gg.itzkatze.mcc.configuration.states.SettingStateType;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class ChallengeSettingsManager {
@@ -78,6 +80,60 @@ public class ChallengeSettingsManager {
                 states.put(setting, defaultState);
             }
         }
+    }
+
+    public @NotNull Map<String, String> exportStates() {
+        Map<String, String> encodedStates = new LinkedHashMap<>();
+        for (Setting setting : getAllSettings()) {
+            String encoded = encode(states.get(setting));
+            if (encoded != null) {
+                encodedStates.put(setting.getId(), encoded);
+            }
+        }
+        return encodedStates;
+    }
+
+    public void importStates(@NotNull Map<String, String> encodedStates) {
+        for (Setting setting : getAllSettings()) {
+            String encoded = encodedStates.get(setting.getId());
+            if (encoded != null) {
+                importState(setting, encoded);
+            }
+        }
+    }
+
+    public boolean importState(@NotNull Setting setting, @NotNull String encoded) {
+        SettingStateType state = decode(setting, encoded);
+        if (state == null) {
+            return false;
+        }
+        states.put(setting, state);
+        return true;
+    }
+
+    private static @Nullable String encode(@Nullable SettingStateType state) {
+        if (state instanceof Enum<?> enumState) {
+            return enumState.name();
+        }
+        if (state instanceof ConfigurableSettingState configurable) {
+            return configurable.serialize();
+        }
+        return null;
+    }
+
+    private static @Nullable SettingStateType decode(@NotNull Setting setting, @NotNull String encoded) {
+        SettingStateType defaultState = setting.getDefaultState();
+        if (defaultState instanceof ConfigurableSettingState configurable) {
+            return configurable.parse(encoded);
+        }
+        if (defaultState instanceof Enum<?> enumState) {
+            for (Object constant : enumState.getDeclaringClass().getEnumConstants()) {
+                if (((Enum<?>) constant).name().equalsIgnoreCase(encoded)) {
+                    return (SettingStateType) constant;
+                }
+            }
+        }
+        return null;
     }
 
     public interface ChallengeSettingsChangeListener {

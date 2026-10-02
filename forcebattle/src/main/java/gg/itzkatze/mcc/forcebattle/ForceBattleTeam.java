@@ -6,6 +6,7 @@ import gg.itzkatze.mcc.team.MccTeam;
 import gg.itzkatze.mcc.event.ObjectiveUpdateEvent;
 import gg.itzkatze.mcc.event.PlayerTeamJoinEvent;
 import gg.itzkatze.mcc.event.PlayerTeamLeaveEvent;
+import gg.itzkatze.mcc.game.SessionPersistence;
 import gg.itzkatze.mcc.player.MccPlayer;
 import gg.itzkatze.mcc.util.StringUtility;
 import gg.itzkatze.mcc.util.Toast;
@@ -86,6 +87,7 @@ public class ForceBattleTeam extends MccTeam {
 
     @Override
     public void updateObjective(MccPlayer finisher, boolean finishLast, boolean hasBeenSkipped) {
+        SessionPersistence.requestSave();
         if (finishLast && this.objective != null) {
             this.objective.setFinished(finisher);
             this.objective.setHasBeenSkipped(hasBeenSkipped);

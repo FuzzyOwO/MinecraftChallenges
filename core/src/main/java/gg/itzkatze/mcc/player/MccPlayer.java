@@ -41,8 +41,12 @@ public class MccPlayer implements CommandCaller {
     private boolean excluded;
 
     public MccPlayer(@NotNull Player player) {
-        this.uuid = player.getUniqueId();
-        this.name = player.getName();
+        this(player.getUniqueId(), player.getName());
+    }
+
+    public MccPlayer(@NotNull UUID uuid, @NotNull String name) {
+        this.uuid = uuid;
+        this.name = name;
         PLAYERS.add(this);
     }
 
@@ -62,17 +66,15 @@ public class MccPlayer implements CommandCaller {
     }
 
     /**
-     * Upgrades online player wrappers to the challenge-specific type if a factory is registered.
+     * Upgrades all player wrappers, online and offline, to the challenge-specific type if a factory is registered.
      * Call from the challenge's {@code onEnable}.
      */
     public static void upgrade(@NotNull ChallengeType type) {
         PlayerAdapterFactory factory = factories.get(type);
         if (factory == null) return;
 
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            Optional<MccPlayer> existing = adapt(player.getUniqueId());
-            existing.ifPresent(PLAYERS::remove);
-            factory.adapt(player);
+        for (MccPlayer player : new ArrayList<>(PLAYERS)) {
+            replace(player, factory.adapt(player.getUuid(), player.getName()));
         }
     }
 
@@ -81,18 +83,30 @@ public class MccPlayer implements CommandCaller {
      * Uses registered factories for active challenges; otherwise returns a base MccPlayer.
      */
     public static @NotNull MccPlayer adapt(Player object) {
-        for (MccPlayer mccPlayer : PLAYERS) {
-            if (mccPlayer.getUuid().equals(object.getUniqueId())) {
-                return mccPlayer;
-            }
+        return adapt(object.getUniqueId(), object.getName());
+    }
+
+    /**
+     * Returns the wrapper for the given player, creating one if the player has none yet.
+     */
+    public static @NotNull MccPlayer adapt(@NotNull UUID uuid, @NotNull String name) {
+        Optional<MccPlayer> existing = adapt(uuid);
+        if (existing.isPresent()) {
+            return existing.get();
         }
         for (Challenge challenge : ChallengeManager.getActiveChallenges()) {
             PlayerAdapterFactory factory = factories.get(challenge.getType());
             if (factory != null) {
-                return factory.adapt(object); // constructor already added to BATTLE_PLAYERS
+                return factory.adapt(uuid, name);
             }
         }
-        return new MccPlayer(object);
+        return new MccPlayer(uuid, name);
+    }
+
+    public static @NotNull MccPlayer restore(@NotNull UUID uuid, @NotNull String name, boolean excluded) {
+        MccPlayer player = adapt(uuid, name);
+        player.excluded = excluded;
+        return player;
     }
 
     public static @NotNull Optional<MccPlayer> adapt(String name) {
@@ -140,19 +154,17 @@ public class MccPlayer implements CommandCaller {
      * Call from the challenge's {@code onDisable}.
      */
     public static void downgrade(@NotNull ChallengeType type) {
-        List<MccPlayer> toReplace = new ArrayList<>();
-        for (MccPlayer p : PLAYERS) {
-            if (p.getChallengeType().orElse(null) == type) {
-                toReplace.add(p);
+        for (MccPlayer player : new ArrayList<>(PLAYERS)) {
+            if (player.getChallengeType().orElse(null) == type) {
+                replace(player, new MccPlayer(player.getUuid(), player.getName()));
             }
         }
-        for (MccPlayer p : toReplace) {
-            PLAYERS.remove(p);
-            Player bukkit = p.getPlayer();
-            if (bukkit != null) {
-                PLAYERS.add(new MccPlayer(bukkit));
-            }
-        }
+    }
+
+    private static void replace(@NotNull MccPlayer old, @NotNull MccPlayer replacement) {
+        PLAYERS.remove(old);
+        replacement.excluded = old.excluded;
+        MccTeam.replacePlayer(old, replacement);
     }
 
     /**

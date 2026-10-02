@@ -59,7 +59,16 @@ public class MccTeam {
      * Creates a team using a registered challenge factory if available.
      */
     public static @NotNull MccTeam create(@NotNull List<MccPlayer> players) {
-        int id = nextId();
+        return create(players, nextId());
+    }
+
+    public static @NotNull MccTeam restore(int id, boolean privateTeam, @NotNull List<MccPlayer> players) {
+        MccTeam team = create(players, id);
+        team.privateTeam = privateTeam;
+        return team;
+    }
+
+    private static @NotNull MccTeam create(@NotNull List<MccPlayer> players, int id) {
         for (Challenge challenge : ChallengeManager.getActiveChallenges()) {
             TeamAdapterFactory factory = factories.get(challenge.getType());
             if (factory != null) {
@@ -67,6 +76,18 @@ public class MccTeam {
             }
         }
         return new MccTeam(players, id, true);
+    }
+
+    /**
+     * Swaps a player wrapper for its replacement in every team, e.g. when wrappers are upgraded.
+     */
+    public static void replacePlayer(@NotNull MccPlayer old, @NotNull MccPlayer replacement) {
+        for (MccTeam team : teams) {
+            Collections.replaceAll(team.players, old, replacement);
+            if (team.lastJoinRequest != null && team.lastJoinRequest.mccPlayer() == old) {
+                team.lastJoinRequest = new JoinRequest(replacement, team);
+            }
+        }
     }
 
     /**

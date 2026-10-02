@@ -60,6 +60,10 @@ public class ForceBattleObjective implements ChallengeObjective {
                 .toList();
     }
 
+    public static @NotNull List<ForceBattleObjective> all() {
+        return List.copyOf(objectives);
+    }
+
     public static void deleteAll() {
         objectives.clear();
     }
@@ -86,6 +90,11 @@ public class ForceBattleObjective implements ChallengeObjective {
     public void setFinished(MccPlayer whoFinished) {
         this.whoFinished = whoFinished;
         this.time = MinecraftChallenges.getTimer().getRemainingSeconds();
+    }
+
+    public void restoreFinished(@NotNull MccPlayer whoFinished, int time) {
+        this.whoFinished = whoFinished;
+        this.time = time;
     }
 
     public @NotNull Material getToastIcon() {

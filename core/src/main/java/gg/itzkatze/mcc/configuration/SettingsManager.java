@@ -17,6 +17,10 @@ public class SettingsManager {
     private static void onGlobalSettingChanged(Challenge challenge, Setting setting, SettingStateType oldState, SettingStateType newState) {
     }
 
+    public static ChallengeSettingsManager getGlobalSettingsManager() {
+        return GLOBAL_SETTINGS_MANAGER;
+    }
+
     public static SettingStateType getState(Setting setting) {
         return GLOBAL_SETTINGS_MANAGER.getState(setting);
     }

@@ -10,6 +10,7 @@ import gg.itzkatze.mcc.commands.framework.CommandVisibilityListener;
 import gg.itzkatze.mcc.game.GameLifecycleManager;
 import gg.itzkatze.mcc.game.MccTimer;
 import gg.itzkatze.mcc.game.PauseManager;
+import gg.itzkatze.mcc.game.SessionPersistence;
 import gg.itzkatze.mcc.game.SpawnManager;
 import gg.itzkatze.mcc.gui.GUIListener;
 import gg.itzkatze.mcc.gui.sign.SignInput;
@@ -79,12 +80,15 @@ public final class MinecraftChallenges extends JavaPlugin {
         getServer().getPluginManager().registerEvents(pauseManager, this);
         pauseManager.startStateWatcher();
 
+        SessionPersistence.restore();
+
         logger.info("Successfully initialized MinecraftChallenges.");
     }
 
     @Override
     public void onDisable() {
         BossbarManager.stopTask();
+        SessionPersistence.saveNow();
         ChallengeManager.unloadAllChallenges();
         TaskManager.stopAll();
         try {

@@ -24,11 +24,22 @@ public class DeathSwap implements Challenge {
     @Override
     public void onEnable() {
         gameListener.initialize();
+        loadData();
     }
 
     @Override
     public void onDisable() {
         gameListener.cleanup();
+    }
+
+    @Override
+    public void saveData() {
+        gameListener.saveToFile();
+    }
+
+    @Override
+    public void loadData() {
+        gameListener.loadFromFile();
     }
 
     @Override
@@ -38,6 +49,7 @@ public class DeathSwap implements Challenge {
 
     @Override
     public void onGameReset() {
+        gameListener.deleteFile();
         gameListener.cleanup();
         gameListener.initialize();
     }

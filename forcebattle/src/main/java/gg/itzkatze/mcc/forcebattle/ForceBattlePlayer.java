@@ -6,6 +6,7 @@ import gg.itzkatze.mcc.configuration.SettingsManager;
 import gg.itzkatze.mcc.MinecraftChallenges;
 import gg.itzkatze.mcc.event.ObjectiveUpdateEvent;
 import gg.itzkatze.mcc.event.PlayerResetEvent;
+import gg.itzkatze.mcc.game.SessionPersistence;
 import gg.itzkatze.mcc.team.MccTeam;
 import gg.itzkatze.mcc.player.MccPlayer;
 import gg.itzkatze.mcc.util.Joker;
@@ -27,6 +28,7 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 public class ForceBattlePlayer extends MccPlayer {
 
@@ -45,9 +47,9 @@ public class ForceBattlePlayer extends MccPlayer {
     private int chainProgress = 0;
     private int points = 0;
 
-    public ForceBattlePlayer(@NotNull Player player) {
-        super(player);
-        this.BACKPACK_INVENTORY = Bukkit.createInventory(null, 27, player.getName() + "'s Backpack");
+    public ForceBattlePlayer(@NotNull UUID uuid, @NotNull String name) {
+        super(uuid, name);
+        this.BACKPACK_INVENTORY = Bukkit.createInventory(null, 27, name + "'s Backpack");
     }
 
     /**
@@ -122,6 +124,7 @@ public class ForceBattlePlayer extends MccPlayer {
         }
 
         this.objective = newObjective;
+        SessionPersistence.requestSave();
     }
 
     public void increaseChainProgress() {

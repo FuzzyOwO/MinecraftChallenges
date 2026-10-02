@@ -185,4 +185,14 @@ public class MccTimer implements GameTimer {
         this.running = false;
         hitZero = true;
     }
+
+    @Override
+    public void restore(Mode mode, int durationSeconds, int remainingSeconds, int elapsedSeconds, boolean hitZero) {
+        this.mode = mode;
+        this.duration = durationSeconds;
+        this.remainingSeconds = remainingSeconds;
+        this.elapsedSeconds = elapsedSeconds;
+        this.hitZero = hitZero;
+        this.running = false;
+    }
 }

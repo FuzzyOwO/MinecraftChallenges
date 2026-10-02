@@ -9,6 +9,7 @@ import gg.itzkatze.mcc.challenges.Challenge;
 import gg.itzkatze.mcc.challenges.ChallengeType;
 import gg.itzkatze.mcc.challenges.TimerSpec;
 import gg.itzkatze.mcc.game.GameTimer;
+import gg.itzkatze.mcc.game.SessionPersistence;
 import gg.itzkatze.mcc.forcebattle.bossbar.ForceBattlePlayerObjectiveBossbar;
 import gg.itzkatze.mcc.forcebattle.bossbar.ForceBattleTeamObjectiveBossbar;
 import gg.itzkatze.mcc.forcebattle.bossbar.ForceBattleWaitingBossbar;
@@ -43,10 +44,12 @@ public class ForceBattle implements Challenge {
         MccTeam.registerFactory(ChallengeType.FORCE_BATTLE, ForceBattleTeam::new);
         MccTeam.upgrade(ChallengeType.FORCE_BATTLE);
         NametagManager.runTask();
+        loadData();
     }
 
     @Override
     public void onDisable() {
+        saveData();
         ForceBattleGameListener.startPhase = true;
         gameListener.clearPendingRestores();
         NametagManager.stopTask();
@@ -61,6 +64,16 @@ public class ForceBattle implements Challenge {
     }
 
     @Override
+    public void saveData() {
+        ForceBattlePersistence.saveData();
+    }
+
+    @Override
+    public void loadData() {
+        ForceBattlePersistence.loadData();
+    }
+
+    @Override
     public void onGameStart() {
         Bukkit.getWorlds().forEach(world ->
                 world.setGameRule(GameRules.SHOW_ADVANCEMENT_MESSAGES, false));
@@ -69,6 +82,7 @@ public class ForceBattle implements Challenge {
 
     @Override
     public void onGameReset() {
+        ForceBattlePersistence.deleteData();
         ForceBattleGameListener.startPhase = true;
         gameListener.clearPendingRestores();
         StructureTask.clearCache();
@@ -97,6 +111,7 @@ public class ForceBattle implements Challenge {
     @Override
     public void onTimerElapsed() {
         gameListener.handleBattleEnd();
+        SessionPersistence.requestSave();
     }
 
     @Override

@@ -1,7 +1,5 @@
 package gg.itzkatze.mcc.allitems.data;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import gg.itzkatze.mcc.MinecraftChallenges;
 import gg.itzkatze.mcc.allitems.AllItemsObjective;
 import gg.itzkatze.mcc.allitems.AllItemsObjectiveType;
@@ -9,19 +7,15 @@ import gg.itzkatze.mcc.allitems.AllItemsSettings;
 import gg.itzkatze.mcc.data.BiomeSimplified;
 import gg.itzkatze.mcc.data.MccAdvancement;
 import gg.itzkatze.mcc.data.StructureSimplified;
+import gg.itzkatze.mcc.game.SessionPersistence;
 import gg.itzkatze.mcc.util.StringUtility;
+import gg.itzkatze.mcc.util.WorldStorage;
 import org.bukkit.Material;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
-import java.io.Reader;
-import java.io.Writer;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -42,7 +36,6 @@ public class AllItemsData {
 
     private static final String DATA_FILE_NAME = "all_items_progress.json";
     private static final DateTimeFormatter TIMESTAMP_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
     private final Map<Material, FoundEntry> teamFoundItems = new ConcurrentHashMap<>();
     private final Map<BiomeSimplified, FoundEntry> teamFoundBiomes = new ConcurrentHashMap<>();
@@ -86,6 +79,7 @@ public class AllItemsData {
         playerFoundItems.computeIfAbsent(player.getUniqueId(), k -> ConcurrentHashMap.newKeySet()).add(material);
         addRecentFind(AllItemsObjectiveType.ITEM, material.name(), formatMaterialName(material), entry);
         advanceChainIfNeeded(player, AllItemsObjectiveType.ITEM, material.name());
+        SessionPersistence.requestSave();
         return true;
     }
 
@@ -104,6 +98,7 @@ public class AllItemsData {
         playerFoundBiomes.computeIfAbsent(player.getUniqueId(), k -> ConcurrentHashMap.newKeySet()).add(biome);
         addRecentFind(AllItemsObjectiveType.BIOME, biome.name(), biome.getName(), entry);
         advanceChainIfNeeded(player, AllItemsObjectiveType.BIOME, biome.name());
+        SessionPersistence.requestSave();
         return true;
     }
 
@@ -122,6 +117,7 @@ public class AllItemsData {
         playerFoundMobs.computeIfAbsent(player.getUniqueId(), k -> ConcurrentHashMap.newKeySet()).add(type);
         addRecentFind(AllItemsObjectiveType.MOB, type.name(), formatMaterialName(type.name()), entry);
         advanceChainIfNeeded(player, AllItemsObjectiveType.MOB, type.name());
+        SessionPersistence.requestSave();
         return true;
     }
 
@@ -140,6 +136,7 @@ public class AllItemsData {
         playerFoundStructures.computeIfAbsent(player.getUniqueId(), k -> ConcurrentHashMap.newKeySet()).add(structure);
         addRecentFind(AllItemsObjectiveType.STRUCTURE, structure.name(), structure.getName(), entry);
         advanceChainIfNeeded(player, AllItemsObjectiveType.STRUCTURE, structure.name());
+        SessionPersistence.requestSave();
         return true;
     }
 
@@ -158,6 +155,7 @@ public class AllItemsData {
         playerFoundAdvancements.computeIfAbsent(player.getUniqueId(), k -> ConcurrentHashMap.newKeySet()).add(advancement);
         addRecentFind(AllItemsObjectiveType.ADVANCEMENT, advancement.name(), advancement.getName(), entry);
         advanceChainIfNeeded(player, AllItemsObjectiveType.ADVANCEMENT, advancement.name());
+        SessionPersistence.requestSave();
         return true;
     }
 
@@ -372,28 +370,22 @@ public class AllItemsData {
         data.teamStructures = serializeFoundStructures(teamFoundStructures);
         data.teamAdvancements = serializeFoundAdvancements(teamFoundAdvancements);
         data.playerProgress = serializePlayerProgress();
-
-        Path dataPath = getDataFilePath();
-        try {
-            Files.createDirectories(dataPath.getParent());
-            try (Writer writer = Files.newBufferedWriter(dataPath)) {
-                GSON.toJson(data, writer);
-            }
-        } catch (IOException e) {
-            MinecraftChallenges.get().getLogger().severe("Failed to save All Items data: " + e.getMessage());
+        data.teamChain = teamChain == null ? null : ChainJson.from(teamChain);
+        playerChains.forEach((uuid, chain) -> data.playerChains.put(uuid.toString(), ChainJson.from(chain)));
+        synchronized (recentFinds) {
+            data.recentFinds = recentFinds.stream().map(RecentFindJson::of).toList();
         }
+
+        WorldStorage.save(DATA_FILE_NAME, data);
     }
 
     public void loadFromFile() {
-        Path dataPath = getDataFilePath();
-        if (!Files.exists(dataPath)) {
+        SaveData data = WorldStorage.load(DATA_FILE_NAME, SaveData.class);
+        if (data == null) {
             return;
         }
 
-        try (Reader reader = Files.newBufferedReader(dataPath)) {
-            SaveData data = GSON.fromJson(reader, SaveData.class);
-            if (data == null) return;
-
+        try {
             if ("INDIVIDUAL".equalsIgnoreCase(data.gameMode)) {
                 AllItemsSettings.setGameMode(AllItemsSettings.GameMode.INDIVIDUAL);
             } else {
@@ -450,12 +442,34 @@ public class AllItemsData {
                     } catch (IllegalArgumentException ignored) {}
                 });
             }
-        } catch (IOException e) {
-            MinecraftChallenges.get().getLogger().severe("Failed to load All Items data: " + e.getMessage());
+
+            if (data.teamChain != null) {
+                teamChain = data.teamChain.toChainState();
+            }
+            if (data.playerChains != null) {
+                data.playerChains.forEach((uuid, chain) -> {
+                    try {
+                        ChainState state = chain.toChainState();
+                        if (state != null) {
+                            playerChains.put(UUID.fromString(uuid), state);
+                        }
+                    } catch (IllegalArgumentException ignored) {}
+                });
+            }
+            if (data.recentFinds != null) {
+                for (RecentFindJson find : data.recentFinds) {
+                    FoundObjective objective = find.toFoundObjective();
+                    if (objective != null) {
+                        recentFinds.add(objective);
+                    }
+                }
+            }
+        } catch (RuntimeException e) {
+            MinecraftChallenges.get().getLogger().warning("Failed to restore All Items data: " + e.getMessage());
         }
     }
 
-    private void clearAllProgress() {
+    public void clearAllProgress() {
         teamFoundItems.clear();
         teamFoundBiomes.clear();
         teamFoundMobs.clear();
@@ -608,8 +622,15 @@ public class AllItemsData {
         return progress;
     }
 
-    private Path getDataFilePath() {
-        return Paths.get(MinecraftChallenges.get().getDataDirectory().getAbsolutePath(), DATA_FILE_NAME);
+    private static @Nullable AllItemsObjectiveType parseObjectiveType(@Nullable String name) {
+        if (name == null) {
+            return null;
+        }
+        try {
+            return AllItemsObjectiveType.valueOf(name);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
     }
 
     private static class ChainState {
@@ -617,8 +638,12 @@ public class AllItemsData {
         private int index;
 
         ChainState(List<AllItemsObjective> objectives) {
+            this(objectives, 0);
+        }
+
+        ChainState(List<AllItemsObjective> objectives, int index) {
             this.objectives = objectives;
-            this.index = 0;
+            this.index = index;
         }
 
         @Nullable AllItemsObjective getCurrent() {
@@ -645,6 +670,58 @@ public class AllItemsData {
         Map<String, FoundEntryJson> teamStructures;
         Map<String, FoundEntryJson> teamAdvancements;
         Map<String, PlayerProgress> playerProgress;
+        ChainJson teamChain;
+        Map<String, ChainJson> playerChains = new HashMap<>();
+        List<RecentFindJson> recentFinds = new ArrayList<>();
+    }
+
+    private static class ChainJson {
+        List<ObjectiveJson> objectives = new ArrayList<>();
+        int index;
+
+        static ChainJson from(ChainState state) {
+            ChainJson json = new ChainJson();
+            json.objectives = state.objectives.stream().map(ObjectiveJson::from).toList();
+            json.index = state.index;
+            return json;
+        }
+
+        @Nullable ChainState toChainState() {
+            if (objectives == null || index < 0 || index > objectives.size()) {
+                return null;
+            }
+            List<AllItemsObjective> restored = new ArrayList<>();
+            for (ObjectiveJson objective : objectives) {
+                AllItemsObjective decoded = objective.toObjective();
+                if (decoded == null) {
+                    return null;
+                }
+                restored.add(decoded);
+            }
+            return new ChainState(restored, index);
+        }
+    }
+
+    private static class ObjectiveJson {
+        String type;
+        String key;
+        String displayName;
+
+        static ObjectiveJson from(AllItemsObjective objective) {
+            ObjectiveJson json = new ObjectiveJson();
+            json.type = objective.type().name();
+            json.key = objective.key();
+            json.displayName = objective.displayName();
+            return json;
+        }
+
+        @Nullable AllItemsObjective toObjective() {
+            AllItemsObjectiveType objectiveType = parseObjectiveType(type);
+            if (objectiveType == null || key == null) {
+                return null;
+            }
+            return new AllItemsObjective(objectiveType, key, Objects.requireNonNullElse(displayName, key));
+        }
     }
 
     private static class PlayerProgress {
@@ -741,6 +818,31 @@ public class AllItemsData {
                 uuid = new UUID(0L, 0L);
             }
             return new FoundEntry(playerName, uuid, time);
+        }
+    }
+
+    private static class RecentFindJson extends FoundEntryJson {
+        String type;
+        String key;
+        String displayName;
+
+        static RecentFindJson of(FoundObjective find) {
+            RecentFindJson json = new RecentFindJson();
+            json.type = find.type().name();
+            json.key = find.key();
+            json.displayName = find.displayName();
+            json.playerName = find.entry().playerName();
+            json.playerUUID = find.entry().playerUUID().toString();
+            json.foundTime = find.entry().getFormattedTime();
+            return json;
+        }
+
+        @Nullable FoundObjective toFoundObjective() {
+            AllItemsObjectiveType objectiveType = parseObjectiveType(type);
+            if (objectiveType == null || key == null) {
+                return null;
+            }
+            return new FoundObjective(objectiveType, key, Objects.requireNonNullElse(displayName, key), toFoundEntry());
         }
     }
 }

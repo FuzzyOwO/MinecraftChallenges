@@ -11,6 +11,7 @@ import gg.itzkatze.mcc.commands.framework.MccCommand;
 import gg.itzkatze.mcc.configuration.ChallengeSettingsManager;
 import gg.itzkatze.mcc.gui.MccGUI;
 import gg.itzkatze.mcc.scoreboard.ScoreboardContent;
+import gg.itzkatze.mcc.util.WorldStorage;
 import lombok.Getter;
 import org.bukkit.event.Listener;
 import org.jetbrains.annotations.NotNull;
@@ -42,6 +43,22 @@ public class AllItems implements Challenge {
     }
 
     @Override
+    public void saveData() {
+        data.saveToFile();
+    }
+
+    @Override
+    public void loadData() {
+        data.loadFromFile();
+    }
+
+    @Override
+    public void onGameReset() {
+        WorldStorage.delete("all_items_progress.json");
+        data.clearAllProgress();
+    }
+
+    @Override
     public @NotNull ChallengeType getType() {
         return ChallengeType.ALL_ITEMS;
     }
@@ -61,7 +78,7 @@ public class AllItems implements Challenge {
 
     @Override
     @NotNull public List<Runnable> getTasks() {
-        return List.of(data::saveToFile);
+        return List.of();
     }
 
     @Override

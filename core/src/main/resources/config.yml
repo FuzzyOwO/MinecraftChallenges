@@ -141,7 +141,8 @@ exclude:
     biomes:
         - THE_VOID
 
-    # default height range: -63 - 320
     heights:
     advancements:
     structures:
+
+forcebattle-duration-minutes: 60

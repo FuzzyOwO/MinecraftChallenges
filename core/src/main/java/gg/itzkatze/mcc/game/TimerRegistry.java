@@ -35,5 +35,14 @@ public final class TimerRegistry {
         @Override public void start() { this.running = true; }
         @Override public void pause() { this.running = false; }
         @Override public void stop() { this.running = false; }
+
+        @Override
+        public void restore(Mode mode, int durationSeconds, int remainingSeconds, int elapsedSeconds, boolean hitZero) {
+            this.mode = mode;
+            this.duration = durationSeconds;
+            this.remainingSeconds = remainingSeconds;
+            this.elapsedSeconds = elapsedSeconds;
+            this.running = false;
+        }
     }
 }

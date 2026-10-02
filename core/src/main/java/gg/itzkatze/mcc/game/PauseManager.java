@@ -5,6 +5,7 @@ import gg.itzkatze.mcc.challenges.ChallengeManager;
 import org.bukkit.Bukkit;
 import org.bukkit.GameRules;
 import org.bukkit.Location;
+import org.bukkit.NamespacedKey;
 import org.bukkit.World;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
@@ -14,7 +15,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockCookEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
-import org.bukkit.event.world.ChunkLoadEvent;
+import org.bukkit.event.world.EntitiesLoadEvent;
 import org.bukkit.event.inventory.BrewEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
@@ -22,6 +23,7 @@ import org.bukkit.event.inventory.FurnaceBurnEvent;
 import org.bukkit.event.inventory.FurnaceSmeltEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.util.Vector;
 
 import java.util.HashMap;
@@ -32,12 +34,15 @@ import java.util.UUID;
 
 public class PauseManager implements Listener {
 
+    private static final NamespacedKey PAUSED_AI_KEY = new NamespacedKey("minecraftchallenges", "paused_ai");
+
     private boolean pauseApplied = false;
     private final Map<String, Integer> randomTickSpeedByWorld = new HashMap<>();
     private final Map<UUID, Location> frozenLocations = new HashMap<>();
     private final Set<UUID> aiDisabledEntities = new HashSet<>();
 
     public void startStateWatcher() {
+        Bukkit.getWorlds().forEach(world -> world.getEntities().forEach(this::restoreEntityAI));
         Bukkit.getScheduler().runTaskTimer(MinecraftChallenges.get(), this::updatePauseState, 1L, 5L);
     }
 
@@ -59,7 +64,10 @@ public class PauseManager implements Listener {
 
         for (World world : Bukkit.getWorlds()) {
             Integer randomTickSpeed = world.getGameRuleValue(GameRules.RANDOM_TICK_SPEED);
-            randomTickSpeedByWorld.put(world.getName(), randomTickSpeed);
+            // A speed of 0 is most likely left over from a pause the server crashed in, so resuming falls back to the default.
+            if (randomTickSpeed != null && randomTickSpeed != 0) {
+                randomTickSpeedByWorld.put(world.getName(), randomTickSpeed);
+            }
 
             world.setGameRule(GameRules.RANDOM_TICK_SPEED, 0);
             world.setGameRule(GameRules.ADVANCE_TIME, false);
@@ -71,6 +79,7 @@ public class PauseManager implements Listener {
                     try {
                         if (livingEntity.hasAI()) {
                             livingEntity.setAI(false);
+                            livingEntity.getPersistentDataContainer().set(PAUSED_AI_KEY, PersistentDataType.BOOLEAN, true);
                             aiDisabledEntities.add(livingEntity.getUniqueId());
                         }
                     } catch (Throwable ignored) {
@@ -103,11 +112,13 @@ public class PauseManager implements Listener {
             return;
         }
         UUID entityId = livingEntity.getUniqueId();
-        if (!aiDisabledEntities.contains(entityId)) {
+        boolean pausedByPlugin = aiDisabledEntities.contains(entityId) || livingEntity.getPersistentDataContainer().has(PAUSED_AI_KEY);
+        if (!pausedByPlugin) {
             return;
         }
         try {
             livingEntity.setAI(true);
+            livingEntity.getPersistentDataContainer().remove(PAUSED_AI_KEY);
             aiDisabledEntities.remove(entityId);
         } catch (Throwable ignored) {
         }
@@ -180,11 +191,11 @@ public class PauseManager implements Listener {
     }
 
     @EventHandler
-    public void onChunkLoad(ChunkLoadEvent event) {
-        if (pauseApplied || aiDisabledEntities.isEmpty()) {
+    public void onEntitiesLoad(EntitiesLoadEvent event) {
+        if (pauseApplied) {
             return;
         }
-        for (Entity entity : event.getChunk().getEntities()) {
+        for (Entity entity : event.getEntities()) {
             restoreEntityAI(entity);
         }
     }

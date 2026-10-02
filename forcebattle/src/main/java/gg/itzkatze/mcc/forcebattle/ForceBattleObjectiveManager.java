@@ -28,6 +28,7 @@ import org.bukkit.Material;
 import org.bukkit.Registry;
 import org.bukkit.block.Biome;
 import org.bukkit.entity.EntityType;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
@@ -196,6 +197,21 @@ public class ForceBattleObjectiveManager {
             }
         }
         return list;
+    }
+
+    public @NotNull List<ObjectiveSeed> exportChain() {
+        return List.copyOf(chainList);
+    }
+
+    public @NotNull List<ObjectiveSeed> exportTeamChain() {
+        return List.copyOf(teamChainList);
+    }
+
+    public void importChains(@NotNull List<ObjectiveSeed> chain, @NotNull List<ObjectiveSeed> teamChain) {
+        chainList.clear();
+        chainList.addAll(chain);
+        teamChainList.clear();
+        teamChainList.addAll(teamChain);
     }
 
     private List<ObjectiveSeed> getChainList() {
@@ -554,13 +570,13 @@ public class ForceBattleObjectiveManager {
             StructureSimplified.END_CITY
     );
 
-    private static final class ObjectiveSeed {
+    @Getter
+    public static final class ObjectiveSeed {
         private final ForceBattleType type;
         private final Object value;
-        @Getter
         private final String key;
 
-        private ObjectiveSeed(ForceBattleType type, Object value) {
+        public ObjectiveSeed(ForceBattleType type, Object value) {
             this.type = type;
             this.value = value;
             this.key = ForceBattleObjective.buildObjectiveString(type, value);

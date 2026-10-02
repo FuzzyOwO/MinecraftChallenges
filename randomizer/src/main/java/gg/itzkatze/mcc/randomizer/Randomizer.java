@@ -23,12 +23,22 @@ public class Randomizer implements Challenge {
 
     @Override
     public void onEnable() {
-        gameListener.resetMappings();
+        gameListener.loadFromFile();
     }
 
     @Override
     public void onDisable() {
-        gameListener.resetMappings();
+        gameListener.saveToFile();
+    }
+
+    @Override
+    public void saveData() {
+        gameListener.saveToFile();
+    }
+
+    @Override
+    public void loadData() {
+        gameListener.loadFromFile();
     }
 
     @Override

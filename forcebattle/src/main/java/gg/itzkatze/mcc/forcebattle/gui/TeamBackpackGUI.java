@@ -48,6 +48,11 @@ public class TeamBackpackGUI extends MccGUI {
         if (index > 0) set(GUIClickableItem.getGoBackItem(size - 9, team.getBACKPACK_INVENTORIES().get(index - 1)));
     }
 
+    public boolean isNavigationSlot(int slot) {
+        int inventoryPages = team.getBACKPACK_INVENTORIES().size();
+        return (slot == size - 1 && index < inventoryPages - 1) || (slot == size - 9 && index > 0);
+    }
+
     @Override
     public boolean allowItemMoving() {
         return true;

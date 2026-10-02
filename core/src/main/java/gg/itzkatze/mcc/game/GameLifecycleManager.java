@@ -3,6 +3,8 @@ package gg.itzkatze.mcc.game;
 import gg.itzkatze.mcc.MinecraftChallenges;
 import gg.itzkatze.mcc.challenges.ChallengeManager;
 import gg.itzkatze.mcc.player.MccPlayer;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Sound;
@@ -12,6 +14,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.world.WorldSaveEvent;
 import org.jetbrains.annotations.NotNull;
 
 public class GameLifecycleManager implements Listener {
@@ -19,6 +22,10 @@ public class GameLifecycleManager implements Listener {
     @EventHandler(ignoreCancelled = true)
     public void onPlayerJoin(@NotNull PlayerJoinEvent event) {
         if (ChallengeManager.isGameStarted()) {
+            if (event.getPlayer().isOp() && SessionPersistence.isAwaitingResume()) {
+                event.getPlayer().sendMessage(Component.text("The game was restored after a server restart and is paused. Use /timer resume to continue.")
+                        .color(NamedTextColor.YELLOW));
+            }
             return;
         }
 
@@ -31,6 +38,14 @@ public class GameLifecycleManager implements Listener {
         if (!ChallengeManager.isGameStarted()) {
             MccPlayer.remove(event.getPlayer().getUniqueId());
         }
+    }
+
+    @EventHandler
+    public void onWorldSave(@NotNull WorldSaveEvent event) {
+        if (Bukkit.getWorlds().isEmpty() || !event.getWorld().equals(Bukkit.getWorlds().getFirst())) {
+            return;
+        }
+        SessionPersistence.saveNow();
     }
 
     public static void sendToLobby(@NotNull MccPlayer player) {
@@ -47,6 +62,7 @@ public class GameLifecycleManager implements Listener {
     }
 
     public static void startGame() {
+        MccPlayer.removeOfflinePlayers();
         SpawnManager.destroySpawn();
 
         World world = Bukkit.getWorld("world");
@@ -71,6 +87,7 @@ public class GameLifecycleManager implements Listener {
     public static void resetGame() {
         MinecraftChallenges.getTimer().stop();
         ChallengeManager.resetGameState();
+        SessionPersistence.delete();
         MccPlayer.removeOfflinePlayers();
 
         for (MccPlayer player : MccPlayer.getOnlinePlayers()) {
