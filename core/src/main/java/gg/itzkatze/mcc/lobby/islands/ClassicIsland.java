@@ -19,7 +19,7 @@ public class ClassicIsland extends LobbyIsland {
 
     @Override
     public @NotNull Vector getSpawnPosition() {
-        return new Vector(26, 9, 28);
+        return new Vector(41, 10, 28);
     }
 
     @Override

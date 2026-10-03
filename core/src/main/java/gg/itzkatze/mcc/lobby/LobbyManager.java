@@ -43,7 +43,7 @@ public class LobbyManager implements Listener {
     private static final String ISLAND_PACKAGE = "gg.itzkatze.mcc.lobby.islands";
     private static final String WORLD_NAME = "world";
     private static final String RECORD_FILE = "lobby.json";
-    private static final int BASE_Y = 192;
+    private static final int BASE_Y = 190;
 
     private static final List<LobbyIsland> islands = new ArrayList<>();
     private static @Nullable Lobby activeLobby;
