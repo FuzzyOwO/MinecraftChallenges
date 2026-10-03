@@ -87,6 +87,7 @@ public class ForceBattle implements Challenge {
         gameListener.clearPendingRestores();
         StructureTask.clearCache();
         ForceBattleObjective.deleteAll();
+        ForceBattleObjectiveManager.getInstance().clearChains();
         MccTeam.teams.stream()
                 .filter(ForceBattleTeam.class::isInstance)
                 .map(ForceBattleTeam.class::cast)

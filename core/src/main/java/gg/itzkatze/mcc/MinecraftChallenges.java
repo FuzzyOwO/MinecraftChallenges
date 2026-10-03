@@ -11,8 +11,8 @@ import gg.itzkatze.mcc.game.GameLifecycleManager;
 import gg.itzkatze.mcc.game.MccTimer;
 import gg.itzkatze.mcc.game.PauseManager;
 import gg.itzkatze.mcc.game.SessionPersistence;
-import gg.itzkatze.mcc.game.SpawnManager;
 import gg.itzkatze.mcc.gui.GUIListener;
+import gg.itzkatze.mcc.lobby.LobbyManager;
 import gg.itzkatze.mcc.gui.sign.SignInput;
 import gg.itzkatze.mcc.configuration.SettingsFile;
 import gg.itzkatze.mcc.game.GameTimer;
@@ -75,7 +75,8 @@ public final class MinecraftChallenges extends JavaPlugin {
         ScoreboardManager.startUpdater();
 
         getServer().getPluginManager().registerEvents(new GameLifecycleManager(), this);
-        getServer().getPluginManager().registerEvents(new SpawnManager(), this);
+        getServer().getPluginManager().registerEvents(new LobbyManager(), this);
+        LobbyManager.loadIslands();
         getServer().getPluginManager().registerEvents(new TeamChatManager(), this);
         getServer().getPluginManager().registerEvents(pauseManager, this);
         pauseManager.startStateWatcher();

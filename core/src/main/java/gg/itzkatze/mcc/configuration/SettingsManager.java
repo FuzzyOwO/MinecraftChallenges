@@ -29,8 +29,9 @@ public class SettingsManager {
         if (state == null) {
             state = setting.getDefaultState();
         }
-        if (state != null) {
-            GLOBAL_SETTINGS_MANAGER.setState(setting, state);
+        ChallengeSettingsManager manager = findSettingsManagerFor(setting);
+        if (state != null && manager != null) {
+            manager.setState(setting, state);
         }
     }
 

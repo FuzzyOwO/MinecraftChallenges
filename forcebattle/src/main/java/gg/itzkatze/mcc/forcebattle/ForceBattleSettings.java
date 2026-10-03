@@ -26,7 +26,11 @@ public enum ForceBattleSettings implements Setting {
     EXCLUDE_POTTERY_SHERDS(true, "Exclude Pottery Sherds", OnOffState.ON),
     EXCLUDE_ORES(true, "Exclude Ores", OnOffState.ON),
     EXCLUDE_END(true, "Exclude End", OnOffState.ON),
-    EXCLUDE_TRIAL_ITEMS(true, "Exclude Trial Items", OnOffState.ON); //TODO needs to be done still
+    EXCLUDE_TRIAL_ITEMS(true, "Exclude Trial Items", OnOffState.ON),
+    EXCLUDE_OXIDIZED_COPPER(true, "Exclude Oxidized Copper", OnOffState.ON),
+    EXCLUDE_HEADS(true, "Exclude Heads", OnOffState.ON),
+    EXCLUDE_SNIFFER(true, "Exclude Sniffer", OnOffState.ON),
+    EXCLUDE_UNREALISTIC(true, "Exclude Unrealistic", OnOffState.ON);
 
     private final boolean updateOnChange;
     private final String displayName;
