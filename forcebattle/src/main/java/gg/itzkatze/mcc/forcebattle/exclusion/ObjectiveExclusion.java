@@ -29,8 +29,9 @@ public enum ObjectiveExclusion {
     MUSIC_DISCS(ForceBattleSettings.EXCLUDE_MUSIC_DISCS, Material.MUSIC_DISC_CAT, "Music discs and the disc fragment", ExclusionRules.builder()
             .items(Material.DISC_FRAGMENT_5)
             .itemsNamed(name -> name.startsWith("MUSIC_DISC_"))),
-    BANNER_PATTERNS(ForceBattleSettings.EXCLUDE_BANNER_PATTERNS, Material.FLOWER_BANNER_PATTERN, "All banner patterns", ExclusionRules.builder()
-            .itemsNamed(name -> name.endsWith("_BANNER_PATTERN"))),
+    BANNER_PATTERNS(ForceBattleSettings.EXCLUDE_BANNER_PATTERNS, Material.GLOBE_BANNER_PATTERN,
+            "Banner patterns except Field Masoned, Bordure Indented and Flower Charge",
+            ExclusionRules.builder().itemsNamed(ObjectiveExclusion::isRareBannerPattern)),
     ARMOR_TEMPLATES(ForceBattleSettings.EXCLUDE_ARMOR_TEMPLATES, Material.SENTRY_ARMOR_TRIM_SMITHING_TEMPLATE, "Armor trim and netherite upgrade templates",
             ExclusionRules.builder().itemsNamed(name -> name.endsWith("_SMITHING_TEMPLATE"))),
     POTTERY_SHERDS(ForceBattleSettings.EXCLUDE_POTTERY_SHERDS, Material.ANGLER_POTTERY_SHERD, "All pottery sherds", ExclusionRules.builder()
@@ -75,6 +76,7 @@ public enum ObjectiveExclusion {
             .mobs(EntityType.SKELETON_HORSE)
             .deaths(MccDamageType.LIGHTNING_BOLT));
 
+    private static final Set<String> COMMON_BANNER_PATTERNS = Set.of("FIELD_MASONED_BANNER_PATTERN", "BORDURE_INDENTED_BANNER_PATTERN", "FLOWER_BANNER_PATTERN");
     private static final List<String> OXIDATION_STAGES = List.of("EXPOSED_", "WEATHERED_", "OXIDIZED_");
     private static final Set<String> CRAFTED_UNOXIDIZED_ONLY = Set.of("COPPER_BARS", "COPPER_CHAIN", "COPPER_LANTERN", "LIGHTNING_ROD", "COPPER_CHEST");
 
@@ -96,6 +98,10 @@ public enum ObjectiveExclusion {
 
     public static @NotNull List<ObjectiveExclusion> toggleable() {
         return Arrays.stream(values()).filter(exclusion -> exclusion.setting != null).toList();
+    }
+
+    private static boolean isRareBannerPattern(@NotNull String name) {
+        return name.endsWith("_BANNER_PATTERN") && !COMMON_BANNER_PATTERNS.contains(name);
     }
 
     /**
