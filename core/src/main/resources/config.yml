@@ -9,12 +9,6 @@ first-startup: true
 ### Names are case-insensitive; a "minecraft:" prefix is optional. Unobtainable objectives are excluded automatically. ###
 exclude:
     items:
-        - DECORATED_POT
-        - WRITTEN_BOOK
-        - TIPPED_ARROW
-        - POTION
-        - SPLASH_POTION
-        - LINGERING_POTION
     mobs:
     biomes:
     structures:

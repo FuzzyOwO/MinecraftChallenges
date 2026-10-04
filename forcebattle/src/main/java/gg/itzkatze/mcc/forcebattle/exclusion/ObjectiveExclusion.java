@@ -22,7 +22,8 @@ public enum ObjectiveExclusion {
                     Material.TEST_BLOCK, Material.TEST_INSTANCE_BLOCK, Material.COMMAND_BLOCK, Material.CHAIN_COMMAND_BLOCK, Material.REPEATING_COMMAND_BLOCK,
                     Material.COMMAND_BLOCK_MINECART, Material.DEBUG_STICK, Material.KNOWLEDGE_BOOK, Material.SPAWNER, Material.TRIAL_SPAWNER, Material.VAULT,
                     Material.BUDDING_AMETHYST, Material.REINFORCED_DEEPSLATE, Material.END_PORTAL_FRAME, Material.CHORUS_PLANT, Material.FARMLAND, Material.DIRT_PATH,
-                    Material.FROGSPAWN, Material.SUSPICIOUS_SAND, Material.SUSPICIOUS_GRAVEL, Material.PLAYER_HEAD, Material.PETRIFIED_OAK_SLAB)
+                    Material.FROGSPAWN, Material.SUSPICIOUS_SAND, Material.SUSPICIOUS_GRAVEL, Material.PLAYER_HEAD, Material.PETRIFIED_OAK_SLAB, Material.POTION,
+                    Material.TIPPED_ARROW, Material.SPLASH_POTION, Material.LINGERING_POTION, Material.WRITTEN_BOOK)
             .itemsNamed(name -> name.startsWith("INFESTED_") || name.endsWith("_SPAWN_EGG"))
             .mobs(EntityType.GIANT, EntityType.ILLUSIONER, EntityType.MANNEQUIN, EntityType.ARMOR_STAND, EntityType.CREAKING)
             .biomes("the_void")),
@@ -74,7 +75,8 @@ public enum ObjectiveExclusion {
                     MccAdvancement.BEACONATOR, MccAdvancement.WITH_OUR_POWERS_COMBINED, MccAdvancement.WHEN_THE_SQUAD_HOPS_INTO_TOWN, MccAdvancement.COVER_ME_IN_DEBRIS,
                     MccAdvancement.VERY_VERY_FRIGHTENING, MccAdvancement.SURGE_PROTECTOR)
             .mobs(EntityType.SKELETON_HORSE)
-            .deaths(MccDamageType.LIGHTNING_BOLT));
+            .deaths(MccDamageType.LIGHTNING_BOLT)
+            .items(Material.MACE, Material.HEAVY_CORE, Material.BEACON, Material.NETHER_STAR));
 
     private static final Set<String> COMMON_BANNER_PATTERNS = Set.of("FIELD_MASONED_BANNER_PATTERN", "BORDURE_INDENTED_BANNER_PATTERN", "FLOWER_BANNER_PATTERN");
     private static final List<String> OXIDATION_STAGES = List.of("EXPOSED_", "WEATHERED_", "OXIDIZED_");
