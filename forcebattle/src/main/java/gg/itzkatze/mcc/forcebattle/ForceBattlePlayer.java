@@ -164,6 +164,7 @@ public class ForceBattlePlayer extends MccPlayer {
         this.points = 0;
         this.chainProgress = 0;
         this.skippedObjectives = new ArrayList<>();
+        setCurrentObjective(null, false, false);
         if (isInTeam() && getTeam() instanceof ForceBattleTeam fbTeam) {
             fbTeam.setChainProgress(0);
         }

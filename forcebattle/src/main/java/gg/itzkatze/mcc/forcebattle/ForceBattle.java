@@ -6,6 +6,7 @@ import gg.itzkatze.mcc.team.MccTeam;
 import gg.itzkatze.mcc.player.MccPlayer;
 import gg.itzkatze.mcc.bossbar.BossbarContent;
 import gg.itzkatze.mcc.challenges.Challenge;
+import gg.itzkatze.mcc.challenges.ChallengeManager;
 import gg.itzkatze.mcc.challenges.ChallengeType;
 import gg.itzkatze.mcc.challenges.TimerSpec;
 import gg.itzkatze.mcc.game.GameTimer;
@@ -21,6 +22,7 @@ import gg.itzkatze.mcc.gui.MccGUI;
 import gg.itzkatze.mcc.scoreboard.ScoreboardContent;
 import org.bukkit.Bukkit;
 import org.bukkit.GameRules;
+import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,6 +47,9 @@ public class ForceBattle implements Challenge {
         MccTeam.upgrade(ChallengeType.FORCE_BATTLE);
         NametagManager.runTask();
         loadData();
+        if (!ChallengeManager.isGameStarted()) {
+            Bukkit.getOnlinePlayers().forEach(ForceBattleGuideBook::give);
+        }
     }
 
     @Override
@@ -96,7 +101,15 @@ public class ForceBattle implements Challenge {
                 .filter(ForceBattlePlayer.class::isInstance)
                 .map(ForceBattlePlayer.class::cast)
                 .filter(player -> !player.isOffline())
-                .forEach(player -> player.reset(true));
+                .forEach(player -> player.reset(false));
+    }
+
+    @Override
+    public void onLobbyJoin(@NotNull MccPlayer player) {
+        Player bukkitPlayer = player.getPlayer();
+        if (bukkitPlayer != null) {
+            ForceBattleGuideBook.give(bukkitPlayer);
+        }
     }
 
     @Override

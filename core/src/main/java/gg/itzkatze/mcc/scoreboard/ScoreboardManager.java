@@ -16,12 +16,14 @@ import org.bukkit.scoreboard.DisplaySlot;
 import org.bukkit.scoreboard.Objective;
 import org.bukkit.scoreboard.Score;
 import org.bukkit.scoreboard.Scoreboard;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
 
 public class ScoreboardManager {
 
+    private static final String SIDEBAR_OBJECTIVE = "challenge_info";
     private static final Map<MccPlayer, Scoreboard> SCOREBOARDS = new HashMap<>();
     private static final Map<MccPlayer, Map<Integer, Component>> LAST_LINES = new HashMap<>();
 
@@ -41,13 +43,17 @@ public class ScoreboardManager {
             if (shouldHaveScoreboard && showScoreboard) {
                 updateScoreboard(mccPlayer);
             } else if (SCOREBOARDS.containsKey(mccPlayer)) {
-                removeScoreboard(mccPlayer);
+                removeSidebar(mccPlayer);
             }
         }
     }
 
     public static Scoreboard getOrCreateScoreboard(MccPlayer player) {
         return SCOREBOARDS.computeIfAbsent(player, p -> Bukkit.getScoreboardManager().getNewScoreboard());
+    }
+
+    public static @Nullable Scoreboard findScoreboard(MccPlayer player) {
+        return SCOREBOARDS.get(player);
     }
 
     public static void updateScoreboard(MccPlayer player) {
@@ -66,10 +72,10 @@ public class ScoreboardManager {
 
         Scoreboard scoreboard = getOrCreateScoreboard(player);
 
-        Objective obj = scoreboard.getObjective("challenge_info");
+        Objective obj = scoreboard.getObjective(SIDEBAR_OBJECTIVE);
         if (obj == null) {
             obj = scoreboard.registerNewObjective(
-                    "challenge_info", "dummy",
+                    SIDEBAR_OBJECTIVE, "dummy",
                     styleTitle(content.getTitle())
             );
             obj.setDisplaySlot(DisplaySlot.SIDEBAR);
@@ -113,10 +119,15 @@ public class ScoreboardManager {
         }
     }
 
-    public static void removeScoreboard(MccPlayer player) {
-        player.getPlayer().setScoreboard(Bukkit.getScoreboardManager().getNewScoreboard());
-        SCOREBOARDS.remove(player);
+    public static void removeSidebar(MccPlayer player) {
         LAST_LINES.remove(player);
+        Scoreboard scoreboard = SCOREBOARDS.get(player);
+        if (scoreboard == null) return;
+
+        Objective sidebar = scoreboard.getObjective(SIDEBAR_OBJECTIVE);
+        if (sidebar != null) {
+            sidebar.unregister();
+        }
     }
 
     private static Component styleTitle(Component title) {

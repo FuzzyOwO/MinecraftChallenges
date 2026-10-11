@@ -16,7 +16,9 @@ import gg.itzkatze.mcc.util.StringUtility;
 import net.kyori.adventure.text.Component;
 import org.bukkit.*;
 import org.bukkit.entity.Player;
+import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
@@ -361,6 +363,16 @@ public class ForceBattleGameListener implements Listener {
         mccPlayer.sendMessage(Component.text("Your objective has been swapped with " + targetPlayer.getName() + "."));
 
         targetPlayer.getPlayer().playSound(targetPlayer.getPlayer(), Sound.BLOCK_NOTE_BLOCK_BASS, SoundCategory.MASTER, 1, 20);
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onGuideBookUse(@NotNull PlayerInteractEvent event) {
+        if (event.getAction() != Action.RIGHT_CLICK_BLOCK && event.getAction() != Action.RIGHT_CLICK_AIR) return;
+        if (event.useItemInHand() != Event.Result.DENY) return;
+        ItemStack item = event.getItem();
+        if (item == null || !ForceBattleGuideBook.isGuideBook(item)) return;
+
+        event.getPlayer().openBook(item);
     }
 
     @EventHandler

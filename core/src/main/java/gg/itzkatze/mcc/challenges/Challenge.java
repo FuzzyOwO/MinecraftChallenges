@@ -22,6 +22,8 @@ public interface Challenge extends ChallengeSettings {
 
     default void onGameReset() {}
 
+    default void onLobbyJoin(@NotNull MccPlayer player) {}
+
     default void saveData() {}
 
     default void loadData() {}

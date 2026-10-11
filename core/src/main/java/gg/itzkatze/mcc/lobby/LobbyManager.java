@@ -20,9 +20,11 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockPhysicsEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
+import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.structure.Structure;
+import org.bukkit.util.BlockVector;
 import org.bukkit.util.BoundingBox;
 import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
@@ -123,6 +125,33 @@ public class LobbyManager implements Listener {
         }
     }
 
+    public static @Nullable LobbyIsland pickOtherIsland(@NotNull Random random) {
+        Lobby lobby = activeLobby;
+        if (lobby == null) return null;
+
+        String currentId = lobby.getIsland().getId();
+        List<LobbyIsland> order = selectionOrder(islands, currentId, random);
+        return order.isEmpty() || order.getFirst().getId().equals(currentId) ? null : order.getFirst();
+    }
+
+    public static boolean switchIsland(@NotNull LobbyIsland island) {
+        Lobby previous = activeLobby;
+        World world = Bukkit.getWorld(WORLD_NAME);
+        if (previous == null || world == null) return false;
+        if (previous.getIsland().getId().equals(island.getId())) return true;
+
+        Structure structure = StructureUtil.loadStructure(island.getStructureName());
+        if (structure == null) return false;
+
+        destroyLobby();
+        Lobby lobby = create(island, structure, world);
+        for (MccPlayer player : MccPlayer.getOnlinePlayers()) {
+            player.teleport(lobby.getSpawn());
+            onPlayerJoin(player);
+        }
+        return true;
+    }
+
     public static void onPlayerJoin(@NotNull MccPlayer player) {
         Lobby lobby = activeLobby;
         if (lobby == null) return;
@@ -160,7 +189,16 @@ public class LobbyManager implements Listener {
         Structure structure = StructureUtil.loadStructure(island.getStructureName());
         if (structure == null) return false;
 
-        Lobby lobby = new Lobby(island, world, structure.getSize(), BASE_Y);
+        create(island, structure, world);
+        return true;
+    }
+
+    private static @NotNull Lobby create(@NotNull LobbyIsland island, @NotNull Structure structure, @NotNull World world) {
+        Lobby lobby = new Lobby(island, world, structure.getSize(), BASE_Y, StructureUtil.barrierBounds(island.getStructureName(), structure));
+        // Blocks with block-entity data are pasted last, so anything resting on them (carpets) would break first. The paste replaces each stand-in.
+        for (BlockVector position : StructureUtil.blockEntityPositions(island.getStructureName(), structure)) {
+            lobby.toWorld(position).getBlock().setType(Material.STONE, false);
+        }
         structure.place(lobby.toWorld(new Vector()), true, island.getRotation(), Mirror.NONE, 0, 1.0f, new Random());
 
         world.setTime(6000);
@@ -179,7 +217,7 @@ public class LobbyManager implements Listener {
                 Bukkit.getPluginManager().registerEvents(listener, MinecraftChallenges.get());
             }
         }
-        return true;
+        return lobby;
     }
 
     private static void clear(@NotNull LobbyRecord record) {
@@ -242,6 +280,13 @@ public class LobbyManager implements Listener {
 
     @EventHandler
     public void onHungerChange(FoodLevelChangeEvent event) {
+        if (activeLobby != null) {
+            event.setCancelled(true);
+        }
+    }
+
+    @EventHandler
+    public void onDropItem(PlayerDropItemEvent event) {
         if (activeLobby != null) {
             event.setCancelled(true);
         }

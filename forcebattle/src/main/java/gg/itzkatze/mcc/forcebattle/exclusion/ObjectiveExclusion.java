@@ -76,7 +76,8 @@ public enum ObjectiveExclusion {
                     MccAdvancement.VERY_VERY_FRIGHTENING, MccAdvancement.SURGE_PROTECTOR)
             .mobs(EntityType.SKELETON_HORSE)
             .deaths(MccDamageType.LIGHTNING_BOLT)
-            .items(Material.MACE, Material.HEAVY_CORE, Material.BEACON, Material.NETHER_STAR));
+            .items(Material.MACE, Material.HEAVY_CORE, Material.BEACON, Material.NETHER_STAR, Material.CHAINMAIL_HELMET, Material.CHAINMAIL_CHESTPLATE,
+                    Material.CHAINMAIL_LEGGINGS, Material.CHAINMAIL_BOOTS));
 
     private static final Set<String> COMMON_BANNER_PATTERNS = Set.of("FIELD_MASONED_BANNER_PATTERN", "BORDURE_INDENTED_BANNER_PATTERN", "FLOWER_BANNER_PATTERN");
     private static final List<String> OXIDATION_STAGES = List.of("EXPOSED_", "WEATHERED_", "OXIDIZED_");

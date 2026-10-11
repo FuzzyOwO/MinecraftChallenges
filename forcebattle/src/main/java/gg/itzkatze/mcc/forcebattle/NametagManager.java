@@ -40,6 +40,14 @@ public class NametagManager {
             runningTask = null;
         }
         lastSuffixes.clear();
+        MccPlayer.PLAYERS.forEach(NametagManager::removeNametags);
+    }
+
+    private static void removeNametags(@NotNull MccPlayer viewer) {
+        Scoreboard scoreboard = ScoreboardManager.findScoreboard(viewer);
+        if (scoreboard != null) {
+            scoreboard.getTeams().forEach(Team::unregister);
+        }
     }
 
     private static void updateNametag(@NotNull MccPlayer mccPlayer) {

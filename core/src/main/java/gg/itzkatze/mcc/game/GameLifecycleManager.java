@@ -69,6 +69,7 @@ public class GameLifecycleManager implements Listener {
             player.getPlayer().teleport(spawn);
         }
         LobbyManager.onPlayerJoin(player);
+        ChallengeManager.getActiveChallenges().forEach(challenge -> challenge.onLobbyJoin(player));
     }
 
     public static void startGame() {
@@ -112,6 +113,7 @@ public class GameLifecycleManager implements Listener {
     }
 
     public static void resetGame() {
+        StartCountdown.cancel();
         MinecraftChallenges.getTimer().stop();
         ChallengeManager.resetGameState();
         SessionPersistence.delete();

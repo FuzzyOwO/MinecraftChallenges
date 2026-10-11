@@ -38,7 +38,7 @@ Access global plugin settings anytime in-game using `/settings`:
 
 | Command           | Description                                                    |
 |:------------------|:---------------------------------------------------------------|
-| `/start`          | Starts the selected challenge                                  |
+| `/start`          | Starts the selected challenge after a 5 second countdown       |
 | `/reset [player]` | Resets the game or a specific player                           |
 | `/timer`          | Controls the global timer (start, pause, resume, set duration) |
 | `/settings`       | Opens the global settings GUI                                  |

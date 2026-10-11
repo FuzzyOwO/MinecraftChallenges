@@ -8,6 +8,7 @@ import gg.itzkatze.mcc.commands.framework.MccCommand;
 import gg.itzkatze.mcc.game.GameLifecycleManager;
 import gg.itzkatze.mcc.game.GameTimer;
 import gg.itzkatze.mcc.game.SessionPersistence;
+import gg.itzkatze.mcc.game.StartCountdown;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.permissions.PermissionDefault;
@@ -30,14 +31,30 @@ public class StartCommand extends MccCommand {
 
     @Override
     public void executeCommand(@NotNull CommandCaller caller, String[] args) {
+        if (StartCountdown.isRunning()) {
+            caller.sendMessage(Component.text("The game is already starting.").color(NamedTextColor.RED));
+            return;
+        }
+        if (!canStart(caller)) return;
+
+        caller.sendMessage(Component.text("The game starts in " + StartCountdown.SECONDS + " seconds.").color(NamedTextColor.GREEN));
+        StartCountdown.begin(() -> start(caller));
+    }
+
+    private static boolean canStart(@NotNull CommandCaller caller) {
         if (ChallengeManager.getActiveChallenges().isEmpty()) {
             caller.sendMessage(Component.text("No challenge is enabled, game can not be started!").color(NamedTextColor.RED));
-            return;
+            return false;
         }
         if (ChallengeManager.isGameStarted()) {
             caller.sendMessage(Component.text("The game has already been started.").color(NamedTextColor.RED));
-            return;
+            return false;
         }
+        return true;
+    }
+
+    private static void start(@NotNull CommandCaller caller) {
+        if (!canStart(caller)) return;
 
         GameLifecycleManager.startGame();
         if (!ChallengeManager.startActiveChallenges()) {
