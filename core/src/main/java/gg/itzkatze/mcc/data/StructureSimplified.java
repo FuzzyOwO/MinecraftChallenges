@@ -29,7 +29,14 @@ public enum StructureSimplified {
     IGLOO("Igloo", new GUIMaterial(Material.SNOW_BLOCK), List.of(MccStructure.IGLOO)),
     BASTION_REMNANT("Bastion Remnant", new GUIMaterial(Material.POLISHED_BLACKSTONE_BRICKS), List.of(MccStructure.BASTION_REMNANT)),
     FORTRESS("Fortress", new GUIMaterial(Material.NETHER_BRICKS), List.of(MccStructure.FORTRESS)),
-    STRONGHOLD("Stronghold", new GUIMaterial(Material.END_PORTAL_FRAME), List.of(MccStructure.STRONGHOLD));
+    STRONGHOLD("Stronghold", new GUIMaterial(Material.END_PORTAL_FRAME), List.of(MccStructure.STRONGHOLD)),
+    ABANDONED_CAMP("Abandoned Camp", new GUIMaterial(Material.CAMPFIRE), List.of(
+            MccStructure.ABANDONED_CAMP_BAMBOO_JUNGLE, MccStructure.ABANDONED_CAMP_BIRCH_FOREST, MccStructure.ABANDONED_CAMP_CHERRY_GROVE,
+            MccStructure.ABANDONED_CAMP_DAPPLED_FOREST, MccStructure.ABANDONED_CAMP_FLOWER_FOREST, MccStructure.ABANDONED_CAMP_FOREST,
+            MccStructure.ABANDONED_CAMP_MEADOW, MccStructure.ABANDONED_CAMP_OLD_GROWTH_BIRCH_FOREST, MccStructure.ABANDONED_CAMP_OLD_GROWTH_PINE_TAIGA,
+            MccStructure.ABANDONED_CAMP_OLD_GROWTH_SPRUCE_TAIGA, MccStructure.ABANDONED_CAMP_PALE_GARDEN, MccStructure.ABANDONED_CAMP_SAVANNA,
+            MccStructure.ABANDONED_CAMP_SNOWY_TAIGA, MccStructure.ABANDONED_CAMP_SPARSE_JUNGLE, MccStructure.ABANDONED_CAMP_SWAMP,
+            MccStructure.ABANDONED_CAMP_TAIGA, MccStructure.ABANDONED_CAMP_WINDSWEPT_FOREST, MccStructure.ABANDONED_CAMP_WOODED_BADLANDS));
 
     private final String name;
     private final GUIMaterial guiMaterial;

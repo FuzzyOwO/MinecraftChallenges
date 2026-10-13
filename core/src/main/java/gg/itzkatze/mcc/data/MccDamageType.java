@@ -38,6 +38,7 @@ public enum MccDamageType {
     SPIT("Spit", List.of(DamageType.SPIT)),
     STALAGMITE("Stalagmite", List.of(DamageType.STALAGMITE)),
     STING("Sting", List.of(DamageType.STING)),
+    SULFUR_CUBE_HOT("Hot Sulfur Cube", List.of(DamageType.SULFUR_CUBE_HOT)),
     SWEET_BERRY_BUSH("Sweet Berry Bush", List.of(DamageType.SWEET_BERRY_BUSH)),
     TRIDENT("Trident", List.of(DamageType.TRIDENT)),
     WIND_CHARGE("Wind Charge", List.of(DamageType.WIND_CHARGE)),

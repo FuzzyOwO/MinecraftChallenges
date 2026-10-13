@@ -1,0 +1,130 @@
+package gg.itzkatze.mcc.lobby.cosmetics;
+
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+final class CosmeticProfile {
+
+    private @Nullable String name;
+    private int points;
+    private int earned;
+    private int best;
+    private List<String> owned = new ArrayList<>();
+    private List<String> equipped = new ArrayList<>();
+
+    CosmeticProfile() {
+    }
+
+    static @NotNull CosmeticProfile restored(@Nullable String name, int points, int earned, int best, @Nullable List<String> owned, @Nullable List<String> equipped) {
+        CosmeticProfile profile = new CosmeticProfile();
+        profile.name = name;
+        profile.points = points;
+        profile.earned = earned;
+        profile.best = best;
+        profile.owned = owned == null ? null : new ArrayList<>(owned);
+        profile.equipped = equipped == null ? null : new ArrayList<>(equipped);
+        return profile;
+    }
+
+    @Nullable String name() {
+        return name;
+    }
+
+    int points() {
+        return points;
+    }
+
+    int earned() {
+        return earned;
+    }
+
+    int best() {
+        return best;
+    }
+
+    @NotNull List<String> owned() {
+        return Collections.unmodifiableList(owned);
+    }
+
+    @NotNull List<String> equipped() {
+        return Collections.unmodifiableList(equipped);
+    }
+
+    void rename(@Nullable String name) {
+        if (name != null) {
+            this.name = name;
+        }
+    }
+
+    void recordLanding(int runScore) {
+        points = increment(points);
+        earned = increment(earned);
+        best = Math.max(best, runScore);
+    }
+
+    boolean owns(@NotNull String id) {
+        return owned.contains(id);
+    }
+
+    @NotNull PurchaseResult buy(@NotNull Cosmetic cosmetic, @NotNull CosmeticCatalog catalog) {
+        if (owns(cosmetic.id())) return PurchaseResult.ALREADY_OWNED;
+        if (points < cosmetic.price()) return PurchaseResult.NOT_ENOUGH_POINTS;
+
+        points -= cosmetic.price();
+        owned.add(cosmetic.id());
+        equip(cosmetic, catalog);
+        return PurchaseResult.BOUGHT;
+    }
+
+    boolean equip(@NotNull Cosmetic cosmetic, @NotNull CosmeticCatalog catalog) {
+        if (!owns(cosmetic.id())) return false;
+
+        unequip(cosmetic.category(), catalog);
+        equipped.add(cosmetic.id());
+        return true;
+    }
+
+    void unequip(@NotNull CosmeticCategory category, @NotNull CosmeticCatalog catalog) {
+        equipped.removeIf(id -> catalog.find(id).map(Cosmetic::category).orElse(null) == category);
+    }
+
+    @NotNull Optional<Cosmetic> equipped(@NotNull CosmeticCategory category, @NotNull CosmeticCatalog catalog) {
+        return equipped.reversed().stream()
+                .map(catalog::find)
+                .flatMap(Optional::stream)
+                .filter(cosmetic -> cosmetic.category() == category)
+                .findFirst();
+    }
+
+    void normalize(@NotNull CosmeticCatalog catalog) {
+        points = Math.max(points, 0);
+        earned = Math.max(earned, 0);
+        best = Math.max(best, 0);
+        owned = owned == null ? new ArrayList<>() : new ArrayList<>(owned.stream().filter(Objects::nonNull).collect(Collectors.toCollection(LinkedHashSet::new)));
+
+        List<String> known = equipped == null ? List.of() : equipped.stream().filter(id -> id != null && catalog.find(id).isPresent()).toList();
+        Set<CosmeticCategory> seen = EnumSet.noneOf(CosmeticCategory.class);
+        List<String> kept = new ArrayList<>();
+        for (String id : known.reversed()) {
+            if (seen.add(catalog.find(id).orElseThrow().category())) {
+                kept.add(id);
+            }
+        }
+        Collections.reverse(kept);
+        equipped = kept;
+    }
+
+    private static int increment(int value) {
+        return value == Integer.MAX_VALUE ? value : value + 1;
+    }
+}

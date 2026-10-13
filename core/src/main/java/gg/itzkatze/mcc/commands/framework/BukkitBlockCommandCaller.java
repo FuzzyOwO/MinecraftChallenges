@@ -1,6 +1,5 @@
 package gg.itzkatze.mcc.commands.framework;
 
-import gg.itzkatze.mcc.MinecraftChallenges;
 import net.kyori.adventure.text.Component;
 import org.bukkit.command.BlockCommandSender;
 import org.bukkit.permissions.PermissionDefault;
@@ -32,7 +31,7 @@ public class BukkitBlockCommandCaller implements CommandCaller {
 
     @Override
     public void sendMessage(final Component component) {
-        MinecraftChallenges.getBukkitAudiences().sender(sender).sendMessage(component);
+        sender.sendMessage(component);
     }
 
     @Override

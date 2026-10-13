@@ -11,6 +11,7 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockState;
 import org.bukkit.block.structure.Mirror;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
@@ -23,6 +24,7 @@ import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.inventory.BlockInventoryHolder;
 import org.bukkit.structure.Structure;
 import org.bukkit.util.BlockVector;
 import org.bukkit.util.BoundingBox;
@@ -38,6 +40,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.Predicate;
 
 public class LobbyManager implements Listener {
 
@@ -195,6 +198,7 @@ public class LobbyManager implements Listener {
 
     private static @NotNull Lobby create(@NotNull LobbyIsland island, @NotNull Structure structure, @NotNull World world) {
         Lobby lobby = new Lobby(island, world, structure.getSize(), BASE_Y, StructureUtil.barrierBounds(island.getStructureName(), structure));
+        emptyContainers(world, lobby.getBounds());
         // Blocks with block-entity data are pasted last, so anything resting on them (carpets) would break first. The paste replaces each stand-in.
         for (BlockVector position : StructureUtil.blockEntityPositions(island.getStructureName(), structure)) {
             lobby.toWorld(position).getBlock().setType(Material.STONE, false);
@@ -226,7 +230,24 @@ public class LobbyManager implements Listener {
         clear(world, BoundingBox.of(new Vector(record.min[0], record.min[1], record.min[2]), new Vector(record.max[0], record.max[1], record.max[2])));
     }
 
+    // The game drops the items of a container whenever its block is replaced, so shelves left by an earlier paste are emptied before anything is set over them.
+    private static void emptyContainers(@NotNull World world, @NotNull BoundingBox bounds) {
+        Predicate<Block> inside = block -> bounds.contains(block.getX(), block.getY(), block.getZ());
+        int lastX = (int) bounds.getMaxX() - 1;
+        int lastZ = (int) bounds.getMaxZ() - 1;
+        for (int chunkX = (int) bounds.getMinX() >> 4; chunkX <= lastX >> 4; chunkX++) {
+            for (int chunkZ = (int) bounds.getMinZ() >> 4; chunkZ <= lastZ >> 4; chunkZ++) {
+                for (BlockState tileEntity : world.getChunkAt(chunkX, chunkZ).getTileEntities(inside, false)) {
+                    if (tileEntity instanceof BlockInventoryHolder holder) {
+                        holder.getInventory().clear();
+                    }
+                }
+            }
+        }
+    }
+
     private static void clear(@NotNull World world, @NotNull BoundingBox bounds) {
+        emptyContainers(world, bounds);
         for (int x = (int) bounds.getMinX(); x < (int) bounds.getMaxX(); x++) {
             for (int y = (int) bounds.getMinY(); y < (int) bounds.getMaxY(); y++) {
                 for (int z = (int) bounds.getMinZ(); z < (int) bounds.getMaxZ(); z++) {

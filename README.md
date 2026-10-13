@@ -3,7 +3,7 @@
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
 ---
-Supported Minecraft version: 26.1.2
+Supported Minecraft version: 26.3
 
 ---
 

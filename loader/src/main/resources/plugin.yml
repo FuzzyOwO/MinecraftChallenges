@@ -1,7 +1,7 @@
 name: MinecraftChallenges
 version: '${version}'
 main: gg.itzkatze.mcc.MinecraftChallenges
-api-version: '26.1.2'
+api-version: '26.3'
 
 commands:
     backpack:

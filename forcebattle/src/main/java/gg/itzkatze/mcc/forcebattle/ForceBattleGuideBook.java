@@ -34,6 +34,7 @@ public final class ForceBattleGuideBook {
             "§8§lDie wichtigsten Commands auf einen Blick:\n\n§5§l/bp (bzw.) /backpack§5 §8\n...ö§0ffnet den Backpack (eine geteilte Ender-\nchest für alle in einem Team)§8\n",
             "§5§l/chat team§0\n...stellt einen Chat-\nmodus ein, in dem nur Teammitglieder deine Nachrichten sehen können\n\n§5§l/chat all§0\n...stellt den normalen Chatmodus ein (Alle sehen deine Nachrichten)",
             "§5§l/info§0\n...öffnet ein Menü, in dem du die verschiedenen Teamaufgaben sehen kannst (Biome, Strukturen, Mobs, Tode)\n\n§5§l/recipe [Itemname]§0 ...öffnet eine Anleitung, wie du dein Item herstellen kannst",
+            "§5§l/team create [Zahl]§0\n...erstellt ein Team, in dem du mit Partnern spielen kannst\n\n\n§5§l/team join [Zahl]§0\n...tritt dem entsprechenden Team bei",
             "§3§l\n\n\n\n\n   Viel Spaß beim          Spielen!  \n           \n          :D"
     );
 

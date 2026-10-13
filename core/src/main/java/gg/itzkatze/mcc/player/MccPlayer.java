@@ -1,6 +1,5 @@
 package gg.itzkatze.mcc.player;
 
-import gg.itzkatze.mcc.MinecraftChallenges;
 import gg.itzkatze.mcc.challenges.Challenge;
 import lombok.Getter;
 import gg.itzkatze.mcc.challenges.ChallengeManager;
@@ -258,8 +257,8 @@ public class MccPlayer implements CommandCaller {
     }
 
     public Audience getAudience() {
-        if (getPlayer() == null) return Audience.empty();
-        return MinecraftChallenges.getBukkitAudiences().player(getPlayer());
+        Player player = getPlayer();
+        return player == null ? Audience.empty() : player;
     }
 
     public MccTeam getTeam() {

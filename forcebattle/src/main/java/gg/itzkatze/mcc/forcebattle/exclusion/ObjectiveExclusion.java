@@ -77,7 +77,9 @@ public enum ObjectiveExclusion {
             .mobs(EntityType.SKELETON_HORSE)
             .deaths(MccDamageType.LIGHTNING_BOLT)
             .items(Material.MACE, Material.HEAVY_CORE, Material.BEACON, Material.NETHER_STAR, Material.CHAINMAIL_HELMET, Material.CHAINMAIL_CHESTPLATE,
-                    Material.CHAINMAIL_LEGGINGS, Material.CHAINMAIL_BOOTS));
+                    Material.CHAINMAIL_LEGGINGS, Material.CHAINMAIL_BOOTS)),
+    MAPS(ForceBattleSettings.EXCLUDE_MAPS, Material.FILLED_MAP, "Structure maps from cartographer trades and abandoned camp chests",
+            ExclusionRules.builder().itemsNamed(ObjectiveExclusion::isStructureMap));
 
     private static final Set<String> COMMON_BANNER_PATTERNS = Set.of("FIELD_MASONED_BANNER_PATTERN", "BORDURE_INDENTED_BANNER_PATTERN", "FLOWER_BANNER_PATTERN");
     private static final List<String> OXIDATION_STAGES = List.of("EXPOSED_", "WEATHERED_", "OXIDIZED_");
@@ -105,6 +107,11 @@ public enum ObjectiveExclusion {
 
     private static boolean isRareBannerPattern(@NotNull String name) {
         return name.endsWith("_BANNER_PATTERN") && !COMMON_BANNER_PATTERNS.contains(name);
+    }
+
+    /** The filled map is what an empty map turns into when used, so it stays obtainable and is not a structure map. */
+    private static boolean isStructureMap(@NotNull String name) {
+        return name.endsWith("_MAP") && !name.equals("FILLED_MAP");
     }
 
     /**

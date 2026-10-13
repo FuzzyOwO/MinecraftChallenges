@@ -1,6 +1,5 @@
 package gg.itzkatze.mcc;
 
-import lombok.Getter;
 import gg.itzkatze.mcc.bossbar.BossbarManager;
 import gg.itzkatze.mcc.challenges.ChallengeManager;
 import gg.itzkatze.mcc.chat.TeamChatManager;
@@ -13,14 +12,16 @@ import gg.itzkatze.mcc.game.PauseManager;
 import gg.itzkatze.mcc.game.SessionPersistence;
 import gg.itzkatze.mcc.gui.GUIListener;
 import gg.itzkatze.mcc.lobby.LobbyManager;
+import gg.itzkatze.mcc.lobby.cosmetics.CosmeticStore;
+import gg.itzkatze.mcc.lobby.cosmetics.PointsSidebar;
 import gg.itzkatze.mcc.gui.sign.SignInput;
 import gg.itzkatze.mcc.configuration.SettingsFile;
 import gg.itzkatze.mcc.game.GameTimer;
 import gg.itzkatze.mcc.game.TimerRegistry;
 import gg.itzkatze.mcc.game.TaskManager;
 import gg.itzkatze.mcc.scoreboard.ScoreboardManager;
-import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 import net.kyori.adventure.text.Component;
+import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 import org.reflections.Reflections;
@@ -37,8 +38,6 @@ public final class MinecraftChallenges extends JavaPlugin {
 
     private static final Logger logger = LoggerFactory.getLogger("MinecraftChallenges");
     private static MinecraftChallenges instance;
-    @Getter
-    private static BukkitAudiences bukkitAudiences;
     private final PauseManager pauseManager = new PauseManager();
 
     public static MinecraftChallenges get() {
@@ -48,7 +47,6 @@ public final class MinecraftChallenges extends JavaPlugin {
     @Override
     public void onEnable() {
         instance = this;
-        bukkitAudiences = BukkitAudiences.create(this);
 
         saveDefaultConfig();
         File settingsFile = new File(getDataDirectory(), "data/settings.json");
@@ -66,6 +64,8 @@ public final class MinecraftChallenges extends JavaPlugin {
             throw new RuntimeException("settings.json File not found", e);
         }
         installTimerEngine();
+        CosmeticStore.load();
+        PointsSidebar.install(CosmeticStore.get());
 
         CommandHandler.registerAll(loopThroughPackage("gg.itzkatze.mcc.commands", MccCommand.class).toList());
         getServer().getPluginManager().registerEvents(new CommandVisibilityListener(), this);
@@ -88,6 +88,7 @@ public final class MinecraftChallenges extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        CosmeticStore.flushInstalled();
         BossbarManager.stopTask();
         SessionPersistence.saveNow();
         ChallengeManager.unloadAllChallenges();
@@ -118,9 +119,7 @@ public final class MinecraftChallenges extends JavaPlugin {
     }
 
     public static void broadcast(Component message) {
-        if (bukkitAudiences != null) {
-            bukkitAudiences.all().sendMessage(message);
-        }
+        Bukkit.getServer().sendMessage(message);
     }
 
     public static <T> Stream<T> loopThroughPackage(String packageName, Class<T> clazz) {

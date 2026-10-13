@@ -21,7 +21,7 @@ public enum MobsSimplified {
             EntityType.ELDER_GUARDIAN, EntityType.DROWNED)),
     ARTHROPOD("Arthropod", new GUIMaterial(Material.STRING), List.of(EntityType.CAVE_SPIDER, EntityType.SILVERFISH, EntityType.SPIDER)),
     CONSTRUCT("Construct", new GUIMaterial(Material.IRON_BLOCK), List.of(EntityType.COPPER_GOLEM, EntityType.CREAKING, EntityType.IRON_GOLEM, EntityType.SNOW_GOLEM)),
-    CUBIC("Cubic", new GUIMaterial(Material.SLIME_BLOCK), List.of(EntityType.MAGMA_CUBE, EntityType.SLIME)),
+    CUBIC("Cubic", new GUIMaterial(Material.SLIME_BLOCK), List.of(EntityType.MAGMA_CUBE, EntityType.SLIME, EntityType.SULFUR_CUBE)),
     ENDER("Ender", new GUIMaterial(Material.END_STONE), List.of(EntityType.ENDERMAN, EntityType.SHULKER, EntityType.ENDER_DRAGON, EntityType.ENDERMITE)),
     FROZEN("Frozen", new GUIMaterial(Material.ICE), List.of(EntityType.STRAY, EntityType.POLAR_BEAR, EntityType.SNOW_GOLEM)),
     HUMANOID("Humanoid", new GUIMaterial(Material.PLAYER_HEAD), List.of(EntityType.EVOKER, EntityType.ILLUSIONER, EntityType.PILLAGER, EntityType.VILLAGER, EntityType.VINDICATOR,

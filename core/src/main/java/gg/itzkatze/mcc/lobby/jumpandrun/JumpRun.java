@@ -14,7 +14,7 @@ final class JumpRun {
 
     private final Player player;
     private final UUID id;
-    private final RunColor color;
+    private final RunLook look;
     private final BitSet visited = new BitSet();
     private Cell current;
     private @Nullable Cell next;
@@ -22,10 +22,10 @@ final class JumpRun {
     private @Nullable HopSteering.Leg leg;
     private int score;
 
-    JumpRun(@NotNull Player player, @NotNull RunColor color, @NotNull Cell start, @NotNull Cell next) {
+    JumpRun(@NotNull Player player, @NotNull RunLook look, @NotNull Cell start, @NotNull Cell next) {
         this.player = player;
         this.id = player.getUniqueId();
-        this.color = color;
+        this.look = look;
         this.current = start;
         this.next = next;
     }

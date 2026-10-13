@@ -3,6 +3,9 @@ package gg.itzkatze.mcc.lobby.jumpandrun;
 import gg.itzkatze.mcc.MinecraftChallenges;
 import gg.itzkatze.mcc.lobby.Lobby;
 import gg.itzkatze.mcc.lobby.LobbyFeature;
+import gg.itzkatze.mcc.lobby.cosmetics.CosmeticStore;
+import gg.itzkatze.mcc.lobby.cosmetics.PointsText;
+import gg.itzkatze.mcc.lobby.cosmetics.SoundCosmetic;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.sound.Sound;
 import net.kyori.adventure.text.Component;
@@ -30,6 +33,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
@@ -39,7 +43,7 @@ public class JumpAndRun implements LobbyFeature, Listener {
 
     private static final Logger logger = LoggerFactory.getLogger("MinecraftChallenges/" + JumpAndRun.class.getSimpleName());
     private static final Sound PLATE_CLICK = Sound.sound(Key.key("block.metal_pressure_plate.click_on"), Sound.Source.BLOCK, 1f, 1f);
-    private static final Sound HOP_LANDED = Sound.sound(Key.key("entity.experience_orb.pickup"), Sound.Source.PLAYER, 1f, 1.2f);
+    private static final Sound RUN_OVER = Sound.sound(Key.key("block.beacon.deactivate"), Sound.Source.PLAYER, 1f, 1f);
     private static final Component NO_START_ROOM = Component.text("There is no room for a start block right now.", NamedTextColor.RED);
 
     private enum Ending {
@@ -148,30 +152,37 @@ public class JumpAndRun implements LobbyFeature, Listener {
             return;
         }
 
-        RunColor color = RunColor.pick(runs.values().stream().map(JumpRun::getColor).toList(), lastColors.get(id));
+        RunLook look = lookFor(id);
         Cell block = start.block();
         Cell first = start.first().block();
-        place(arena, block, color);
-        place(arena, first, color);
+        place(arena, block, look.block());
+        place(arena, first, look.block());
 
         Location arrival = new Location(arena.world(), block.x() + 0.5, block.y() + 1.0, block.z() + 0.5);
         arrival.setDirection(new Vector(first.x() - block.x(), first.y() - block.y() - player.getEyeHeight(), first.z() - block.z()));
         if (!player.teleport(arrival)) {
-            removeBlock(arena, block, color);
-            removeBlock(arena, first, color);
+            removeBlock(arena, block, look.block());
+            removeBlock(arena, first, look.block());
             player.sendMessage(NO_START_ROOM);
             return;
         }
 
-        JumpRun run = new JumpRun(player, color, block, first);
+        JumpRun run = new JumpRun(player, look, block, first);
         HopSteering.visit(run.getVisited(), block, arena.playArea());
         runs.put(id, run);
-        lastColors.put(id, color);
+        if (look.color() != null) {
+            lastColors.put(id, look.color());
+        }
         reservations.set(id, HopPlanner.reservation(block, start.first()));
-        player.sendMessage(Component.text("Jump & Run: jump onto the ", NamedTextColor.YELLOW)
-                .append(Component.text(color.displayName(), color.textColor()))
-                .append(Component.text(" block!", NamedTextColor.YELLOW)));
+        player.sendMessage(look.startMessage());
         player.playSound(PLATE_CLICK);
+    }
+
+    private @NotNull RunLook lookFor(@NotNull UUID id) {
+        return CosmeticStore.get().equippedBlock(id).map(RunLook::of).orElseGet(() -> {
+            List<RunColor> inUse = runs.values().stream().map(run -> run.getLook().color()).filter(Objects::nonNull).toList();
+            return RunColor.pick(inUse, lastColors.get(id)).look();
+        });
     }
 
     private void checkSupport(@NotNull Arena arena, @NotNull JumpRun run, @NotNull Location to) {
@@ -191,8 +202,10 @@ public class JumpAndRun implements LobbyFeature, Listener {
         HopDifficulty landed = run.getNextDifficulty();
         Cell previous = run.getCurrent();
         run.land();
-        run.getPlayer().playSound(HOP_LANDED);
-        removeBlock(arena, previous, run.getColor());
+        CosmeticStore store = CosmeticStore.get();
+        store.recordLanding(run.getPlayer(), run.getScore());
+        run.getPlayer().playSound(store.equippedSound(run.getId()).map(SoundCosmetic::sound).orElse(SoundCosmetic.DEFAULT));
+        removeBlock(arena, previous, run.getLook().block());
 
         Cell standing = run.getCurrent();
         Random random = ThreadLocalRandom.current();
@@ -206,7 +219,7 @@ public class JumpAndRun implements LobbyFeature, Listener {
             return;
         }
 
-        place(arena, hop.block(), run.getColor());
+        place(arena, hop.block(), run.getLook().block());
         run.setNext(hop.block(), hop.difficulty());
         reservations.set(run.getId(), HopPlanner.reservation(standing, hop));
     }
@@ -214,27 +227,32 @@ public class JumpAndRun implements LobbyFeature, Listener {
     private void end(@NotNull Arena arena, @NotNull JumpRun run, @NotNull Ending ending) {
         runs.remove(run.getId());
         reservations.release(run.getId());
-        removeBlock(arena, run.getCurrent(), run.getColor());
+        removeBlock(arena, run.getCurrent(), run.getLook().block());
         if (run.getNext() != null) {
-            removeBlock(arena, run.getNext(), run.getColor());
+            removeBlock(arena, run.getNext(), run.getLook().block());
         }
         if (ending == Ending.SILENT) return;
 
         String reason = ending == Ending.NO_ROOM ? "There is no room for another block. " : "";
         int score = run.getScore();
-        run.getPlayer().sendMessage(Component.text("Jump & Run over! " + reason + "You reached ", NamedTextColor.RED)
+        Component message = Component.text("Jump & Run over! " + reason + "You reached ", NamedTextColor.RED)
                 .append(Component.text(score, NamedTextColor.WHITE))
-                .append(Component.text(score == 1 ? " block." : " blocks.", NamedTextColor.RED)));
-        run.getPlayer().teleport(arena.lobby().getSpawn().clone());
+                .append(Component.text(score == 1 ? " block." : " blocks.", NamedTextColor.RED));
+        if (score > 0) {
+            message = message.append(Component.text(" +" + PointsText.amount(score), NamedTextColor.GREEN))
+                    .append(Component.text(" (" + CosmeticStore.get().points(run.getId()) + " total).", NamedTextColor.GRAY));
+        }
+        run.getPlayer().sendMessage(message);
+        run.getPlayer().playSound(RUN_OVER);
     }
 
-    private void place(@NotNull Arena arena, @NotNull Cell cell, @NotNull RunColor color) {
-        arena.world().getBlockAt(cell.x(), cell.y(), cell.z()).setType(color.block(), false);
+    private void place(@NotNull Arena arena, @NotNull Cell cell, @NotNull Material material) {
+        arena.world().getBlockAt(cell.x(), cell.y(), cell.z()).setType(material, false);
     }
 
-    private void removeBlock(@NotNull Arena arena, @NotNull Cell cell, @NotNull RunColor color) {
+    private void removeBlock(@NotNull Arena arena, @NotNull Cell cell, @NotNull Material material) {
         Block block = arena.world().getBlockAt(cell.x(), cell.y(), cell.z());
-        if (block.getType() == color.block()) {
+        if (block.getType() == material) {
             block.setType(Material.AIR, false);
         }
     }

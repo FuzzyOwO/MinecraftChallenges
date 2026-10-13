@@ -6,6 +6,8 @@ import gg.itzkatze.mcc.challenges.ChallengeManager;
 import gg.itzkatze.mcc.configuration.SettingsManager;
 import gg.itzkatze.mcc.configuration.GlobalSetting;
 import gg.itzkatze.mcc.game.GameTimer;
+import gg.itzkatze.mcc.lobby.LobbyManager;
+import gg.itzkatze.mcc.lobby.cosmetics.PointsSidebar;
 import gg.itzkatze.mcc.player.MccPlayer;
 import io.papermc.paper.scoreboard.numbers.NumberFormat;
 import net.kyori.adventure.text.Component;
@@ -16,6 +18,7 @@ import org.bukkit.scoreboard.DisplaySlot;
 import org.bukkit.scoreboard.Objective;
 import org.bukkit.scoreboard.Score;
 import org.bukkit.scoreboard.Scoreboard;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -26,6 +29,7 @@ public class ScoreboardManager {
     private static final String SIDEBAR_OBJECTIVE = "challenge_info";
     private static final Map<MccPlayer, Scoreboard> SCOREBOARDS = new HashMap<>();
     private static final Map<MccPlayer, Map<Integer, Component>> LAST_LINES = new HashMap<>();
+    private static final ScoreboardContent LOBBY_CONTENT = new PointsSidebar();
 
     public static void startUpdater() {
         Bukkit.getScheduler().runTaskTimer(MinecraftChallenges.get(), ScoreboardManager::updateAll, 20L, 20L);
@@ -36,16 +40,32 @@ public class ScoreboardManager {
                 && (MinecraftChallenges.getTimer().getMode() == GameTimer.Mode.DISABLED
                     || MinecraftChallenges.getTimer().isRunning());
 
+        SCOREBOARDS.keySet().removeIf(wrapper -> !MccPlayer.PLAYERS.contains(wrapper));
+        LAST_LINES.keySet().removeIf(wrapper -> !MccPlayer.PLAYERS.contains(wrapper));
+
+        boolean lobbyDue = lobbySidebarDue();
         for (MccPlayer mccPlayer : MccPlayer.getOnlinePlayers()) {
             boolean shouldHaveScoreboard = !mccPlayer.isExcluded() && gameActive;
             boolean showScoreboard = SettingsManager.isEnabled(GlobalSetting.SHOW_SCOREBOARD);
 
             if (shouldHaveScoreboard && showScoreboard) {
                 updateScoreboard(mccPlayer);
+            } else if (lobbyDue) {
+                render(mccPlayer, LOBBY_CONTENT);
             } else if (SCOREBOARDS.containsKey(mccPlayer)) {
                 removeSidebar(mccPlayer);
             }
         }
+    }
+
+    public static void refreshLobby(@NotNull MccPlayer player) {
+        if (!lobbySidebarDue() || player.getPlayer() == null) return;
+
+        render(player, LOBBY_CONTENT);
+    }
+
+    static boolean lobbySidebarDue() {
+        return LobbyManager.isActive() && !ChallengeManager.isGameStarted() && SettingsManager.isEnabled(GlobalSetting.SHOW_SCOREBOARD);
     }
 
     public static Scoreboard getOrCreateScoreboard(MccPlayer player) {
@@ -70,15 +90,19 @@ public class ScoreboardManager {
         ScoreboardContent content = highestPriorityChallenge.getScoreboardContent();
         if (content == null) return;
 
+        render(player, content);
+    }
+
+    private static void render(@NotNull MccPlayer player, @NotNull ScoreboardContent content) {
         Scoreboard scoreboard = getOrCreateScoreboard(player);
 
+        Component title = styleTitle(content.getTitle());
         Objective obj = scoreboard.getObjective(SIDEBAR_OBJECTIVE);
         if (obj == null) {
-            obj = scoreboard.registerNewObjective(
-                    SIDEBAR_OBJECTIVE, "dummy",
-                    styleTitle(content.getTitle())
-            );
+            obj = scoreboard.registerNewObjective(SIDEBAR_OBJECTIVE, "dummy", title);
             obj.setDisplaySlot(DisplaySlot.SIDEBAR);
+        } else if (!title.equals(obj.displayName())) {
+            obj.displayName(title);
         }
 
         Map<Integer, Component> last = LAST_LINES.computeIfAbsent(player, p -> new HashMap<>());

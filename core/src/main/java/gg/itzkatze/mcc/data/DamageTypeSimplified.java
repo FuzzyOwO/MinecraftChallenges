@@ -10,7 +10,7 @@ import java.util.List;
 public enum DamageTypeSimplified {
     CONTACT("Contact", new GUIMaterial(Material.CACTUS), List.of(MccDamageType.CACTUS, MccDamageType.CAMPFIRE, MccDamageType.STALAGMITE)),
     ENTITY_ATTACK("Entity Attack", new GUIMaterial(Material.ZOMBIE_HEAD), List.of(MccDamageType.MOB_ATTACK, MccDamageType.MOB_PROJECTILE, MccDamageType.SONIC_BOOM,
-            MccDamageType.SPIT, MccDamageType.STING, MccDamageType.TRIDENT, MccDamageType.WITHER, MccDamageType.WIND_CHARGE)),
+            MccDamageType.SPIT, MccDamageType.STING, MccDamageType.SULFUR_CUBE_HOT, MccDamageType.TRIDENT, MccDamageType.WITHER, MccDamageType.WIND_CHARGE)),
     PROJECTILE("Projectile", new GUIMaterial(Material.ARROW), List.of(MccDamageType.ARROW, MccDamageType.MOB_PROJECTILE, MccDamageType.TRIDENT,
             MccDamageType.WIND_CHARGE, MccDamageType.DRAGON_BREATH, MccDamageType.FIREBALL)),
     SUFFOCATION("Suffocation", new GUIMaterial(Material.GRAVEL), List.of(MccDamageType.CRAMMING, MccDamageType.IN_WALL)),

@@ -34,7 +34,7 @@ public enum MccAdvancement {
             "Rescue a Ghast from the Nether, bring it safely home to the Overworld... and then kill it"
     ),
     WAR_PIGS(NamespacedKey.minecraft("nether/loot_bastion"), "War Pigs", "Loot a Chest in a Bastion Remnant"),
-    COUNTRY_LODE_TAKE_ME_HOME(NamespacedKey.minecraft("nether/use_lodestone"), "Country Lode, Take Me Home", "Use a Compass on a Lodestone"),
+    COUNTRY_LODE_TAKE_ME_HOME(NamespacedKey.minecraft("adventure/use_lodestone"), "Country Lode, Take Me Home", "Use a Compass on a Lodestone"),
     COVER_ME_IN_DEBRIS(NamespacedKey.minecraft("nether/netherite_armor"), "Cover Me in Debris", "Get a full suit of Netherite armor"),
     SPOOKY_SCARY_SKELETON(NamespacedKey.minecraft("nether/get_wither_skull"), "Spooky Scary Skeleton", "Obtain a Wither Skeleton's skull"),
     INTO_FIRE(NamespacedKey.minecraft("nether/obtain_blaze_rod"), "Into Fire", "Relieve a Blaze of its rod"),
@@ -148,7 +148,8 @@ public enum MccAdvancement {
             NamespacedKey.minecraft("husbandry/kill_axolotl_target"),
             "The Healing Power of Friendship!",
             "Team up with an axolotl and win a fight"
-    );
+    ),
+    UH_OH(NamespacedKey.minecraft("husbandry/uh_oh"), "Uh Oh", "Have a Sulfur Cube absorb a TNT block");
 
     public final NamespacedKey key;
     public final String name;

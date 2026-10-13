@@ -2,7 +2,10 @@ package gg.itzkatze.mcc.lobby.islands;
 
 import gg.itzkatze.mcc.lobby.LobbyFeature;
 import gg.itzkatze.mcc.lobby.LobbyIsland;
+import gg.itzkatze.mcc.lobby.cosmetics.Leaderboard;
 import gg.itzkatze.mcc.lobby.jumpandrun.JumpAndRun;
+import gg.itzkatze.mcc.lobby.npc.NpcSpot;
+import gg.itzkatze.mcc.lobby.npc.impl.CosmeticShopNpc;
 import org.bukkit.block.structure.StructureRotation;
 import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
@@ -33,6 +36,9 @@ public class BalloninselIsland extends LobbyIsland {
 
     @Override
     public @NotNull List<LobbyFeature> createFeatures() {
-        return List.of(new JumpAndRun(new Vector(31, 15, 23)));
+        return List.of(
+                new JumpAndRun(new Vector(31, 15, 23)),
+                new NpcSpot(new CosmeticShopNpc(), new Vector(26, 16, 18), -45f),
+                new Leaderboard(new Vector(29.5, 15, 26.5)));
     }
 }

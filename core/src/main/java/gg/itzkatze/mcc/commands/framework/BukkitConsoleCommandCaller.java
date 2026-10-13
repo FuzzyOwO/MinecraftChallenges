@@ -1,7 +1,7 @@
 package gg.itzkatze.mcc.commands.framework;
 
-import gg.itzkatze.mcc.MinecraftChallenges;
 import net.kyori.adventure.text.Component;
+import org.bukkit.Bukkit;
 import org.bukkit.permissions.PermissionDefault;
 
 public class BukkitConsoleCommandCaller implements ConsoleCommandCaller {
@@ -27,7 +27,7 @@ public class BukkitConsoleCommandCaller implements ConsoleCommandCaller {
 
     @Override
     public void sendMessage(Component message) {
-        MinecraftChallenges.getBukkitAudiences().console().sendMessage(message);
+        Bukkit.getConsoleSender().sendMessage(message);
     }
 
     @Override

@@ -1,0 +1,14 @@
+package gg.itzkatze.mcc.lobby.cosmetics;
+
+import net.kyori.adventure.key.Key;
+import net.kyori.adventure.sound.Sound;
+
+final class ShopSounds {
+
+    static final Sound CLICK = Sound.sound(Key.key("ui.button.click"), Sound.Source.UI, 1f, 1f);
+    static final Sound CONFIRM = Sound.sound(Key.key("entity.player.levelup"), Sound.Source.PLAYER, 1f, 1f);
+    static final Sound DENY = Sound.sound(Key.key("entity.villager.no"), Sound.Source.PLAYER, 1f, 1f);
+
+    private ShopSounds() {
+    }
+}

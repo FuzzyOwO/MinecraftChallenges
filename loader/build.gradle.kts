@@ -30,7 +30,7 @@ dependencies {
     implementation(project(":deathswap"))
     implementation(project(":randomizer"))
     implementation(project(":itemrain"))
-    compileOnly("io.papermc.paper:paper-api:26.1.2.build.74-stable")
+    compileOnly("io.papermc.paper:paper-api:26.3.build.175-stable")
 }
 
 tasks.withType<JavaCompile>().configureEach {

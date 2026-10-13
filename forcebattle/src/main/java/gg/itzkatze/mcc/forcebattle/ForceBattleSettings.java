@@ -30,7 +30,8 @@ public enum ForceBattleSettings implements Setting {
     EXCLUDE_OXIDIZED_COPPER(true, "Exclude Oxidized Copper", OnOffState.ON),
     EXCLUDE_HEADS(true, "Exclude Heads", OnOffState.ON),
     EXCLUDE_SNIFFER(true, "Exclude Sniffer", OnOffState.ON),
-    EXCLUDE_UNREALISTIC(true, "Exclude Unrealistic", OnOffState.ON);
+    EXCLUDE_UNREALISTIC(true, "Exclude Unrealistic", OnOffState.ON),
+    EXCLUDE_MAPS(true, "Exclude Maps", OnOffState.ON);
 
     private final boolean updateOnChange;
     private final String displayName;

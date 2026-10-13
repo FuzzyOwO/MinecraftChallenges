@@ -57,14 +57,16 @@ public class LobbyPosCommand extends MccCommand {
     }
 
     static int snapYaw(float structureYaw) {
-        return (int) Location.normalizeYaw(Math.round(structureYaw / 45f) * 45f);
+        return (int) Location.normalizeYaw(Math.round(structureYaw / 5f) * 5f);
     }
 
     static @NotNull Component positionMessage(@NotNull String islandId, @NotNull Vector block, int yaw) {
-        int x = block.getBlockX();
-        int y = block.getBlockY();
-        int z = block.getBlockZ();
+        double x = block.getBlockX() + 0.5;
+        double y = block.getBlockY();
+        double z = block.getBlockZ() + 0.5;
+
         String arguments = "new Vector(" + x + ", " + y + ", " + z + "), " + yaw;
+
         return Component.text("Island " + islandId + ": " + x + " " + y + " " + z + ", yaw " + yaw + " ", NamedTextColor.YELLOW)
                 .append(Component.text("[Copy]", NamedTextColor.GREEN)
                         .clickEvent(ClickEvent.copyToClipboard(arguments))

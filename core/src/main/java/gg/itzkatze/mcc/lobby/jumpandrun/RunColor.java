@@ -31,11 +31,17 @@ enum RunColor {
     private final Material block;
     private final String displayName;
     private final TextColor textColor;
+    private final RunLook look;
 
     RunColor(DyeColor dye) {
         this.block = Material.valueOf(dye.name() + "_CONCRETE");
         this.displayName = dye.name().toLowerCase(Locale.ROOT).replace('_', ' ');
         this.textColor = TextColor.color(dye.getColor().asRGB());
+        this.look = RunLook.of(this);
+    }
+
+    @NotNull RunLook look() {
+        return look;
     }
 
     @NotNull Material block() {

@@ -18,14 +18,14 @@ import java.util.ArrayList;
 public class InfoSimplifiedBiomesGUI extends MccGUI {
 
     public InfoSimplifiedBiomesGUI() {
-        super("Simplified Biomes Info", 27);
+        super("Simplified Biomes Info", 36);
     }
 
     @Override
     public void setItems(final MccPlayer player) {
         fill(ItemStackCreator.fillerItem());
-        set(GUIClickableItem.getGoBackItem(21, new InfoGUI()));
-        set(GUIClickableItem.getCloseItem(22));
+        set(GUIClickableItem.getGoBackItem(30, new InfoGUI()));
+        set(GUIClickableItem.getCloseItem(31));
 
         int index = 0;
         for (BiomeSimplified simplified : BiomeSimplified.values()) {
