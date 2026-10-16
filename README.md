@@ -74,6 +74,18 @@ Want to contribute? Here is how you can help:
 
 ---
 
+## 🏝️ Spawn Credits
+
+The lobby spawns where players wait before a game starts were built by:
+
+| Spawn          | Builder          |
+|:---------------|:-----------------|
+| `classic`      | q8h              |
+| `balloninsel`  | IchmagYorkleffs  |
+| `inselmithaus` | IchmagYorkleffs  |
+
+---
+
 ## 📜 License
 
 This project is licensed under the **GNU GPLv3**.  
