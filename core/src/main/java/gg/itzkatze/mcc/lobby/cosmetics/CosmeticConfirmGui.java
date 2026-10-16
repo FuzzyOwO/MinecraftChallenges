@@ -1,79 +1,40 @@
 package gg.itzkatze.mcc.lobby.cosmetics;
 
-import gg.itzkatze.mcc.gui.GUIClickableItem;
-import gg.itzkatze.mcc.gui.GUIItem;
 import gg.itzkatze.mcc.gui.MccGUI;
 import gg.itzkatze.mcc.player.MccPlayer;
 import gg.itzkatze.mcc.util.ItemStackCreator;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
-import net.kyori.adventure.text.format.TextDecoration;
-import org.bukkit.Material;
 import org.bukkit.entity.Player;
-import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class CosmeticConfirmGui extends MccGUI {
-
-    private static final int ACCEPT_SLOT = 3;
-    private static final int ITEM_SLOT = 4;
-    private static final int DENY_SLOT = 5;
+public class CosmeticConfirmGui extends PurchaseConfirmGui {
 
     private final Cosmetic cosmetic;
     private final MccGUI shop;
 
     public CosmeticConfirmGui(@NotNull Cosmetic cosmetic, @NotNull MccGUI shop) {
-        super("Buy " + cosmetic.displayName() + "?", 9);
+        super("Buy " + cosmetic.displayName() + "?");
         this.cosmetic = cosmetic;
         this.shop = shop;
     }
 
     @Override
-    public void setItems(MccPlayer player) {
-        clear();
-        fill(ItemStackCreator.fillerItem());
-        set(new GUIClickableItem(ACCEPT_SLOT) {
-            @Override
-            public void run(InventoryClickEvent event, MccPlayer clicker) {
-                accept(clicker);
-            }
-
-            @Override
-            public ItemStack getItem(MccPlayer viewer) {
-                return ItemStackCreator.getStack(Component.text("Accept", NamedTextColor.GREEN, TextDecoration.BOLD), Material.LIME_STAINED_GLASS_PANE,
-                        List.of(Component.text("Buy " + cosmetic.displayName(), NamedTextColor.GRAY)));
-            }
-        });
-        set(new GUIItem(ITEM_SLOT) {
-            @Override
-            public ItemStack getItem(MccPlayer viewer) {
-                return summary(viewer);
-            }
-        });
-        set(new GUIClickableItem(DENY_SLOT) {
-            @Override
-            public void run(InventoryClickEvent event, MccPlayer clicker) {
-                deny(clicker);
-            }
-
-            @Override
-            public ItemStack getItem(MccPlayer viewer) {
-                return ItemStackCreator.getStack(Component.text("Deny", NamedTextColor.RED, TextDecoration.BOLD), Material.RED_STAINED_GLASS_PANE,
-                        List.of(Component.text("Back to the shop", NamedTextColor.GRAY)));
-            }
-        });
+    protected @NotNull String acceptHint() {
+        return "Buy " + cosmetic.displayName();
     }
 
     @Override
-    public boolean allowItemMoving() {
-        return false;
+    protected @NotNull String denyHint() {
+        return "Back to the shop";
     }
 
-    private @NotNull ItemStack summary(@NotNull MccPlayer viewer) {
+    @Override
+    protected @NotNull ItemStack summary(@NotNull MccPlayer viewer) {
         CosmeticStore store = CosmeticStore.get();
         int balance = store.points(viewer.getUuid());
         List<Component> lore = new ArrayList<>();
@@ -88,7 +49,8 @@ public class CosmeticConfirmGui extends MccGUI {
         return ItemStackCreator.getStack(cosmetic.styledName(), cosmetic.icon(), lore);
     }
 
-    private void accept(@NotNull MccPlayer clicker) {
+    @Override
+    protected void accept(@NotNull MccPlayer clicker) {
         Player player = clicker.getPlayer();
         if (player == null) return;
 
@@ -110,11 +72,19 @@ public class CosmeticConfirmGui extends MccGUI {
                 player.sendMessage(Component.text(PointsText.missing(cosmetic.price() - store.points(player.getUniqueId())), NamedTextColor.RED));
                 player.playSound(ShopSounds.DENY);
             }
+            case OUT_OF_SEASON -> {
+                Season season = cosmetic.season();
+                if (season != null) {
+                    player.sendMessage(season.returnsMessage(cosmetic));
+                }
+                player.playSound(ShopSounds.DENY);
+            }
         }
         shop.open(clicker);
     }
 
-    private void deny(@NotNull MccPlayer clicker) {
+    @Override
+    protected void deny(@NotNull MccPlayer clicker) {
         Player player = clicker.getPlayer();
         if (player != null) {
             player.playSound(ShopSounds.CLICK);

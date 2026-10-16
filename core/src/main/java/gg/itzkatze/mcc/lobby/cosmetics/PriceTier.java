@@ -5,23 +5,30 @@ import org.jetbrains.annotations.NotNull;
 
 public enum PriceTier {
 
-    COMMON(0, NamedTextColor.WHITE),
-    UNCOMMON(60, NamedTextColor.GREEN),
-    RARE(120, NamedTextColor.AQUA),
-    EPIC(250, NamedTextColor.LIGHT_PURPLE),
-    LEGENDARY(500, NamedTextColor.GOLD),
+    COMMON(0, NamedTextColor.WHITE, "Common"),
+    UNCOMMON(100, NamedTextColor.GREEN, "Uncommon"),
+    RARE(200, NamedTextColor.BLUE, "Rare"),
+    EPIC(500, NamedTextColor.DARK_PURPLE, "Epic"),
+    LEGENDARY(1000, NamedTextColor.GOLD, "Legendary"),
+    MYTHIC(2000, NamedTextColor.LIGHT_PURPLE, "Mythic"),
     ;
 
     private final int fromPrice;
     private final NamedTextColor color;
+    private final String displayName;
 
-    PriceTier(int fromPrice, NamedTextColor color) {
+    PriceTier(int fromPrice, NamedTextColor color, String displayName) {
         this.fromPrice = fromPrice;
         this.color = color;
+        this.displayName = displayName;
     }
 
     public @NotNull NamedTextColor color() {
         return color;
+    }
+
+    public @NotNull String displayName() {
+        return displayName;
     }
 
     public static @NotNull PriceTier of(int price) {

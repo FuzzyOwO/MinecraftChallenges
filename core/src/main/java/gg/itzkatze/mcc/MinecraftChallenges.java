@@ -13,6 +13,7 @@ import gg.itzkatze.mcc.game.SessionPersistence;
 import gg.itzkatze.mcc.gui.GUIListener;
 import gg.itzkatze.mcc.lobby.LobbyManager;
 import gg.itzkatze.mcc.lobby.cosmetics.CosmeticStore;
+import gg.itzkatze.mcc.lobby.cosmetics.cases.CaseRollGui;
 import gg.itzkatze.mcc.lobby.cosmetics.PointsSidebar;
 import gg.itzkatze.mcc.gui.sign.SignInput;
 import gg.itzkatze.mcc.configuration.SettingsFile;
@@ -88,6 +89,7 @@ public final class MinecraftChallenges extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        CaseRollGui.finishAllSilently();
         CosmeticStore.flushInstalled();
         BossbarManager.stopTask();
         SessionPersistence.saveNow();

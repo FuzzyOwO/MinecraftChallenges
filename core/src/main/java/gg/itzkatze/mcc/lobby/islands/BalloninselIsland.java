@@ -3,6 +3,7 @@ package gg.itzkatze.mcc.lobby.islands;
 import gg.itzkatze.mcc.lobby.LobbyFeature;
 import gg.itzkatze.mcc.lobby.LobbyIsland;
 import gg.itzkatze.mcc.lobby.cosmetics.Leaderboard;
+import gg.itzkatze.mcc.lobby.cosmetics.cases.CaseSpot;
 import gg.itzkatze.mcc.lobby.jumpandrun.JumpAndRun;
 import gg.itzkatze.mcc.lobby.npc.NpcSpot;
 import gg.itzkatze.mcc.lobby.npc.impl.CosmeticShopNpc;
@@ -39,6 +40,7 @@ public class BalloninselIsland extends LobbyIsland {
         return List.of(
                 new JumpAndRun(new Vector(31, 15, 23)),
                 new NpcSpot(new CosmeticShopNpc(), new Vector(26, 16, 18), -45f),
+                new CaseSpot(new Vector(24, 16, 19), -45f),
                 new Leaderboard(new Vector(29.5, 15, 26.5)));
     }
 }

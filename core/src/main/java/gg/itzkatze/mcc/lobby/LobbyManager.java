@@ -5,6 +5,7 @@ import gg.itzkatze.mcc.player.MccPlayer;
 import gg.itzkatze.mcc.util.StructureUtil;
 import gg.itzkatze.mcc.util.WorldStorage;
 import org.bukkit.Bukkit;
+import org.bukkit.Chunk;
 import org.bukkit.GameMode;
 import org.bukkit.GameRules;
 import org.bukkit.Location;
@@ -13,6 +14,7 @@ import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.structure.Mirror;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -22,6 +24,7 @@ import org.bukkit.event.block.BlockPhysicsEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
+import org.bukkit.event.player.PlayerInteractAtEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.inventory.BlockInventoryHolder;
@@ -40,6 +43,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 public class LobbyManager implements Listener {
@@ -199,6 +203,7 @@ public class LobbyManager implements Listener {
     private static @NotNull Lobby create(@NotNull LobbyIsland island, @NotNull Structure structure, @NotNull World world) {
         Lobby lobby = new Lobby(island, world, structure.getSize(), BASE_Y, StructureUtil.barrierBounds(island.getStructureName(), structure));
         emptyContainers(world, lobby.getBounds());
+        removeEntities(world, lobby.getBounds());
         // Blocks with block-entity data are pasted last, so anything resting on them (carpets) would break first. The paste replaces each stand-in.
         for (BlockVector position : StructureUtil.blockEntityPositions(island.getStructureName(), structure)) {
             lobby.toWorld(position).getBlock().setType(Material.STONE, false);
@@ -230,20 +235,37 @@ public class LobbyManager implements Listener {
         clear(world, BoundingBox.of(new Vector(record.min[0], record.min[1], record.min[2]), new Vector(record.max[0], record.max[1], record.max[2])));
     }
 
-    // The game drops the items of a container whenever its block is replaced, so shelves left by an earlier paste are emptied before anything is set over them.
-    private static void emptyContainers(@NotNull World world, @NotNull BoundingBox bounds) {
-        Predicate<Block> inside = block -> bounds.contains(block.getX(), block.getY(), block.getZ());
+    private static void forEachChunk(@NotNull World world, @NotNull BoundingBox bounds, @NotNull Consumer<Chunk> action) {
         int lastX = (int) bounds.getMaxX() - 1;
         int lastZ = (int) bounds.getMaxZ() - 1;
         for (int chunkX = (int) bounds.getMinX() >> 4; chunkX <= lastX >> 4; chunkX++) {
             for (int chunkZ = (int) bounds.getMinZ() >> 4; chunkZ <= lastZ >> 4; chunkZ++) {
-                for (BlockState tileEntity : world.getChunkAt(chunkX, chunkZ).getTileEntities(inside, false)) {
-                    if (tileEntity instanceof BlockInventoryHolder holder) {
-                        holder.getInventory().clear();
-                    }
-                }
+                action.accept(world.getChunkAt(chunkX, chunkZ));
             }
         }
+    }
+
+    // The game drops the items of a container whenever its block is replaced, so shelves left by an earlier paste are emptied before anything is set over them.
+    private static void emptyContainers(@NotNull World world, @NotNull BoundingBox bounds) {
+        Predicate<Block> inside = block -> bounds.contains(block.getX(), block.getY(), block.getZ());
+        forEachChunk(world, bounds, chunk -> {
+            for (BlockState tileEntity : chunk.getTileEntities(inside, false)) {
+                if (tileEntity instanceof BlockInventoryHolder holder) {
+                    holder.getInventory().clear();
+                }
+            }
+        });
+    }
+
+    // The entities a structure brings along (armor stands, cushions) outlive its blocks, and a restart pastes another set over the old one.
+    private static void removeEntities(@NotNull World world, @NotNull BoundingBox bounds) {
+        forEachChunk(world, bounds, chunk -> {
+            for (Entity entity : chunk.getEntities()) {
+                if (!(entity instanceof Player) && bounds.contains(entity.getLocation().toVector())) {
+                    entity.remove();
+                }
+            }
+        });
     }
 
     private static void clear(@NotNull World world, @NotNull BoundingBox bounds) {
@@ -255,6 +277,7 @@ public class LobbyManager implements Listener {
                 }
             }
         }
+        removeEntities(world, bounds);
     }
 
     private static boolean isInLobby(@NotNull Block block) {
@@ -308,6 +331,13 @@ public class LobbyManager implements Listener {
 
     @EventHandler
     public void onDropItem(PlayerDropItemEvent event) {
+        if (activeLobby != null) {
+            event.setCancelled(true);
+        }
+    }
+
+    @EventHandler
+    public void onEntityAtInteract(PlayerInteractAtEntityEvent event) {
         if (activeLobby != null) {
             event.setCancelled(true);
         }

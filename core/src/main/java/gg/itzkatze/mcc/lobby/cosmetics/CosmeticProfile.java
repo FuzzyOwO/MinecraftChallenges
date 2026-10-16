@@ -3,6 +3,7 @@ package gg.itzkatze.mcc.lobby.cosmetics;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -76,14 +77,44 @@ final class CosmeticProfile {
         return owned.contains(id);
     }
 
-    @NotNull PurchaseResult buy(@NotNull Cosmetic cosmetic, @NotNull CosmeticCatalog catalog) {
+    @NotNull PurchaseResult buy(@NotNull Cosmetic cosmetic, @NotNull CosmeticCatalog catalog, @NotNull LocalDate today) {
         if (owns(cosmetic.id())) return PurchaseResult.ALREADY_OWNED;
+        if (!cosmetic.isAvailable(today)) return PurchaseResult.OUT_OF_SEASON;
         if (points < cosmetic.price()) return PurchaseResult.NOT_ENOUGH_POINTS;
 
         points -= cosmetic.price();
         owned.add(cosmetic.id());
         equip(cosmetic, catalog);
         return PurchaseResult.BOUGHT;
+    }
+
+    boolean spend(int amount) {
+        if (amount < 0 || points < amount) return false;
+
+        points -= amount;
+        return true;
+    }
+
+    void addPoints(int amount) {
+        points = add(points, amount);
+    }
+
+    boolean grant(@NotNull Cosmetic cosmetic) {
+        if (owns(cosmetic.id())) return false;
+
+        owned.add(cosmetic.id());
+        return true;
+    }
+
+    int addEventPoints(int amount) {
+        int before = points;
+        if (amount >= 0) {
+            points = add(points, amount);
+            earned = add(earned, amount);
+        } else {
+            points = Math.max(0, points + amount);
+        }
+        return points - before;
     }
 
     boolean equip(@NotNull Cosmetic cosmetic, @NotNull CosmeticCatalog catalog) {
@@ -126,5 +157,9 @@ final class CosmeticProfile {
 
     private static int increment(int value) {
         return value == Integer.MAX_VALUE ? value : value + 1;
+    }
+
+    private static int add(int value, int amount) {
+        return (int) Math.min(Integer.MAX_VALUE, (long) value + amount);
     }
 }

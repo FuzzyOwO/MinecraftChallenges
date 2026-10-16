@@ -201,14 +201,18 @@ public class JumpAndRun implements LobbyFeature, Listener {
     private void land(@NotNull Arena arena, @NotNull JumpRun run) {
         HopDifficulty landed = run.getNextDifficulty();
         Cell previous = run.getCurrent();
-        run.land();
+        boolean onEvent = run.land();
         CosmeticStore store = CosmeticStore.get();
+        Random random = ThreadLocalRandom.current();
         store.recordLanding(run.getPlayer(), run.getScore());
-        run.getPlayer().playSound(store.equippedSound(run.getId()).map(SoundCosmetic::sound).orElse(SoundCosmetic.DEFAULT));
+        if (onEvent) {
+            payEvent(arena, run, store, random);
+        } else {
+            run.getPlayer().playSound(store.equippedSound(run.getId()).map(SoundCosmetic::sound).orElse(SoundCosmetic.DEFAULT));
+        }
         removeBlock(arena, previous, run.getLook().block());
 
         Cell standing = run.getCurrent();
-        Random random = ThreadLocalRandom.current();
         HopSteering.visit(run.getVisited(), standing, arena.playArea());
         HopSteering.Leg leg = HopSteering.advance(run.getLeg(), standing, arena.playArea(), run.getVisited(), random);
         run.setLeg(leg);
@@ -219,9 +223,19 @@ public class JumpAndRun implements LobbyFeature, Listener {
             return;
         }
 
-        place(arena, hop.block(), run.getLook().block());
-        run.setNext(hop.block(), hop.difficulty());
+        boolean nextEvent = EventBlock.rolls(onEvent, random);
+        place(arena, hop.block(), nextEvent ? EventBlock.MATERIAL : run.getLook().block());
+        run.setNext(hop.block(), hop.difficulty(), nextEvent);
         reservations.set(run.getId(), HopPlanner.reservation(standing, hop));
+    }
+
+    // The landing point is already banked, so a loss never takes the balance below 0; the used Event Block turns into a normal block of the run.
+    private void payEvent(@NotNull Arena arena, @NotNull JumpRun run, @NotNull CosmeticStore store, @NotNull Random random) {
+        int applied = store.addEventPoints(run.getPlayer(), EventBlock.payout(random));
+        run.recordEvent(applied);
+        place(arena, run.getCurrent(), run.getLook().block());
+        run.getPlayer().sendMessage(EventBlock.message(applied));
+        run.getPlayer().playSound(EventBlock.sound(applied));
     }
 
     private void end(@NotNull Arena arena, @NotNull JumpRun run, @NotNull Ending ending) {
@@ -229,7 +243,7 @@ public class JumpAndRun implements LobbyFeature, Listener {
         reservations.release(run.getId());
         removeBlock(arena, run.getCurrent(), run.getLook().block());
         if (run.getNext() != null) {
-            removeBlock(arena, run.getNext(), run.getLook().block());
+            removeBlock(arena, run.getNext(), run.isNextEvent() ? EventBlock.MATERIAL : run.getLook().block());
         }
         if (ending == Ending.SILENT) return;
 
@@ -239,8 +253,11 @@ public class JumpAndRun implements LobbyFeature, Listener {
                 .append(Component.text(score, NamedTextColor.WHITE))
                 .append(Component.text(score == 1 ? " block." : " blocks.", NamedTextColor.RED));
         if (score > 0) {
-            message = message.append(Component.text(" +" + PointsText.amount(score), NamedTextColor.GREEN))
-                    .append(Component.text(" (" + CosmeticStore.get().points(run.getId()) + " total).", NamedTextColor.GRAY));
+            message = message.append(Component.text(" +" + PointsText.amount(score), NamedTextColor.GREEN));
+            if (run.getEventBlocks() > 0) {
+                message = message.append(Component.text(", Event Blocks " + String.format("%+d", run.getEventPoints()), NamedTextColor.GOLD));
+            }
+            message = message.append(Component.text(" (" + CosmeticStore.get().points(run.getId()) + " total).", NamedTextColor.GRAY));
         }
         run.getPlayer().sendMessage(message);
         run.getPlayer().playSound(RUN_OVER);

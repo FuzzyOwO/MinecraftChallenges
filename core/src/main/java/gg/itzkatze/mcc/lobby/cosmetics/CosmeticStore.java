@@ -13,6 +13,8 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Clock;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -42,6 +44,7 @@ public final class CosmeticStore {
     private final Path file;
     private final CosmeticCatalog catalog;
     private final Delayer delayer;
+    private final Clock clock;
     private final Map<UUID, CosmeticProfile> profiles = new LinkedHashMap<>();
     private final List<Consumer<UUID>> balanceListeners = new ArrayList<>();
     private boolean dirty;
@@ -49,9 +52,14 @@ public final class CosmeticStore {
     private int writes;
 
     public CosmeticStore(@NotNull Path file, @NotNull CosmeticCatalog catalog, @NotNull Delayer delayer) {
+        this(file, catalog, delayer, Clock.systemDefaultZone());
+    }
+
+    public CosmeticStore(@NotNull Path file, @NotNull CosmeticCatalog catalog, @NotNull Delayer delayer, @NotNull Clock clock) {
         this.file = file;
         this.catalog = catalog;
         this.delayer = delayer;
+        this.clock = clock;
         readFile();
     }
 
@@ -80,6 +88,10 @@ public final class CosmeticStore {
 
     public @NotNull CosmeticCatalog catalog() {
         return catalog;
+    }
+
+    public @NotNull LocalDate today() {
+        return LocalDate.now(clock);
     }
 
     public int points(@NotNull UUID player) {
@@ -140,15 +152,51 @@ public final class CosmeticStore {
 
     public @NotNull PurchaseResult buy(@NotNull Player player, @NotNull Cosmetic cosmetic) {
         CosmeticProfile profile = profiles.get(player.getUniqueId());
-        if (profile == null) return PurchaseResult.NOT_ENOUGH_POINTS;
+        if (profile == null) return cosmetic.isAvailable(today()) ? PurchaseResult.NOT_ENOUGH_POINTS : PurchaseResult.OUT_OF_SEASON;
 
-        PurchaseResult result = profile.buy(cosmetic, catalog);
+        PurchaseResult result = profile.buy(cosmetic, catalog, today());
         if (result == PurchaseResult.BOUGHT) {
             profile.rename(player.getName());
             markDirty();
             notifyBalance(player.getUniqueId());
         }
         return result;
+    }
+
+    public boolean spend(@NotNull Player player, int amount) {
+        CosmeticProfile profile = profiles.get(player.getUniqueId());
+        if (profile == null) return false;
+
+        int before = profile.points();
+        if (!profile.spend(amount)) return false;
+
+        changed(player, profile, before);
+        return true;
+    }
+
+    public void addPoints(@NotNull Player player, int amount) {
+        if (amount <= 0) return;
+
+        CosmeticProfile profile = profiles.computeIfAbsent(player.getUniqueId(), key -> new CosmeticProfile());
+        int before = profile.points();
+        profile.addPoints(amount);
+        changed(player, profile, before);
+    }
+
+    public boolean grant(@NotNull Player player, @NotNull Cosmetic cosmetic) {
+        CosmeticProfile profile = profiles.computeIfAbsent(player.getUniqueId(), key -> new CosmeticProfile());
+        if (!profile.grant(cosmetic)) return false;
+
+        changed(player, profile, profile.points());
+        return true;
+    }
+
+    public int addEventPoints(@NotNull Player player, int amount) {
+        CosmeticProfile profile = profiles.computeIfAbsent(player.getUniqueId(), key -> new CosmeticProfile());
+        int before = profile.points();
+        int applied = profile.addEventPoints(amount);
+        changed(player, profile, before);
+        return applied;
     }
 
     public boolean equip(@NotNull Player player, @NotNull Cosmetic cosmetic) {
@@ -188,6 +236,14 @@ public final class CosmeticStore {
     private static @NotNull String displayName(@NotNull Map.Entry<UUID, CosmeticProfile> entry) {
         String name = entry.getValue().name();
         return name == null || name.isBlank() ? entry.getKey().toString().substring(0, SHORT_ID_LENGTH) : name;
+    }
+
+    private void changed(@NotNull Player player, @NotNull CosmeticProfile profile, int pointsBefore) {
+        profile.rename(player.getName());
+        markDirty();
+        if (profile.points() != pointsBefore) {
+            notifyBalance(player.getUniqueId());
+        }
     }
 
     private void notifyBalance(@NotNull UUID player) {

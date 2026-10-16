@@ -170,11 +170,17 @@ public class CosmeticShopGui extends MccGUI {
         if (!owned) {
             int balance = store.points(id);
             lore.add(Component.text("Price: " + PointsText.amount(cosmetic.price()), NamedTextColor.GOLD));
-            lore.add(balance >= cosmetic.price() ? Component.text("Click to buy", NamedTextColor.YELLOW) : Component.text(PointsText.missing(cosmetic.price() - balance), NamedTextColor.RED));
+            if (cosmetic.isAvailable(store.today())) {
+                lore.add(balance >= cosmetic.price() ? Component.text("Click to buy", NamedTextColor.YELLOW) : Component.text(PointsText.missing(cosmetic.price() - balance), NamedTextColor.RED));
+            }
         } else if (equipped) {
             lore.add(Component.text("Equipped", NamedTextColor.GREEN));
         } else {
             lore.add(Component.text("Click to equip", NamedTextColor.YELLOW));
+        }
+        Season season = cosmetic == null ? null : cosmetic.season();
+        if (season != null) {
+            lore.add(season.availability(store.today()));
         }
         if (previewOf(entry) != null) {
             lore.add(Component.text("Right-click to preview", NamedTextColor.GRAY));
@@ -205,6 +211,9 @@ public class CosmeticShopGui extends MccGUI {
                 play(clicker, ShopSounds.CLICK);
                 redraw(clicker);
             }
+        } else if (cosmetic.season() != null && !cosmetic.isAvailable(store.today())) {
+            player.sendMessage(cosmetic.season().returnsMessage(cosmetic));
+            play(clicker, ShopSounds.DENY);
         } else if (store.points(id) >= cosmetic.price()) {
             play(clicker, ShopSounds.CLICK);
             new CosmeticConfirmGui(cosmetic, this).open(clicker);
