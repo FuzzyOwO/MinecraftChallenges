@@ -290,7 +290,7 @@ public class ForceBattleGameListener implements Listener {
 
         team.getPlayers().forEach(player -> {
             if (player != mccPlayer) {
-                player.sendMessage(Component.text(player.getName() + " has skipped " + StringUtility.formatName(oldObjective.getObjectiveString()) + "."));
+                player.sendMessage(Component.text(mccPlayer.getName() + " has skipped " + StringUtility.formatName(oldObjective.getObjectiveString()) + "."));
             }
         });
 
