@@ -4,6 +4,7 @@ import gg.itzkatze.mcc.MinecraftChallenges;
 import gg.itzkatze.mcc.lobby.Lobby;
 import gg.itzkatze.mcc.lobby.LobbyFeature;
 import gg.itzkatze.mcc.lobby.cosmetics.CosmeticStore;
+import gg.itzkatze.mcc.lobby.cosmetics.PointsSidebar;
 import gg.itzkatze.mcc.lobby.cosmetics.PointsText;
 import gg.itzkatze.mcc.lobby.cosmetics.SoundCosmetic;
 import net.kyori.adventure.key.Key;
@@ -34,6 +35,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.OptionalInt;
 import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
@@ -94,6 +96,11 @@ public class JumpAndRun implements LobbyFeature, Listener {
         reservations.clear();
         lastColors.clear();
         this.arena = null;
+    }
+
+    public @NotNull OptionalInt score(@NotNull UUID player) {
+        JumpRun run = runs.get(player);
+        return run == null ? OptionalInt.empty() : OptionalInt.of(run.getScore());
     }
 
     // Lowest priority: the lobby's fall catch teleports a player on the barrier floor first otherwise, which would end the run without its message.
@@ -174,6 +181,7 @@ public class JumpAndRun implements LobbyFeature, Listener {
             lastColors.put(id, look.color());
         }
         reservations.set(id, HopPlanner.reservation(block, start.first()));
+        PointsSidebar.refresh(id);
         player.sendMessage(look.startMessage());
         player.playSound(PLATE_CLICK);
     }
@@ -245,6 +253,7 @@ public class JumpAndRun implements LobbyFeature, Listener {
         if (run.getNext() != null) {
             removeBlock(arena, run.getNext(), run.isNextEvent() ? EventBlock.MATERIAL : run.getLook().block());
         }
+        PointsSidebar.refresh(run.getId());
         if (ending == Ending.SILENT) return;
 
         String reason = ending == Ending.NO_ROOM ? "There is no room for another block. " : "";
