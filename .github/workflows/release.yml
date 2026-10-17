@@ -1,0 +1,87 @@
+name: Release
+
+on:
+    workflow_dispatch:
+        inputs:
+            bump:
+                description: Version part to increase
+                type: choice
+                options:
+                    - patch
+                    - minor
+                    - major
+                default: patch
+
+permissions:
+    contents: write
+
+concurrency:
+    group: release
+
+jobs:
+    release:
+        runs-on: windows-latest
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v7
+              with:
+                  fetch-depth: 0
+
+            - name: Set up Java
+              uses: actions/setup-java@v6
+              with:
+                  java-version: '25'
+                  distribution: 'temurin'
+                  cache: gradle
+
+            - name: Pick version
+              id: version
+              shell: bash
+              env:
+                  BUMP: ${{ inputs.bump }}
+              run: |
+                  previous=$(git tag --list 'v*' --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -n 1 || true)
+                  IFS=. read -r major minor patch <<< "${previous:-v0.0.0}"
+                  major=${major#v}
+                  case "$BUMP" in
+                      major) version="$((major + 1)).0.0" ;;
+                      minor) version="$major.$((minor + 1)).0" ;;
+                      *) version="$major.$minor.$((patch + 1))" ;;
+                  esac
+                  echo "Releasing v$version (previous: ${previous:-none})"
+                  echo "previous=$previous" >> "$GITHUB_OUTPUT"
+                  echo "version=$version" >> "$GITHUB_OUTPUT"
+
+            - name: Build
+              # an env var instead of -PreleaseVersion=..., which PowerShell can split at the first dot
+              env:
+                  ORG_GRADLE_PROJECT_releaseVersion: ${{ steps.version.outputs.version }}
+              run: .\gradlew.bat :loader:shadowJar
+
+            - name: Publish release
+              shell: bash
+              env:
+                  GH_TOKEN: ${{ github.token }}
+                  VERSION: ${{ steps.version.outputs.version }}
+                  PREVIOUS: ${{ steps.version.outputs.previous }}
+              run: |
+                  jar=$(ls loader/build/libs/MinecraftChallenges-*.jar)
+                  minecraft=${jar##*+}
+                  minecraft=${minecraft%.jar}
+                  notes="$RUNNER_TEMP/release-notes.md"
+                  if [ -n "$PREVIOUS" ]; then
+                      {
+                          echo "## Changes since $PREVIOUS"
+                          echo
+                          git log --no-merges --reverse --format='- %s' "$PREVIOUS..HEAD"
+                          echo
+                          echo "**Full Changelog**: https://github.com/$GITHUB_REPOSITORY/compare/$PREVIOUS...v$VERSION"
+                      } > "$notes"
+                  else
+                      echo "First numbered release." > "$notes"
+                  fi
+                  gh release create "v$VERSION" "$jar" \
+                      --title "MinecraftChallenges $VERSION (Minecraft $minecraft)" \
+                      --notes-file "$notes" \
+                      --target "$GITHUB_SHA"

@@ -5,6 +5,8 @@ plugins {
 }
 
 val targetJavaVersion = 25
+val paperVersion = providers.gradleProperty("paperVersion").get()
+val minecraftVersion = paperVersion.substringBefore(".build")
 
 java {
     val javaVersion = JavaVersion.toVersion(targetJavaVersion)
@@ -30,7 +32,7 @@ dependencies {
     implementation(project(":deathswap"))
     implementation(project(":randomizer"))
     implementation(project(":itemrain"))
-    compileOnly("io.papermc.paper:paper-api:26.3.build.175-stable")
+    compileOnly("io.papermc.paper:paper-api:$paperVersion")
 }
 
 tasks.withType<JavaCompile>().configureEach {
@@ -45,7 +47,7 @@ tasks.shadowJar {
     mergeServiceFiles()
     archiveBaseName.set("MinecraftChallenges")
     archiveClassifier.set("")
-    archiveVersion.set(project.version.toString())
+    archiveVersion.set("${project.version}+$minecraftVersion")
 }
 
 tasks.processResources {

@@ -10,9 +10,11 @@ repositories {
     mavenLocal()
 }
 
+val paperVersion = providers.gradleProperty("paperVersion").get()
+
 allprojects {
     group = "gg.itzkatze"
-    version = "0.0.1-SNAPSHOT"
+    version = findProperty("releaseVersion") ?: "0.0.1-SNAPSHOT"
 }
 
 subprojects {
@@ -41,7 +43,7 @@ subprojects {
         implementation("org.reflections:reflections:0.10.2")
         implementation("com.google.code.gson:gson:2.13.2")
 
-        compileOnly("io.papermc.paper:paper-api:26.3.build.175-stable")
+        compileOnly("io.papermc.paper:paper-api:$paperVersion")
 
         compileOnly("org.projectlombok:lombok:1.18.42")
         compileOnly("org.jetbrains:annotations:26.0.1")
