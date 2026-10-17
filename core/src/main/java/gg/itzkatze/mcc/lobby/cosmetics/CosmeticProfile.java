@@ -68,8 +68,7 @@ final class CosmeticProfile {
     }
 
     void recordLanding(int runScore) {
-        points = increment(points);
-        earned = increment(earned);
+        gain(1);
         best = Math.max(best, runScore);
     }
 
@@ -96,7 +95,7 @@ final class CosmeticProfile {
     }
 
     void addPoints(int amount) {
-        points = add(points, amount);
+        gain(amount);
     }
 
     boolean grant(@NotNull Cosmetic cosmetic) {
@@ -109,8 +108,7 @@ final class CosmeticProfile {
     int addEventPoints(int amount) {
         int before = points;
         if (amount >= 0) {
-            points = add(points, amount);
-            earned = add(earned, amount);
+            gain(amount);
         } else {
             points = Math.max(0, points + amount);
         }
@@ -155,8 +153,12 @@ final class CosmeticProfile {
         equipped = kept;
     }
 
-    private static int increment(int value) {
-        return value == Integer.MAX_VALUE ? value : value + 1;
+    // Every gain also counts toward the lifetime points, and nothing else changes them, so they never go down.
+    private void gain(int amount) {
+        if (amount <= 0) return;
+
+        points = add(points, amount);
+        earned = add(earned, amount);
     }
 
     private static int add(int value, int amount) {
