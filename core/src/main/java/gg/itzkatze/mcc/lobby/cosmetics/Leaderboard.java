@@ -178,7 +178,7 @@ public class Leaderboard implements LobbyFeature, Listener {
         return text.appendNewline().append(Component.text("Click to switch", NamedTextColor.GRAY)).build();
     }
 
-    private static @NotNull TextColor rankColor(int index) {
+    static @NotNull TextColor rankColor(int index) {
         return switch (index) {
             case 0 -> NamedTextColor.GOLD;
             case 1 -> SILVER;

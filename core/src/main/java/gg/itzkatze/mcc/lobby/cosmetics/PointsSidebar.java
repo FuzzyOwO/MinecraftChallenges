@@ -36,11 +36,11 @@ public final class PointsSidebar implements ScoreboardContent {
         return new Component[]{
                 Component.text(" "),
                 stat("Current Run: ", score.isPresent() ? Component.text(score.getAsInt(), NamedTextColor.WHITE) : Component.text("-", NamedTextColor.DARK_GRAY)),
-                stat("Best Run: ", Component.text(store.best(id), NamedTextColor.WHITE)),
+                ranked("Best Run: ", Component.text(store.best(id), NamedTextColor.WHITE), store.rank(LeaderboardMetric.BEST_RUN, id)),
                 Component.text(" "),
-                stat("Points: ", Component.text(store.points(id), NamedTextColor.GOLD)),
-                stat("Lifetime Points: ", Component.text(store.earned(id), NamedTextColor.GOLD)),
-                stat("Cases Opened: ", Component.text(store.casesOpened(id), NamedTextColor.WHITE))
+                ranked("Points: ", Component.text(store.points(id), NamedTextColor.GOLD), store.rank(LeaderboardMetric.CURRENT_POINTS, id)),
+                ranked("Lifetime Points: ", Component.text(store.earned(id), NamedTextColor.GOLD), store.rank(LeaderboardMetric.LIFETIME_POINTS, id)),
+                ranked("Cases Opened: ", Component.text(store.casesOpened(id), NamedTextColor.WHITE), store.rank(LeaderboardMetric.CASES_OPENED, id))
         };
     }
 
@@ -57,5 +57,10 @@ public final class PointsSidebar implements ScoreboardContent {
 
     private static @NotNull Component stat(@NotNull String label, @NotNull Component value) {
         return Component.text(label, NamedTextColor.GRAY).append(value);
+    }
+
+    private static @NotNull Component ranked(@NotNull String label, @NotNull Component value, @NotNull OptionalInt position) {
+        Component line = stat(label, value);
+        return position.isEmpty() ? line : line.append(Component.text(" (#" + position.getAsInt() + ")", Leaderboard.rankColor(position.getAsInt() - 1)));
     }
 }

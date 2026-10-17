@@ -23,6 +23,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.UUID;
 import java.util.function.Consumer;
 
@@ -135,12 +136,22 @@ public final class CosmeticStore {
     public @NotNull List<Standing> top(@NotNull LeaderboardMetric metric, int limit) {
         return profiles.entrySet().stream()
                 .filter(entry -> metric.read(entry.getValue()) > 0)
-                .sorted(Comparator.<Map.Entry<UUID, CosmeticProfile>>comparingInt(entry -> metric.read(entry.getValue())).reversed()
-                        .thenComparing(CosmeticStore::displayName, String.CASE_INSENSITIVE_ORDER)
-                        .thenComparing(Map.Entry::getKey))
+                .sorted(boardOrder(metric))
                 .limit(Math.max(limit, 0))
                 .map(entry -> new Standing(displayName(entry), metric.read(entry.getValue())))
                 .toList();
+    }
+
+    public @NotNull OptionalInt rank(@NotNull LeaderboardMetric metric, @NotNull UUID player) {
+        CosmeticProfile profile = profiles.get(player);
+        if (profile == null || metric.read(profile) <= 0) return OptionalInt.empty();
+
+        Map.Entry<UUID, CosmeticProfile> own = Map.entry(player, profile);
+        Comparator<Map.Entry<UUID, CosmeticProfile>> order = boardOrder(metric);
+        long ahead = profiles.entrySet().stream()
+                .filter(entry -> metric.read(entry.getValue()) > 0 && order.compare(entry, own) < 0)
+                .count();
+        return OptionalInt.of((int) ahead + 1);
     }
 
     public void recordLanding(@NotNull Player player, int runScore) {
@@ -236,6 +247,12 @@ public final class CosmeticStore {
 
     int writes() {
         return writes;
+    }
+
+    private static @NotNull Comparator<Map.Entry<UUID, CosmeticProfile>> boardOrder(@NotNull LeaderboardMetric metric) {
+        return Comparator.<Map.Entry<UUID, CosmeticProfile>>comparingInt(entry -> metric.read(entry.getValue())).reversed()
+                .thenComparing(CosmeticStore::displayName, String.CASE_INSENSITIVE_ORDER)
+                .thenComparing(Map.Entry::getKey);
     }
 
     private static @NotNull String displayName(@NotNull Map.Entry<UUID, CosmeticProfile> entry) {
