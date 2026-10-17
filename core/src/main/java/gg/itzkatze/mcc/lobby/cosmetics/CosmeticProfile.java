@@ -20,6 +20,7 @@ final class CosmeticProfile {
     private int points;
     private int earned;
     private int best;
+    private int casesOpened;
     private List<String> owned = new ArrayList<>();
     private List<String> equipped = new ArrayList<>();
 
@@ -51,6 +52,10 @@ final class CosmeticProfile {
 
     int best() {
         return best;
+    }
+
+    int casesOpened() {
+        return casesOpened;
     }
 
     @NotNull List<String> owned() {
@@ -91,6 +96,13 @@ final class CosmeticProfile {
         if (amount < 0 || points < amount) return false;
 
         points -= amount;
+        return true;
+    }
+
+    boolean openCase(int price) {
+        if (!spend(price)) return false;
+
+        casesOpened = add(casesOpened, 1);
         return true;
     }
 
@@ -139,6 +151,7 @@ final class CosmeticProfile {
         points = Math.max(points, 0);
         earned = Math.max(earned, 0);
         best = Math.max(best, 0);
+        casesOpened = Math.max(casesOpened, 0);
         owned = owned == null ? new ArrayList<>() : new ArrayList<>(owned.stream().filter(Objects::nonNull).collect(Collectors.toCollection(LinkedHashSet::new)));
 
         List<String> known = equipped == null ? List.of() : equipped.stream().filter(id -> id != null && catalog.find(id).isPresent()).toList();

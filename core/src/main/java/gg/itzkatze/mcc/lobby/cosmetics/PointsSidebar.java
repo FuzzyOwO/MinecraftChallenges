@@ -39,7 +39,8 @@ public final class PointsSidebar implements ScoreboardContent {
                 stat("Best Run: ", Component.text(store.best(id), NamedTextColor.WHITE)),
                 Component.text(" "),
                 stat("Points: ", Component.text(store.points(id), NamedTextColor.GOLD)),
-                stat("Lifetime Points: ", Component.text(store.earned(id), NamedTextColor.GOLD))
+                stat("Lifetime Points: ", Component.text(store.earned(id), NamedTextColor.GOLD)),
+                stat("Cases Opened: ", Component.text(store.casesOpened(id), NamedTextColor.WHITE))
         };
     }
 

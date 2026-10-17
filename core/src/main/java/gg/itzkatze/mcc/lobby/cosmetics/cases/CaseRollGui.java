@@ -69,7 +69,7 @@ public final class CaseRollGui extends MccGUI {
         if (player == null || ROLLING.containsKey(player.getUniqueId())) return;
 
         CosmeticStore store = CosmeticStore.get();
-        if (!store.spend(player, CaseLoot.PRICE)) {
+        if (!store.openCase(player, CaseLoot.PRICE)) {
             player.sendMessage(Component.text(PointsText.missing(CaseLoot.PRICE - store.points(player.getUniqueId())), NamedTextColor.RED));
             player.playSound(ShopSounds.DENY);
             player.closeInventory();

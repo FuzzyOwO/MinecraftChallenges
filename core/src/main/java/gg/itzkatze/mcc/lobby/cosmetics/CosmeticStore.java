@@ -109,6 +109,11 @@ public final class CosmeticStore {
         return profile == null ? 0 : profile.best();
     }
 
+    public int casesOpened(@NotNull UUID player) {
+        CosmeticProfile profile = profiles.get(player);
+        return profile == null ? 0 : profile.casesOpened();
+    }
+
     public boolean owns(@NotNull UUID player, @NotNull Cosmetic cosmetic) {
         CosmeticProfile profile = profiles.get(player);
         return profile != null && profile.owns(cosmetic.id());
@@ -163,12 +168,12 @@ public final class CosmeticStore {
         return result;
     }
 
-    public boolean spend(@NotNull Player player, int amount) {
+    public boolean openCase(@NotNull Player player, int price) {
         CosmeticProfile profile = profiles.get(player.getUniqueId());
         if (profile == null) return false;
 
         int before = profile.points();
-        if (!profile.spend(amount)) return false;
+        if (!profile.openCase(price)) return false;
 
         changed(player, profile, before);
         return true;
