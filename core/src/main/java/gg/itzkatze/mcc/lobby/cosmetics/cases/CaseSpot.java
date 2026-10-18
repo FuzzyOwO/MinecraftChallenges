@@ -122,4 +122,9 @@ public final class CaseSpot implements LobbyFeature, Listener {
         Placed placed = this.placed;
         return placed != null && placed.hitbox().equals(entity);
     }
+
+    public @Nullable Location getChestLocation() {
+        Placed placed = this.placed;
+        return placed == null ? null : placed.chest().getLocation();
+    }
 }

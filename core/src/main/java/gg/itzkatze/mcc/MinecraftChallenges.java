@@ -13,6 +13,7 @@ import gg.itzkatze.mcc.game.SessionPersistence;
 import gg.itzkatze.mcc.gui.GUIListener;
 import gg.itzkatze.mcc.lobby.LobbyManager;
 import gg.itzkatze.mcc.lobby.cosmetics.CosmeticStore;
+import gg.itzkatze.mcc.lobby.cosmetics.cases.CaseFireworkGuard;
 import gg.itzkatze.mcc.lobby.cosmetics.cases.CaseRollGui;
 import gg.itzkatze.mcc.lobby.cosmetics.PointsSidebar;
 import gg.itzkatze.mcc.gui.sign.SignInput;
@@ -77,6 +78,7 @@ public final class MinecraftChallenges extends JavaPlugin {
 
         getServer().getPluginManager().registerEvents(new GameLifecycleManager(), this);
         getServer().getPluginManager().registerEvents(new LobbyManager(), this);
+        getServer().getPluginManager().registerEvents(new CaseFireworkGuard(), this);
         LobbyManager.loadIslands();
         getServer().getPluginManager().registerEvents(new TeamChatManager(), this);
         getServer().getPluginManager().registerEvents(pauseManager, this);

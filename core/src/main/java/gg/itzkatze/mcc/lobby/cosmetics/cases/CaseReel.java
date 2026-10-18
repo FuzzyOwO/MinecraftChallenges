@@ -35,8 +35,9 @@ final class CaseReel {
         return strip.get(PRIZE_INDEX);
     }
 
-    // The reel slows down towards the end: 19 one-tick steps, then longer and longer pauses, 90 ticks in all.
+    // The reel slows down dramatically near the end, creating suspense before the final stop.
     static int delay(int step) {
-        return 1 + (int) Math.round(5 * Math.pow(step / (double) (STEPS - 1), 3));
+        double progress = step / (double) (STEPS - 1);
+        return 1 + (int) Math.round(18 * Math.pow(progress, 5));
     }
 }

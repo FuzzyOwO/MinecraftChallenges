@@ -37,3 +37,4 @@ commands:
         aliases: [ information ]
     lobbypos:
     setspawn:
+    casefireworks:

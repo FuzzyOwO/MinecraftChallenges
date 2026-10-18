@@ -38,11 +38,13 @@ public final class CaseRollGui extends MccGUI {
     private static final int TOP_MARKER_SLOT = 4;
     private static final int REEL_SLOT = 9;
     private static final int BOTTOM_ROW_SLOT = 18;
-    private static final int AGAIN_SLOT = 21;
+    private static final int AGAIN_SLOT = 19;
     private static final int BOTTOM_MARKER_SLOT = 22;
-    private static final int CLOSE_SLOT = 23;
+    private static final int CLOSE_SLOT = 25;
     private static final int CENTER = CaseReel.WIDTH / 2;
-    private static final Sound TICK = Sound.sound(Key.key("block.note_block.hat"), Sound.Source.UI, 0.6f, 1.4f);
+    private static final int PRIZE_SLOT = REEL_SLOT + CENTER;
+    private static final int REVEAL_DELAY = 40;
+    private static final Sound TICK = Sound.sound(Key.key("block.wooden_button.click_on"), Sound.Source.PLAYER, 1f, 1f);
     private static final Sound SMALL_WIN = Sound.sound(Key.key("entity.experience_orb.pickup"), Sound.Source.PLAYER, 1f, 1f);
     private static final Sound GOOD_WIN = Sound.sound(Key.key("entity.player.levelup"), Sound.Source.PLAYER, 1f, 1f);
     private static final Sound BIG_WIN = Sound.sound(Key.key("ui.toast.challenge_complete"), Sound.Source.PLAYER, 1f, 1f);
@@ -56,6 +58,8 @@ public final class CaseRollGui extends MccGUI {
     private boolean paid;
     private boolean reopenPending;
     private @Nullable BukkitTask task;
+    private int revealWait;
+    private boolean stopped;
 
     CaseRollGui(@NotNull Player player, @NotNull CasePrize prize, @NotNull CaseReel reel) {
         super("Cosmetic Case", 27);
@@ -99,22 +103,39 @@ public final class CaseRollGui extends MccGUI {
 
     @Override
     public void setItems(MccPlayer viewer) {
+        if (paid) {
+            setRevealed();
+            return;
+        }
         List<CasePrize> window = reel.window(position);
         for (int column = 0; column < CaseReel.WIDTH; column++) {
             CasePrize shown = window.get(column);
-            set(fixed(REEL_SLOT + column, render(shown, paid && column == CENTER)));
+            set(fixed(REEL_SLOT + column, render(shown, false)));
             if (column != CENTER) {
-                ItemStack pane = pane(paid ? prize.tier() : shown.tier());
+                ItemStack pane = pane(shown.tier());
                 set(fixed(column, pane));
                 set(fixed(BOTTOM_ROW_SLOT + column, pane));
             }
         }
         set(fixed(TOP_MARKER_SLOT, ItemStackCreator.createNamedItemStack(Material.HOPPER, Component.text("▼", NamedTextColor.GRAY))));
         set(fixed(BOTTOM_MARKER_SLOT, ItemStackCreator.createNamedItemStack(Material.HOPPER, Component.text("▲", NamedTextColor.GRAY))));
-        if (paid) {
-            set(againButton());
-            set(GUIClickableItem.getCloseItem(CLOSE_SLOT));
+    }
+
+    private void setRevealed() {
+        ItemStack frame = pane(prize.tier());
+        ItemStack filler = ItemStackCreator.fillerItem();
+        for (int slot = 0; slot < size; slot++) {
+            set(fixed(slot, isAroundPrize(slot) ? frame : filler));
         }
+        set(fixed(PRIZE_SLOT, render(prize, true)));
+        set(againButton());
+        set(GUIClickableItem.getCloseItem(CLOSE_SLOT));
+    }
+
+    private static boolean isAroundPrize(int slot) {
+        int rows = Math.abs(slot / CaseReel.WIDTH - PRIZE_SLOT / CaseReel.WIDTH);
+        int columns = Math.abs(slot % CaseReel.WIDTH - CENTER);
+        return slot != PRIZE_SLOT && rows <= 1 && columns <= 1;
     }
 
     @Override
@@ -155,14 +176,26 @@ public final class CaseRollGui extends MccGUI {
             pay(true);
             return;
         }
+
+        if (stopped) {
+            if (--revealWait <= 0) {
+                pay(false);
+            }
+            return;
+        }
+
         if (--wait > 0) return;
 
         position++;
         online.playSound(TICK);
+
         if (position == CaseReel.STEPS) {
-            pay(false);
+            stopped = true;
+            revealWait = REVEAL_DELAY;
+            redraw();
             return;
         }
+
         wait = CaseReel.delay(position);
         redraw();
     }
@@ -181,14 +214,15 @@ public final class CaseRollGui extends MccGUI {
 
         player.sendMessage(message);
         player.playSound(winSound(prize.tier()));
+        CaseFireworks.play(player, prize.tier());
         redraw();
     }
 
     private @NotNull Component award(@NotNull CosmeticStore store) {
-        if (prize instanceof CasePrize.Points points) {
-            store.addPoints(player, points.amount());
+        if (prize instanceof CasePrize.Points(int amount, PriceTier tier)) {
+            store.addPoints(player, amount);
             return Component.text("You won ", NamedTextColor.GREEN)
-                    .append(Component.text(PointsText.signed(points.amount()), points.tier().color()))
+                    .append(Component.text(PointsText.signed(amount), tier.color()))
                     .append(Component.text("!", NamedTextColor.GREEN));
         }
         Cosmetic cosmetic = ((CasePrize.Item) prize).cosmetic();
