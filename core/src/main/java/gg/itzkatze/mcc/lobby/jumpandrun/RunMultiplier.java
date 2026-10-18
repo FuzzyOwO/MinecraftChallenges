@@ -10,6 +10,7 @@ import java.util.UUID;
 
 public final class RunMultiplier {
 
+    //To set values after how many jumps & how high the multiplier
     private static final int BLOCKS_PER_LEVEL = 50;
     private static final double BONUS_PER_LEVEL = 0.1;
 
@@ -33,14 +34,14 @@ public final class RunMultiplier {
             player.sendMessage(
                     Component.text("Multiplikator erhöht auf ", NamedTextColor.GREEN)
                             .append(Component.text(
-                                    String.format(java.util.Locale.GERMANY, "%.1f", multiplier) + "x",
+                                    String.format(java.util.Locale.US, "%.1f", multiplier) + "x",
                                     NamedTextColor.GOLD
                             ))
                             .append(Component.text("!", NamedTextColor.GREEN))
             );
         }
 
-        // Multiplikator Standart
+        // Multiplikator set value
         state.bonusRemainder += multiplier - 1.0;
 
         int bonusPoints = (int) state.bonusRemainder;
