@@ -73,7 +73,10 @@ final class CosmeticProfile {
     }
 
     void recordLanding(int runScore) {
-        gain(1);
+        recordLanding(runScore, 1);}
+
+    void recordLanding(int runScore, int pointsToGain) {
+        gain(pointsToGain);
         best = Math.max(best, runScore);
     }
 

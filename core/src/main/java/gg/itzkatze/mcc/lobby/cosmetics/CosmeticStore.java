@@ -155,12 +155,17 @@ public final class CosmeticStore {
     }
 
     public void recordLanding(@NotNull Player player, int runScore) {
-        UUID id = player.getUniqueId();
-        CosmeticProfile profile = profiles.computeIfAbsent(id, key -> new CosmeticProfile());
+        recordLanding(player, runScore, 1);}
+
+    public void recordLanding(@NotNull Player player,
+                              int runScore,
+                              int pointsToGain) {UUID id = player.getUniqueId();CosmeticProfile profile = profiles.computeIfAbsent(id, key -> new CosmeticProfile());
+
         int before = profile.points();
         profile.rename(player.getName());
-        profile.recordLanding(runScore);
+        profile.recordLanding(runScore, pointsToGain);
         markDirty();
+
         if (profile.points() != before) {
             notifyBalance(id);
         }

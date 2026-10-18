@@ -62,6 +62,7 @@ public class JumpAndRun implements LobbyFeature, Listener {
     private final Reservations reservations = new Reservations();
     private final Map<UUID, RunColor> lastColors = new HashMap<>();
     private @Nullable Arena arena;
+    private final RunMultiplier runMultiplier = new RunMultiplier();
 
     public JumpAndRun(@NotNull Vector platePosition) {
         this.platePosition = platePosition.clone();
