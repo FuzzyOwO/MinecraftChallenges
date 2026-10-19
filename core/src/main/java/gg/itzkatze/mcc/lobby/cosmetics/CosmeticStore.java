@@ -133,6 +133,10 @@ public final class CosmeticStore {
         return equipped(player, CosmeticCategory.SOUND).filter(SoundCosmetic.class::isInstance).map(SoundCosmetic.class::cast);
     }
 
+    public @NotNull Optional<MusicCosmetic> equippedMusic(@NotNull UUID player) {
+        return equipped(player, CosmeticCategory.MUSIC).filter(MusicCosmetic.class::isInstance).map(MusicCosmetic.class::cast);
+    }
+
     public @NotNull List<Standing> top(@NotNull LeaderboardMetric metric, int limit) {
         return profiles.entrySet().stream()
                 .filter(entry -> metric.read(entry.getValue()) > 0)
@@ -159,7 +163,9 @@ public final class CosmeticStore {
 
     public void recordLanding(@NotNull Player player,
                               int runScore,
-                              int pointsToGain) {UUID id = player.getUniqueId();CosmeticProfile profile = profiles.computeIfAbsent(id, key -> new CosmeticProfile());
+                              int pointsToGain) {
+        UUID id = player.getUniqueId();
+        CosmeticProfile profile = profiles.computeIfAbsent(id, key -> new CosmeticProfile());
 
         int before = profile.points();
         profile.rename(player.getName());
