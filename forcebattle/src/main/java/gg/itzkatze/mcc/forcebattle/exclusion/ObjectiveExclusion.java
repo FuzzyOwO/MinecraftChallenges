@@ -78,13 +78,13 @@ public enum ObjectiveExclusion {
             .deaths(MccDamageType.LIGHTNING_BOLT)
             .items(Material.MACE, Material.HEAVY_CORE, Material.BEACON, Material.NETHER_STAR, Material.CHAINMAIL_HELMET, Material.CHAINMAIL_CHESTPLATE,
                     Material.CHAINMAIL_LEGGINGS, Material.CHAINMAIL_BOOTS, Material.OCHRE_FROGLIGHT, Material.PEARLESCENT_FROGLIGHT, Material.VERDANT_FROGLIGHT,
-                    Material.OMINOUS_TRIAL_KEY)),
+                    Material.OMINOUS_TRIAL_KEY, Material.ECHO_SHARD)),
     MAPS(ForceBattleSettings.EXCLUDE_MAPS, Material.FILLED_MAP, "Structure maps from cartographer trades and abandoned camp chests",
             ExclusionRules.builder().itemsNamed(ObjectiveExclusion::isStructureMap));
 
     private static final Set<String> COMMON_BANNER_PATTERNS = Set.of("FIELD_MASONED_BANNER_PATTERN", "BORDURE_INDENTED_BANNER_PATTERN", "FLOWER_BANNER_PATTERN");
     private static final List<String> OXIDATION_STAGES = List.of("EXPOSED_", "WEATHERED_", "OXIDIZED_");
-    private static final Set<String> CRAFTED_UNOXIDIZED_ONLY = Set.of("COPPER_BARS", "COPPER_CHAIN", "COPPER_LANTERN", "LIGHTNING_ROD", "COPPER_CHEST");
+    private static final Set<String> CRAFTED_UNOXIDIZED_ONLY = Set.of("COPPER_BARS", "COPPER_CHAIN", "COPPER_LANTERN", "LIGHTNING_ROD");
 
     private final @Nullable ForceBattleSettings setting;
     private final @NotNull Material icon;
