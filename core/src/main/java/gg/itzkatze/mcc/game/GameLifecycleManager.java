@@ -4,6 +4,7 @@ import gg.itzkatze.mcc.MinecraftChallenges;
 import gg.itzkatze.mcc.challenges.ChallengeManager;
 import gg.itzkatze.mcc.lobby.LobbyManager;
 import gg.itzkatze.mcc.player.MccPlayer;
+import gg.itzkatze.mcc.spectator.SpectatorManager;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
@@ -63,6 +64,7 @@ public class GameLifecycleManager implements Listener {
         player.getPlayer().setSaturation(20);
         player.getPlayer().setFireTicks(0);
         player.getPlayer().getInventory().clear();
+        SpectatorManager.leaveSpectatorMode(player.getPlayer());
         player.getPlayer().setGameMode(GameMode.ADVENTURE);
         Location spawn = LobbyManager.getSpawn();
         if (spawn != null) {
@@ -81,7 +83,11 @@ public class GameLifecycleManager implements Listener {
         for (MccPlayer player : MccPlayer.getOnlinePlayers()) {
             if (player.getPlayer() == null) continue;
 
-            player.getPlayer().setGameMode(GameMode.SURVIVAL);
+            if (player.isSpectator()) {
+                SpectatorManager.enterSpectatorMode(player.getPlayer());
+            } else {
+                player.getPlayer().setGameMode(GameMode.SURVIVAL);
+            }
             player.getPlayer().getInventory().clear();
             player.getPlayer().setHealth(20);
             player.getPlayer().setSaturation(20);
@@ -122,5 +128,6 @@ public class GameLifecycleManager implements Listener {
         for (MccPlayer player : MccPlayer.getOnlinePlayers()) {
             sendToLobby(player);
         }
+        SpectatorManager.onReset();
     }
 }

@@ -3,6 +3,7 @@ package gg.itzkatze.mcc.itemrain;
 import gg.itzkatze.mcc.MinecraftChallenges;
 import gg.itzkatze.mcc.game.ChallengeTimer;
 import gg.itzkatze.mcc.game.GameTimer;
+import gg.itzkatze.mcc.spectator.SpectatorManager;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -48,6 +49,7 @@ public class ItemRainGameListener implements Listener {
         if (dropTimer.hasElapsed()) {
             dropTimer.consumeElapsed();
             for (Player player : Bukkit.getOnlinePlayers()) {
+                if (SpectatorManager.isSpectator(player.getUniqueId())) continue;
                 giveRandomItem(player);
             }
         }

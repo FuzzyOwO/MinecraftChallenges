@@ -27,7 +27,7 @@ public class DeathTask {
         Player damager = event.getPlayer();
 
         if (!(MccPlayer.adapt(damager) instanceof ForceBattlePlayer mccPlayer)) return;
-        if (mccPlayer.isExcluded()) return;
+        if (!mccPlayer.isParticipating()) return;
 
         checkPlayerObjective(mccPlayer, event.getDamageSource().getDamageType(), event);
         checkTeamObjective(mccPlayer, event.getDamageSource().getDamageType(), event);

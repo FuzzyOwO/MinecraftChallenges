@@ -85,6 +85,10 @@ public class NametagManager {
     private static Component buildSuffix(@NotNull ForceBattlePlayer player) {
         Component suffix = Component.text(" ");
 
+        if (player.isSpectator()) {
+            return suffix.append(Component.text("Spectator", NamedTextColor.GRAY).decorate(TextDecoration.ITALIC))
+                    .decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE);
+        }
         if (player.isExcluded()) {
             suffix = suffix.append(Component.text("Excluded", NamedTextColor.GRAY)
                     .decorate(TextDecoration.ITALIC));
@@ -99,22 +103,11 @@ public class NametagManager {
         }
 
         if (objective != null) {
-            String objectiveString;
-            MccAdvancement advancement = objective.getObjectiveValue(MccAdvancement.class);
-            if (advancement != null) {
-                objectiveString = advancement.name;
-            } else {
-                objectiveString = StringUtility.formatName(objective.getObjectiveString());
-            }
-
             boolean hideObjectives = SettingsManager.isEnabled(GlobalSetting.HIDE_OBJECTIVES);
             boolean hidePoints = SettingsManager.isEnabled(GlobalSetting.HIDE_POINTS);
 
             if (!hideObjectives) {
-                suffix = suffix.append(Component.text(" "))
-                        .append(Component.text(objective.getBattleType().getPrefix(), NamedTextColor.GRAY))
-                        .append(Component.text(" » ", NamedTextColor.DARK_GRAY))
-                        .append(Component.text(objectiveString, NamedTextColor.BLUE));
+                suffix = suffix.append(Component.text(" ")).append(objectiveText(objective));
             }
 
             if (!hideObjectives && !hidePoints) {
@@ -138,5 +131,13 @@ public class NametagManager {
         }
 
         return suffix.decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE);
+    }
+
+    static @NotNull Component objectiveText(@NotNull ForceBattleObjective objective) {
+        MccAdvancement advancement = objective.getObjectiveValue(MccAdvancement.class);
+        String objectiveString = advancement != null ? advancement.name : StringUtility.formatName(objective.getObjectiveString());
+        return Component.text(objective.getBattleType().getPrefix(), NamedTextColor.GRAY)
+                .append(Component.text(" » ", NamedTextColor.DARK_GRAY))
+                .append(Component.text(objectiveString, NamedTextColor.BLUE));
     }
 }

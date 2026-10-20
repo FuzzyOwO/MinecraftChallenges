@@ -6,6 +6,7 @@ import gg.itzkatze.mcc.configuration.SettingsManager;
 import gg.itzkatze.mcc.MinecraftChallenges;
 import gg.itzkatze.mcc.event.ObjectiveUpdateEvent;
 import gg.itzkatze.mcc.event.PlayerResetEvent;
+import gg.itzkatze.mcc.forcebattle.gui.TeamBackpackGUI;
 import gg.itzkatze.mcc.game.SessionPersistence;
 import gg.itzkatze.mcc.team.MccTeam;
 import gg.itzkatze.mcc.player.MccPlayer;
@@ -20,7 +21,9 @@ import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -232,5 +235,18 @@ public class ForceBattlePlayer extends MccPlayer {
     @Override
     public Inventory getBackpack() {
         return BACKPACK_INVENTORY;
+    }
+
+    @Override
+    public @Nullable List<ItemStack> getBackpackContents() {
+        if (!SettingsManager.isEnabled(ForceBattleSettings.BACKPACK)) return null;
+        if (getTeam() instanceof ForceBattleTeam team) {
+            List<ItemStack> contents = new ArrayList<>();
+            for (TeamBackpackGUI page : team.getBACKPACK_INVENTORIES()) {
+                contents.addAll(copyContents(page.getInventory(), slot -> !page.isNavigationSlot(slot)));
+            }
+            return contents;
+        }
+        return super.getBackpackContents();
     }
 }

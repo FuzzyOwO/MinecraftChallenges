@@ -14,6 +14,7 @@ import gg.itzkatze.mcc.util.Toast;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Material;
+import org.bukkit.entity.Arrow;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Fireball;
 import org.bukkit.entity.LivingEntity;
@@ -28,7 +29,7 @@ public class MobsTask {
         Player damager;
 
         if (!(event.getEntity() instanceof LivingEntity target)) return;
-        if (event.getDamager() instanceof Fireball) {
+        if (event.getDamager() instanceof Fireball || event.getDamager() instanceof Arrow) {
             // Not Fireball#getShooter(): Paper caches it and a player hitting the fireball back does not update the cache
             if (event.getDamageSource().getCausingEntity() instanceof Player player) {
                 damager = player;
@@ -38,7 +39,7 @@ public class MobsTask {
         } else return;
 
         if (!(MccPlayer.adapt(damager) instanceof ForceBattlePlayer mccPlayer)) return;
-        if (mccPlayer.isExcluded()) return;
+        if (!mccPlayer.isParticipating()) return;
 
         if (target.getHealth() - event.getDamage() > 0) return;
 

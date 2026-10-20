@@ -49,7 +49,7 @@ public class BossbarManager {
             BossbarKind showKind = timerRunning ? BossbarKind.RUNNING : BossbarKind.NOT_RUNNING;
 
             for (MccPlayer player : MccPlayer.getOnlinePlayers()) {
-                if (player.isExcluded()) {
+                if (!player.isParticipating()) {
                     hideAllBarsForPlayer(player);
                     continue;
                 }
