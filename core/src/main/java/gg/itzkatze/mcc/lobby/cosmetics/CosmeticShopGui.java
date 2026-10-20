@@ -240,7 +240,7 @@ public class CosmeticShopGui extends MccGUI {
                 };
 
         ItemStack stack = ItemStackCreator.getStack(name, icon, lore);
-        return equipped ? glowing(stack) : stack;
+        return owned ? glowing(stack) : stack;
     }
 
     private void choose(@NotNull Entry entry, @NotNull MccPlayer clicker) {
