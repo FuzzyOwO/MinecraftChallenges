@@ -25,27 +25,31 @@ import java.util.UUID;
 
 public class CosmeticShopGui extends MccGUI {
 
-    private static final int BLOCK_TAB_SLOT = 20;
+    private static final int BLOCK_SLOT = 20;
     private static final int BALANCE_SLOT = 4;
-    private static final int SOUND_TAB_SLOT = 22;
-    private static final int MUSIC_TAB_SLOT = 24;
+    private static final int SOUND_SLOT = 22;
+    private static final int MUSIC_SLOT = 24;
     private static final int PREVIOUS_SLOT = 45;
     private static final int BACK_SLOT = 48;
     private static final int CLOSE_SLOT = 49;
     private static final int NEXT_SLOT = 53;
     private static final int[] ENTRY_SLOTS = entrySlots();
-    private boolean overview = true;
-
 
     // A null cosmetic is the free Default entry of the current tab.
     private record Entry(@Nullable Cosmetic cosmetic) {
     }
 
-    private CosmeticCategory category = CosmeticCategory.BLOCK;
+    private CosmeticCategory category;
     private int page;
 
     public CosmeticShopGui() {
         super("Cosmetic Shop", 54);
+        this.category = null;
+    }
+
+    public CosmeticShopGui(@NotNull CosmeticCategory category) {
+        super(category.title() + " Shop", 54);
+        this.category = category;
     }
 
     private static int[] entrySlots() {
@@ -71,10 +75,10 @@ public class CosmeticShopGui extends MccGUI {
             }
         });
 
-        if (overview) {
-            set(overviewCategory(CosmeticCategory.BLOCK, BLOCK_TAB_SLOT));
-            set(overviewCategory(CosmeticCategory.SOUND, SOUND_TAB_SLOT));
-            set(overviewCategory(CosmeticCategory.MUSIC, MUSIC_TAB_SLOT));
+        if (category == null) {
+            set(categoryButton(CosmeticCategory.BLOCK, BLOCK_SLOT));
+            set(categoryButton(CosmeticCategory.SOUND, SOUND_SLOT));
+            set(categoryButton(CosmeticCategory.MUSIC, MUSIC_SLOT));
             set(GUIClickableItem.getCloseItem(CLOSE_SLOT));
             return;
         }
@@ -82,7 +86,7 @@ public class CosmeticShopGui extends MccGUI {
         set(new GUIClickableItem(BACK_SLOT) {
             @Override
             public void run(InventoryClickEvent event, MccPlayer clicker) {
-                overview = true;
+                category = null;
                 page = 0;
                 play(clicker, ShopSounds.CLICK);
                 redraw(clicker);
@@ -135,11 +139,11 @@ public class CosmeticShopGui extends MccGUI {
         return entries;
     }
 
-    private @NotNull GUIClickableItem tab(@NotNull CosmeticCategory tab, int slot) {
+    private @NotNull GUIClickableItem categoryButton(@NotNull CosmeticCategory selectedCategory, int slot) {
         return new GUIClickableItem(slot) {
             @Override
             public void run(InventoryClickEvent event, MccPlayer clicker) {
-                category = tab;
+                category = selectedCategory;
                 page = 0;
                 play(clicker, ShopSounds.CLICK);
                 redraw(clicker);
@@ -147,9 +151,9 @@ public class CosmeticShopGui extends MccGUI {
 
             @Override
             public ItemStack getItem(MccPlayer viewer) {
-                boolean selected = tab == category;
-                ItemStack stack = ItemStackCreator.getStack(Component.text(tab.title(), selected ? NamedTextColor.YELLOW : NamedTextColor.GRAY, TextDecoration.BOLD), tab.icon(), List.of());
-                return selected ? glowing(stack) : stack;
+                return ItemStackCreator.getStack(Component.text(selectedCategory.title(), NamedTextColor.YELLOW, TextDecoration.BOLD), selectedCategory.icon(),
+                        List.of(Component.text("Click to open", NamedTextColor.GRAY))
+                );
             }
         };
     }
@@ -185,35 +189,6 @@ public class CosmeticShopGui extends MccGUI {
             @Override
             public ItemStack getItem(MccPlayer viewer) {
                 return render(entry, viewer);
-            }
-        };
-    }
-
-    private @NotNull GUIClickableItem overviewCategory(
-            @NotNull CosmeticCategory selectedCategory,
-            int slot
-    ) {
-        return new GUIClickableItem(slot) {
-            @Override
-            public void run(InventoryClickEvent event, MccPlayer clicker) {
-                category = selectedCategory;
-                page = 0;
-                overview = false;
-                play(clicker, ShopSounds.CLICK);
-                redraw(clicker);
-            }
-
-            @Override
-            public ItemStack getItem(MccPlayer viewer) {
-                return ItemStackCreator.getStack(
-                        Component.text(
-                                selectedCategory.title(),
-                                NamedTextColor.YELLOW,
-                                TextDecoration.BOLD
-                        ),
-                        selectedCategory.icon(),
-                        List.of(Component.text("Click to Open", NamedTextColor.GRAY))
-                );
             }
         };
     }
