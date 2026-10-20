@@ -79,7 +79,7 @@ public class AllItemsGameListener implements Listener {
         if (!AllItemsSettings.isItemsEnabled()) {
             return;
         }
-        if (MccPlayer.adapt(player).isExcluded()) {
+        if (!MccPlayer.adapt(player).isParticipating()) {
             return;
         }
 
@@ -129,7 +129,7 @@ public class AllItemsGameListener implements Listener {
         if (!AllItemsSettings.isItemsEnabled()) {
             return;
         }
-        if (MccPlayer.adapt(player).isExcluded()) {
+        if (!MccPlayer.adapt(player).isParticipating()) {
             return;
         }
 
@@ -157,7 +157,7 @@ public class AllItemsGameListener implements Listener {
             return;
         }
         Player player = event.getPlayer();
-        if (MccPlayer.adapt(player).isExcluded()) {
+        if (!MccPlayer.adapt(player).isParticipating()) {
             return;
         }
         if (event.getFrom().getBlockX() == event.getTo().getBlockX()
@@ -189,7 +189,7 @@ public class AllItemsGameListener implements Listener {
         if (killer == null) {
             return;
         }
-        if (MccPlayer.adapt(killer).isExcluded()) {
+        if (!MccPlayer.adapt(killer).isParticipating()) {
             return;
         }
 
@@ -212,7 +212,7 @@ public class AllItemsGameListener implements Listener {
             return;
         }
         Player player = event.getPlayer();
-        if (MccPlayer.adapt(player).isExcluded()) {
+        if (!MccPlayer.adapt(player).isParticipating()) {
             return;
         }
 
@@ -246,7 +246,7 @@ public class AllItemsGameListener implements Listener {
 
             Registry<Structure> registry = RegistryAccess.registryAccess().getRegistry(RegistryKey.STRUCTURE);
             for (MccPlayer mccPlayer : MccPlayer.getOnlinePlayers()) {
-                if (mccPlayer.isExcluded()) continue;
+                if (!mccPlayer.isParticipating()) continue;
                 Player player = mccPlayer.getPlayer();
                 if (player == null) continue;
 

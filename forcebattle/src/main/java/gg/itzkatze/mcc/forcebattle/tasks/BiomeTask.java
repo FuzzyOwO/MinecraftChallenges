@@ -29,7 +29,7 @@ public class BiomeTask implements ForceTask {
             Player player = mccPlayer.getPlayer();
 
             if (player == null) continue;
-            if (mccPlayer.isExcluded()) continue;
+            if (!mccPlayer.isParticipating()) continue;
 
             Biome currentBiome = player.getWorld().getBiome(player.getLocation());
             checkPlayerObjective(fbPlayer, currentBiome);

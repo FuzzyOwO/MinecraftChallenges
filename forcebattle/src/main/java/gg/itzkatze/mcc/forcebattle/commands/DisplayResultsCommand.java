@@ -51,7 +51,7 @@ public class DisplayResultsCommand extends MccCommand {
 
         switch (args[0].toLowerCase()) {
             case "player" -> {
-                List<MccPlayer> sortedPlayers = new ArrayList<>(MccPlayer.PLAYERS);
+                List<MccPlayer> sortedPlayers = new ArrayList<>(MccPlayer.PLAYERS.stream().filter(MccPlayer::isRanked).toList());
                 sortedPlayers.sort(Comparator.comparingInt(MccPlayer::getPoints).reversed());
 
                 for (MccPlayer player : sortedPlayers) {

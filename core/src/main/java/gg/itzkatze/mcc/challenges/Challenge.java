@@ -50,6 +50,10 @@ public interface Challenge extends ChallengeSettings {
         return 0;
     }
 
+    @NotNull default List<Component> getSpectatorInfo(@NotNull MccPlayer target) {
+        return Collections.emptyList();
+    }
+
     @Nullable default ScoreboardContent getScoreboardContent() {
         return null; // Default implementation returns null
     }

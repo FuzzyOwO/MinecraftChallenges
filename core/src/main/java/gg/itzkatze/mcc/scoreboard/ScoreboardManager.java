@@ -45,7 +45,7 @@ public class ScoreboardManager {
 
         boolean lobbyDue = lobbySidebarDue();
         for (MccPlayer mccPlayer : MccPlayer.getOnlinePlayers()) {
-            boolean shouldHaveScoreboard = !mccPlayer.isExcluded() && gameActive;
+            boolean shouldHaveScoreboard = mccPlayer.isParticipating() && gameActive;
             boolean showScoreboard = SettingsManager.isEnabled(GlobalSetting.SHOW_SCOREBOARD);
 
             if (shouldHaveScoreboard && showScoreboard) {

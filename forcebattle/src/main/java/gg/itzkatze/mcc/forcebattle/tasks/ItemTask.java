@@ -23,7 +23,7 @@ public class ItemTask implements ForceTask {
 
         for (MccPlayer player : MccPlayer.getOnlinePlayers()) {
             ForceBattlePlayer mccPlayer = (ForceBattlePlayer) player;
-            if (mccPlayer.isExcluded()) continue;
+            if (!mccPlayer.isParticipating()) continue;
 
             checkPlayerObjective(mccPlayer);
             checkTeamObjective(mccPlayer);

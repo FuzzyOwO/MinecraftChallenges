@@ -9,6 +9,8 @@ import gg.itzkatze.mcc.commands.framework.CallerType;
 import gg.itzkatze.mcc.commands.framework.CommandCaller;
 import gg.itzkatze.mcc.event.PlayerExcludeEvent;
 import gg.itzkatze.mcc.game.GameLifecycleManager;
+import gg.itzkatze.mcc.spectator.SpectatorManager;
+import gg.itzkatze.mcc.spectator.SpectatorReason;
 import gg.itzkatze.mcc.team.MccTeam;
 import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.sound.Sound;
@@ -18,6 +20,7 @@ import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.permissions.PermissionDefault;
 import org.bukkit.scoreboard.Scoreboard;
 import org.jetbrains.annotations.NotNull;
@@ -26,6 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.function.IntPredicate;
 
 public class MccPlayer implements CommandCaller {
 
@@ -138,6 +142,7 @@ public class MccPlayer implements CommandCaller {
             }
             PLAYERS.remove(player);
         }
+        SpectatorManager.remove(uuid);
     }
 
     public static void removeOfflinePlayers() {
@@ -194,7 +199,9 @@ public class MccPlayer implements CommandCaller {
         Map<Integer, MccPlayer> places = new HashMap<>();
         Map<MccPlayer, Integer> pointMap = new HashMap<>();
         for (MccPlayer player : PLAYERS) {
-            pointMap.put(player, player.getPoints());
+            if (player.isRanked()) {
+                pointMap.put(player, player.getPoints());
+            }
         }
         List<Map.Entry<MccPlayer, Integer>> sorted = pointMap.entrySet().stream()
                 .sorted(Map.Entry.<MccPlayer, Integer>comparingByValue().reversed())
@@ -207,7 +214,7 @@ public class MccPlayer implements CommandCaller {
     }
 
     public static int getPlace(MccPlayer player) {
-        List<MccPlayer> sorted = new ArrayList<>(PLAYERS);
+        List<MccPlayer> sorted = new ArrayList<>(PLAYERS.stream().filter(MccPlayer::isRanked).toList());
         sorted.sort(Comparator.comparingInt(MccPlayer::getPoints).reversed());
         int place = 1;
         int previousPoints = -1;
@@ -282,6 +289,19 @@ public class MccPlayer implements CommandCaller {
         this.excluded = excludeEvent.isNewExcluded();
     }
 
+    public boolean isSpectator() {
+        return SpectatorManager.isSpectator(uuid);
+    }
+
+    public boolean isParticipating() {
+        return !isExcluded() && !isSpectator();
+    }
+
+    public boolean isRanked() {
+        SpectatorReason reason = SpectatorManager.getReason(uuid);
+        return reason == null || reason.isRanked();
+    }
+
     public void leaveTeam() {
         if (isInTeam()) getTeam().removePlayer(this);
     }
@@ -351,5 +371,21 @@ public class MccPlayer implements CommandCaller {
 
     public @Nullable Inventory getBackpack() {
         return null;
+    }
+
+    public @Nullable List<ItemStack> getBackpackContents() {
+        Inventory backpack = getBackpack();
+        return backpack == null ? null : copyContents(backpack, slot -> true);
+    }
+
+    protected static @NotNull List<ItemStack> copyContents(@NotNull Inventory inventory, @NotNull IntPredicate include) {
+        List<ItemStack> contents = new ArrayList<>();
+        for (int slot = 0; slot < inventory.getSize(); slot++) {
+            if (include.test(slot)) {
+                ItemStack stack = inventory.getItem(slot);
+                contents.add(stack == null || stack.isEmpty() ? null : stack.clone());
+            }
+        }
+        return contents;
     }
 }

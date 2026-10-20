@@ -9,11 +9,15 @@ import gg.itzkatze.mcc.game.GameLifecycleManager;
 import gg.itzkatze.mcc.game.GameTimer;
 import gg.itzkatze.mcc.game.SessionPersistence;
 import gg.itzkatze.mcc.game.StartCountdown;
+import gg.itzkatze.mcc.spectator.SpectatorManager;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
 import org.bukkit.permissions.PermissionDefault;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.List;
 
 public class StartCommand extends MccCommand {
@@ -48,6 +52,11 @@ public class StartCommand extends MccCommand {
         }
         if (ChallengeManager.isGameStarted()) {
             caller.sendMessage(Component.text("The game has already been started.").color(NamedTextColor.RED));
+            return false;
+        }
+        Collection<? extends Player> online = Bukkit.getOnlinePlayers();
+        if (!online.isEmpty() && online.stream().allMatch(player -> SpectatorManager.isSpectator(player.getUniqueId()))) {
+            caller.sendMessage(Component.text("Nobody would play: every online player is spectating.").color(NamedTextColor.RED));
             return false;
         }
         return true;

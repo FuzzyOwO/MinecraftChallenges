@@ -18,8 +18,12 @@ import gg.itzkatze.mcc.forcebattle.gui.ForceBattleSettingsGUI;
 import gg.itzkatze.mcc.forcebattle.tasks.StructureTask;
 import gg.itzkatze.mcc.commands.framework.MccCommand;
 import gg.itzkatze.mcc.configuration.ChallengeSettingsManager;
+import gg.itzkatze.mcc.configuration.GlobalSetting;
+import gg.itzkatze.mcc.configuration.SettingsManager;
 import gg.itzkatze.mcc.gui.MccGUI;
 import gg.itzkatze.mcc.scoreboard.ScoreboardContent;
+import gg.itzkatze.mcc.spectator.PlayerViewGui;
+import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.GameRules;
 import org.bukkit.entity.Player;
@@ -28,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jspecify.annotations.NonNull;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class ForceBattle implements Challenge {
@@ -149,6 +154,20 @@ public class ForceBattle implements Challenge {
     @Override
     @NotNull public List<Runnable> getTasks() {
         return List.of(gameListener::runTasks);
+    }
+
+    @Override
+    public @NotNull List<Component> getSpectatorInfo(@NotNull MccPlayer target) {
+        if (!(target instanceof ForceBattlePlayer player)) return List.of();
+
+        List<Component> lines = new ArrayList<>();
+        ForceBattleObjective objective = player.getObjective();
+        lines.add(PlayerViewGui.infoLine("Objective", objective == null ? Component.text("none") : NametagManager.objectiveText(objective)));
+        if (SettingsManager.isEnabled(GlobalSetting.EXTRA_TEAM_OBJECTIVE) && player.getTeam() instanceof ForceBattleTeam team && team.getObjective() != null) {
+            lines.add(PlayerViewGui.infoLine("Team objective", NametagManager.objectiveText(team.getObjective())));
+        }
+        lines.add(PlayerViewGui.infoLine("Points", Component.text(player.getPoints())));
+        return lines;
     }
 
     @Override
