@@ -48,6 +48,10 @@ public class TeamCommand extends MccCommand {
             caller.sendMessage(Component.text("Teams cannot be changed until the game is reset.").color(NamedTextColor.RED));
             return;
         }
+        if ((args[0].equals("create") || args[0].equals("join")) && mccPlayer.isSpectator()) {
+            caller.sendMessage(Component.text("Spectators can't join teams. Type /spectate to play.").color(NamedTextColor.RED));
+            return;
+        }
 
         switch (args[0]) {
             case "create" -> {
@@ -84,6 +88,12 @@ public class TeamCommand extends MccCommand {
                     return;
                 }
                 if (team.getLastJoinRequest() != null) {
+                    MccPlayer requester = team.getLastJoinRequest().mccPlayer();
+                    if (requester.isSpectator()) {
+                        caller.sendMessage(Component.text(requester.getName() + " is spectating and can't join teams.").color(NamedTextColor.RED));
+                        team.finishLastJoinRequest(false);
+                        return;
+                    }
                     team.finishLastJoinRequest(true);
                 }
             }

@@ -14,6 +14,7 @@ import gg.itzkatze.mcc.util.Toast;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Material;
+import org.bukkit.entity.Arrow;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Fireball;
 import org.bukkit.entity.LivingEntity;
@@ -38,7 +39,7 @@ public class MobsTask {
         } else return;
 
         if (!(MccPlayer.adapt(damager) instanceof ForceBattlePlayer mccPlayer)) return;
-        if (mccPlayer.isExcluded()) return;
+        if (!mccPlayer.isParticipating()) return;
 
         if (target.getHealth() - event.getDamage() > 0) return;
 

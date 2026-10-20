@@ -5,6 +5,8 @@ import gg.itzkatze.mcc.game.ChallengeTimer;
 import gg.itzkatze.mcc.game.GameTimer;
 import gg.itzkatze.mcc.game.SessionPersistence;
 import gg.itzkatze.mcc.player.MccPlayer;
+import gg.itzkatze.mcc.spectator.SpectatorManager;
+import gg.itzkatze.mcc.spectator.SpectatorReason;
 import gg.itzkatze.mcc.util.StringUtility;
 import gg.itzkatze.mcc.util.WorldStorage;
 import net.kyori.adventure.text.Component;
@@ -17,9 +19,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.PlayerDeathEvent;
-import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.event.player.PlayerRespawnEvent;
 import org.jetbrains.annotations.Nullable;
 
 import java.time.Duration;
@@ -96,6 +96,8 @@ public class DeathSwapGameListener implements Listener {
         if (data.eliminated != null) {
             data.eliminated.stream().map(DeathSwapGameListener::parseUuid).filter(Objects::nonNull).forEach(eliminatedPlayers::add);
         }
+        // session.json restored the reasons already; this keeps the eliminated players out when the save predates the spectators.
+        eliminatedPlayers.forEach(uuid -> SpectatorManager.restore(uuid, SpectatorReason.ELIMINATED));
         swapCount = data.swapCount;
         winnerId = parseUuid(data.winner);
         elapsedSeconds = data.elapsedSeconds;
@@ -167,41 +169,18 @@ public class DeathSwapGameListener implements Listener {
 
     @EventHandler
     public void onPlayerDeath(PlayerDeathEvent event) {
-        if (!started || finished) return;
-        Player player = event.getEntity();
-        if (eliminatedPlayers.add(player.getUniqueId())) {
-            checkForWinner();
-            SessionPersistence.requestSave();
-        }
-    }
-
-    @EventHandler
-    public void onPlayerRespawn(PlayerRespawnEvent event) {
-        Player player = event.getPlayer();
-        if (!eliminatedPlayers.contains(player.getUniqueId())) return;
-        Bukkit.getScheduler().runTask(MinecraftChallenges.get(), () -> {
-            if (player.isOnline()) {
-                player.setGameMode(GameMode.SPECTATOR);
-            }
-        });
-    }
-
-    @EventHandler
-    public void onPlayerJoin(PlayerJoinEvent event) {
-        Player player = event.getPlayer();
-        if (!eliminatedPlayers.contains(player.getUniqueId())) return;
-        Bukkit.getScheduler().runTask(MinecraftChallenges.get(), () -> {
-            if (player.isOnline()) {
-                player.setGameMode(GameMode.SPECTATOR);
-            }
-        });
+        eliminate(event.getEntity());
     }
 
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
-        if (!started || finished) return;
-        Player player = event.getPlayer();
+        eliminate(event.getPlayer());
+    }
+
+    private void eliminate(Player player) {
+        if (!started || finished || SpectatorManager.isSpectator(player.getUniqueId())) return;
         if (eliminatedPlayers.add(player.getUniqueId())) {
+            SpectatorManager.eliminate(player.getUniqueId());
             checkForWinner();
             SessionPersistence.requestSave();
         }

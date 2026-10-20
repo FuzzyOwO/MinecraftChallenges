@@ -4,8 +4,6 @@ import gg.itzkatze.mcc.MinecraftChallenges;
 import gg.itzkatze.mcc.configuration.GlobalSetting;
 import gg.itzkatze.mcc.forcebattle.tasks.*;
 import gg.itzkatze.mcc.util.Joker;
-import net.kyori.adventure.text.format.NamedTextColor;
-import net.kyori.adventure.text.format.TextDecoration;
 import gg.itzkatze.mcc.configuration.SettingsManager;
 import gg.itzkatze.mcc.team.MccTeam;
 import org.bukkit.event.Listener;
@@ -28,7 +26,6 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.permissions.PermissionDefault;
 import org.jetbrains.annotations.NotNull;
-import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
@@ -64,55 +61,6 @@ public class ForceBattleGameListener implements Listener {
         new StructureTask().runTick();
     }
 
-    @EventHandler
-    public void onPlayerLogin(AsyncPlayerPreLoginEvent event) {
-        if (MinecraftChallenges.getTimer().isRunning()) {
-            UUID uuid = event.getUniqueId();
-            if (!MccPlayer.getAllUUIDs().contains(uuid)) {
-
-                Component contestants = Component.empty();
-
-                if (!MccTeam.teams.isEmpty()) {
-                    for (MccTeam team : MccTeam.teams) {
-                        if (team instanceof ForceBattleTeam fbTeam) {
-                            String playersList = fbTeam.getPlayers().stream()
-                                    .map(MccPlayer::getName)
-                                    .reduce((a, b) -> a + ", " + b)
-                                    .orElse("");
-                            Component line = Component.text("• " + fbTeam.getId() + ": ", NamedTextColor.AQUA)
-                                    .append(Component.text(playersList, NamedTextColor.WHITE));
-                            contestants = contestants.append(line).append(Component.text("\n"));
-                        }
-                    }
-                } else {
-                    for (MccPlayer player : MccPlayer.PLAYERS) {
-                        Component line = Component.text("• ", NamedTextColor.AQUA)
-                                .append(Component.text(player.getName(), NamedTextColor.WHITE));
-                        contestants = contestants.append(line).append(Component.text("\n"));
-                    }
-                }
-
-                String formattedTime = StringUtility.formatTime(MinecraftChallenges.getTimer().getRemainingSeconds());
-
-                Component kickMessage = Component.text("✖ A game is currently running! ✖", NamedTextColor.RED)
-                        .decorate(TextDecoration.BOLD)
-                        .append(Component.text("\n\n"))
-                        .append(Component.text("⏳ Time remaining: ", NamedTextColor.GRAY))
-                        .append(Component.text(formattedTime, NamedTextColor.GOLD))
-                        .append(Component.text("\n\n"))
-                        .append(Component.text("👥 ", NamedTextColor.AQUA))
-                        .append(Component.text("Current Teams / Players:", NamedTextColor.AQUA).decorate(TextDecoration.BOLD))
-                        .append(Component.text("\n"))
-                        .append(contestants.colorIfAbsent(NamedTextColor.WHITE));
-
-                event.disallow(
-                        AsyncPlayerPreLoginEvent.Result.KICK_OTHER,
-                        kickMessage
-                );
-            }
-        }
-    }
-
     @EventHandler(ignoreCancelled = true)
     public void onPlayerJoin(@NotNull PlayerJoinEvent event) {
         MccPlayer mccPlayer = MccPlayer.adapt(event.getPlayer());
@@ -137,7 +85,7 @@ public class ForceBattleGameListener implements Listener {
 
         for (MccPlayer mccPlayer : MccPlayer.getOnlinePlayers()) {
             ForceBattlePlayer player = (ForceBattlePlayer) mccPlayer;
-            if (player.getPlayer() == null) continue;
+            if (player.getPlayer() == null || player.isSpectator()) continue;
 
             if (player.getObjective() == null) {
                 player.updateObjective(false, false);
@@ -214,9 +162,12 @@ public class ForceBattleGameListener implements Listener {
     }
 
     private void updateAllTablists() {
+        // The tab list shows higher orders first and Paper refuses negative ones, so teams start at 1 to keep the spectators' 0 below team 0.
         MccPlayer.getOnlinePlayers().forEach(player -> {
-            if (player.isInTeam()) {
-                player.getPlayer().setPlayerListOrder(player.getTeam().getId());
+            if (player.isSpectator()) {
+                player.getPlayer().setPlayerListOrder(0);
+            } else if (player.isInTeam()) {
+                player.getPlayer().setPlayerListOrder(player.getTeam().getId() + 1);
             } else {
                 player.getPlayer().setPlayerListOrder(999);
             }
@@ -229,7 +180,7 @@ public class ForceBattleGameListener implements Listener {
         if (event.getHand() == null || !event.getHand().equals(EquipmentSlot.HAND)) {return;}
         if (event.getAction() != Action.RIGHT_CLICK_BLOCK && event.getAction() != Action.RIGHT_CLICK_AIR) {return;}
         if (event.getItem() == null || !Joker.isPlayerSkipItem(event.getItem())) {return;}
-        if (player.isExcluded()) return;
+        if (!player.isParticipating()) return;
 
         event.setCancelled(true);
 
@@ -270,7 +221,7 @@ public class ForceBattleGameListener implements Listener {
         if (event.getAction() != Action.RIGHT_CLICK_BLOCK && event.getAction() != Action.RIGHT_CLICK_AIR) {return;}
         if (event.getItem() == null || !Joker.isTeamSkipItem(event.getItem())) {return;}
         ForceBattleTeam team = (ForceBattleTeam) mccPlayer.getTeam();
-        if (mccPlayer.isExcluded()) return;
+        if (!mccPlayer.isParticipating()) return;
 
         event.setCancelled(true);
 
@@ -317,7 +268,7 @@ public class ForceBattleGameListener implements Listener {
         if (event.getHand() == null || !event.getHand().equals(EquipmentSlot.HAND)) return;
         if (event.getAction() != Action.RIGHT_CLICK_BLOCK && event.getAction() != Action.RIGHT_CLICK_AIR) return;
         if (event.getItem() == null || !Joker.isSwapItem(event.getItem())) return;
-        if (mccPlayer.isExcluded()) return;
+        if (!mccPlayer.isParticipating()) return;
         event.setCancelled(true);
 
         if (!MinecraftChallenges.getTimer().isRunning()) {
@@ -333,7 +284,7 @@ public class ForceBattleGameListener implements Listener {
         List<MccPlayer> availablePlayers = new ArrayList<>();
         for (Player player : Bukkit.getOnlinePlayers()) {
             if (event.getPlayer().equals(player)) continue;
-            if (!(MccPlayer.adapt(player) instanceof ForceBattlePlayer toSwap)) continue;
+            if (!(MccPlayer.adapt(player) instanceof ForceBattlePlayer toSwap) || toSwap.isSpectator()) continue;
             ForceBattlePlayer sender = mccPlayer;
             if (toSwap.getObjective() == null) continue;
             if (toSwap.getTeam() == sender.getTeam() && toSwap.isInTeam() && sender.isInTeam()) continue;
@@ -378,7 +329,7 @@ public class ForceBattleGameListener implements Listener {
     @EventHandler
     public void onPlayerDeath(PlayerDeathEvent event) {
         if (!(MccPlayer.adapt(event.getEntity()) instanceof ForceBattlePlayer mccPlayer)) return;
-        if (!MinecraftChallenges.getTimer().isRunning() || mccPlayer.isExcluded()) return;
+        if (!MinecraftChallenges.getTimer().isRunning() || !mccPlayer.isParticipating()) return;
 
         DeathTask.onDeath(event);
 

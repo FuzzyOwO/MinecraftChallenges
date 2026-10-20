@@ -5,6 +5,8 @@ import gg.itzkatze.mcc.commands.framework.CallerType;
 import gg.itzkatze.mcc.commands.framework.CommandCaller;
 import gg.itzkatze.mcc.commands.framework.MccCommand;
 import gg.itzkatze.mcc.player.MccPlayer;
+import gg.itzkatze.mcc.spectator.SpectatorManager;
+import gg.itzkatze.mcc.spectator.WhisperFilter;
 import java.util.List;
 import net.kyori.adventure.text.Component;
 import org.bukkit.permissions.PermissionDefault;
@@ -31,9 +33,12 @@ public class TeamChatCommand extends MccCommand {
         }
 
         MccPlayer player = MccPlayer.adapt(caller.getName()).orElse(null);
-        if (player != null) {
-            TeamChatManager.sendTeamMessage(player, Component.text(String.join(" ", args).substring(5)));
+        if (player == null) return;
+        if (player.isSpectator() && SpectatorManager.isBattleRunning()) {
+            caller.sendMessage(WhisperFilter.ONLY_SPECTATOR_CHAT);
+            return;
         }
+        TeamChatManager.sendTeamMessage(player, Component.text(String.join(" ", args).substring(5)));
     }
 
     @Override

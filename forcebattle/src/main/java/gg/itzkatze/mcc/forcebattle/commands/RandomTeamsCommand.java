@@ -48,7 +48,7 @@ public class RandomTeamsCommand extends MccCommand {
             return;
         }
 
-        List<MccPlayer> players = new ArrayList<>(MccPlayer.getOnlinePlayers());
+        List<MccPlayer> players = new ArrayList<>(MccPlayer.getOnlinePlayers().stream().filter(player -> !player.isSpectator()).toList());
         int playerAmount = players.size();
 
         if (playerAmount % size != 0) {

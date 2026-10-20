@@ -45,6 +45,19 @@ Access global plugin settings anytime in-game using `/settings`:
 | `/team`           | Create, join, or leave teams                                   |
 | `/chat`           | Toggles chat mode (global / local)                             |
 | `/teamchat`       | Sends a message exclusively to your team                       |
+| `/spectate`       | Watch the next battle instead of playing in it (lobby only)    |
+
+---
+
+## 👀 Spectators
+
+Spectators watch a running battle without influencing it:
+
+- **Becoming one**: type `/spectate` in the lobby (again to play). Players who join a running battle spectate automatically, and players knocked out of a DeathSwap become spectators too.
+- **Watching**: spectators fly in spectator mode and can right-click a player from up to 10 blocks away to see their armor, inventory, health, position and challenge progress, open their backpack, or view through their eyes.
+- **No influence**: spectators get no objectives or items, can't be swapped with, and nothing in their views can be moved.
+- **Chat**: during the battle a spectator's chat only reaches other spectators, and `/msg`, `/tell` and `/w` only work towards other spectators.
+- **After `/reset`**: late joiners and knocked-out players play again; players who chose `/spectate` keep spectating until they type it again.
 
 ---
 

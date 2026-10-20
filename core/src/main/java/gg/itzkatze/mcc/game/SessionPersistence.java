@@ -9,6 +9,8 @@ import gg.itzkatze.mcc.challenges.ChallengeType;
 import gg.itzkatze.mcc.configuration.ChallengeSettingsManager;
 import gg.itzkatze.mcc.configuration.SettingsManager;
 import gg.itzkatze.mcc.player.MccPlayer;
+import gg.itzkatze.mcc.spectator.SpectatorManager;
+import gg.itzkatze.mcc.spectator.SpectatorReason;
 import gg.itzkatze.mcc.team.MccTeam;
 import gg.itzkatze.mcc.util.WorldStorage;
 import org.bukkit.Bukkit;
@@ -141,6 +143,7 @@ public final class SessionPersistence {
             UUID uuid = parseUuid(player.uuid);
             if (uuid != null && player.name != null) {
                 MccPlayer.restore(uuid, player.name, player.excluded);
+                SpectatorManager.restore(uuid, player.spectator);
             }
         }
 
@@ -271,12 +274,15 @@ public final class SessionPersistence {
         String uuid;
         String name;
         boolean excluded;
+        String spectator;
 
         static PlayerData of(@NotNull MccPlayer player) {
             PlayerData data = new PlayerData();
             data.uuid = player.getUuid().toString();
             data.name = player.getName();
             data.excluded = player.isExcluded();
+            SpectatorReason reason = SpectatorManager.getReason(player.getUuid());
+            data.spectator = reason == null ? null : reason.getId();
             return data;
         }
     }

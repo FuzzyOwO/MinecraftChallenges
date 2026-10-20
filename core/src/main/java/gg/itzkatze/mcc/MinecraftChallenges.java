@@ -22,6 +22,8 @@ import gg.itzkatze.mcc.game.GameTimer;
 import gg.itzkatze.mcc.game.TimerRegistry;
 import gg.itzkatze.mcc.game.TaskManager;
 import gg.itzkatze.mcc.scoreboard.ScoreboardManager;
+import gg.itzkatze.mcc.spectator.SpectatorChat;
+import gg.itzkatze.mcc.spectator.SpectatorListener;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -81,6 +83,10 @@ public final class MinecraftChallenges extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new CaseFireworkGuard(), this);
         LobbyManager.loadIslands();
         getServer().getPluginManager().registerEvents(new TeamChatManager(), this);
+        SpectatorListener spectatorListener = new SpectatorListener();
+        getServer().getPluginManager().registerEvents(spectatorListener, this);
+        getServer().getPluginManager().registerEvents(new SpectatorChat(), this);
+        spectatorListener.startViewRefresh();
         getServer().getPluginManager().registerEvents(pauseManager, this);
         pauseManager.startStateWatcher();
 

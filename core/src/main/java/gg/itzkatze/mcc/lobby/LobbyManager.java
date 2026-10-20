@@ -129,6 +129,7 @@ public class LobbyManager implements Listener {
             world.setGameRule(GameRules.RANDOM_TICK_SPEED, 20);
             world.setGameRule(GameRules.ADVANCE_TIME, true);
             world.setGameRule(GameRules.ADVANCE_WEATHER, true);
+            world.setGameRule(GameRules.SPECTATORS_GENERATE_CHUNKS, false);
         }
     }
 
