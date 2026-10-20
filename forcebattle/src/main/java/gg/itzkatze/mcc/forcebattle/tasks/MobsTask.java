@@ -29,7 +29,7 @@ public class MobsTask {
         Player damager;
 
         if (!(event.getEntity() instanceof LivingEntity target)) return;
-        if (event.getDamager() instanceof Fireball) {
+        if (event.getDamager() instanceof Fireball || event.getDamager() instanceof Arrow) {
             // Not Fireball#getShooter(): Paper caches it and a player hitting the fireball back does not update the cache
             if (event.getDamageSource().getCausingEntity() instanceof Player player) {
                 damager = player;
