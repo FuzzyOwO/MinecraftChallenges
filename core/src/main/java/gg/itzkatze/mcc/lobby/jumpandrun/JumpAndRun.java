@@ -4,13 +4,12 @@ import gg.itzkatze.mcc.MinecraftChallenges;
 import gg.itzkatze.mcc.lobby.Lobby;
 import gg.itzkatze.mcc.lobby.LobbyFeature;
 import gg.itzkatze.mcc.lobby.cosmetics.CosmeticStore;
-import gg.itzkatze.mcc.lobby.cosmetics.MusicCosmetic;
+import gg.itzkatze.mcc.lobby.cosmetics.MusicManager;
 import gg.itzkatze.mcc.lobby.cosmetics.PointsSidebar;
 import gg.itzkatze.mcc.lobby.cosmetics.PointsText;
 import gg.itzkatze.mcc.lobby.cosmetics.SoundCosmetic;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.sound.Sound;
-import net.kyori.adventure.sound.SoundStop;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.GameMode;
@@ -65,9 +64,11 @@ public class JumpAndRun implements LobbyFeature, Listener {
     private final Map<UUID, RunColor> lastColors = new HashMap<>();
     private @Nullable Arena arena;
     private final RunMultiplier runMultiplier = new RunMultiplier();
+    private final MusicManager musicManager;
 
     public JumpAndRun(@NotNull Vector platePosition) {
         this.platePosition = platePosition.clone();
+        this.musicManager = new MusicManager(MinecraftChallenges.get());
     }
 
     @Override
@@ -189,10 +190,7 @@ public class JumpAndRun implements LobbyFeature, Listener {
         PointsSidebar.refresh(id);
         player.sendMessage(look.startMessage());
         player.playSound(PLATE_CLICK);
-        CosmeticStore store = CosmeticStore.get();
-        store.equippedMusic(id)
-                .map(MusicCosmetic::sound)
-                .ifPresent(player::playSound);
+        musicManager.start(player);
     }
 
     private @NotNull RunLook lookFor(@NotNull UUID id) {
@@ -268,7 +266,7 @@ public class JumpAndRun implements LobbyFeature, Listener {
             removeBlock(arena, run.getNext(), run.isNextEvent() ? EventBlock.MATERIAL : run.getLook().block());
         }
         PointsSidebar.refresh(run.getId());
-        run.getPlayer().stopSound(SoundStop.source(Sound.Source.MUSIC));
+        musicManager.stop(run.getPlayer());
         if (ending == Ending.SILENT) return;
 
         String reason = ending == Ending.NO_ROOM ? "There is no room for another block. " : "";
