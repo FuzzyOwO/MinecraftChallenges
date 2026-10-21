@@ -25,10 +25,12 @@ import java.util.UUID;
 
 public class CosmeticShopGui extends MccGUI {
 
-    private static final int BLOCK_TAB_SLOT = 2;
+    private static final int BLOCK_SLOT = 20;
     private static final int BALANCE_SLOT = 4;
-    private static final int SOUND_TAB_SLOT = 6;
+    private static final int SOUND_SLOT = 22;
+    private static final int MUSIC_SLOT = 24;
     private static final int PREVIOUS_SLOT = 45;
+    private static final int BACK_SLOT = 48;
     private static final int CLOSE_SLOT = 49;
     private static final int NEXT_SLOT = 53;
     private static final int[] ENTRY_SLOTS = entrySlots();
@@ -37,11 +39,17 @@ public class CosmeticShopGui extends MccGUI {
     private record Entry(@Nullable Cosmetic cosmetic) {
     }
 
-    private CosmeticCategory category = CosmeticCategory.BLOCK;
+    private CosmeticCategory category;
     private int page;
 
     public CosmeticShopGui() {
         super("Cosmetic Shop", 54);
+        this.category = null;
+    }
+
+    public CosmeticShopGui(@NotNull CosmeticCategory category) {
+        super(category.title() + " Shop", 54);
+        this.category = category;
     }
 
     private static int[] entrySlots() {
@@ -58,13 +66,39 @@ public class CosmeticShopGui extends MccGUI {
     public void setItems(MccPlayer player) {
         clear();
         fill(ItemStackCreator.fillerItem());
-        set(tab(CosmeticCategory.BLOCK, BLOCK_TAB_SLOT));
-        set(tab(CosmeticCategory.SOUND, SOUND_TAB_SLOT));
+
         set(new GUIItem(BALANCE_SLOT) {
             @Override
             public ItemStack getItem(MccPlayer viewer) {
                 return ItemStackCreator.getStack(Component.text("Points: " + CosmeticStore.get().points(viewer.getUuid()), NamedTextColor.GOLD), Material.GOLD_NUGGET,
                         List.of(Component.text("Every block you land on in the Jump & Run earns one point.", NamedTextColor.GRAY)));
+            }
+        });
+
+        if (category == null) {
+            set(categoryButton(CosmeticCategory.BLOCK, BLOCK_SLOT));
+            set(categoryButton(CosmeticCategory.SOUND, SOUND_SLOT));
+            set(categoryButton(CosmeticCategory.MUSIC, MUSIC_SLOT));
+            set(GUIClickableItem.getCloseItem(CLOSE_SLOT));
+            return;
+        }
+
+        set(new GUIClickableItem(BACK_SLOT) {
+            @Override
+            public void run(InventoryClickEvent event, MccPlayer clicker) {
+                category = null;
+                page = 0;
+                play(clicker, ShopSounds.CLICK);
+                redraw(clicker);
+            }
+
+            @Override
+            public ItemStack getItem(MccPlayer viewer) {
+                return ItemStackCreator.getStack(
+                        Component.text("Back to Categories", NamedTextColor.YELLOW),
+                        Material.ARROW,
+                        List.of()
+                );
             }
         });
 
@@ -105,11 +139,11 @@ public class CosmeticShopGui extends MccGUI {
         return entries;
     }
 
-    private @NotNull GUIClickableItem tab(@NotNull CosmeticCategory tab, int slot) {
+    private @NotNull GUIClickableItem categoryButton(@NotNull CosmeticCategory selectedCategory, int slot) {
         return new GUIClickableItem(slot) {
             @Override
             public void run(InventoryClickEvent event, MccPlayer clicker) {
-                category = tab;
+                category = selectedCategory;
                 page = 0;
                 play(clicker, ShopSounds.CLICK);
                 redraw(clicker);
@@ -117,9 +151,9 @@ public class CosmeticShopGui extends MccGUI {
 
             @Override
             public ItemStack getItem(MccPlayer viewer) {
-                boolean selected = tab == category;
-                ItemStack stack = ItemStackCreator.getStack(Component.text(tab.title(), selected ? NamedTextColor.YELLOW : NamedTextColor.GRAY, TextDecoration.BOLD), tab.icon(), List.of());
-                return selected ? glowing(stack) : stack;
+                return ItemStackCreator.getStack(Component.text(selectedCategory.title(), NamedTextColor.YELLOW, TextDecoration.BOLD), selectedCategory.icon(),
+                        List.of(Component.text("Click to open", NamedTextColor.GRAY))
+                );
             }
         };
     }
@@ -186,10 +220,27 @@ public class CosmeticShopGui extends MccGUI {
             lore.add(Component.text("Right-click to preview", NamedTextColor.GRAY));
         }
 
-        Component name = cosmetic == null ? Component.text(category == CosmeticCategory.BLOCK ? "Default: Colored Concrete" : "Default: XP Orb", NamedTextColor.WHITE) : cosmetic.styledName();
-        Material icon = cosmetic != null ? cosmetic.icon() : category == CosmeticCategory.BLOCK ? Material.LIME_CONCRETE : Material.EXPERIENCE_BOTTLE;
+        Component name = cosmetic != null
+                ? cosmetic.styledName()
+                : Component.text(
+                        switch (category) {
+                            case BLOCK -> "Default: Colored Concrete";
+                            case SOUND -> "Default: XP Orb";
+                            case MUSIC -> "Default: No Music";
+                        },
+                        NamedTextColor.WHITE
+                );
+
+        Material icon = cosmetic != null
+                ? cosmetic.icon()
+                : switch (category) {
+                    case BLOCK -> Material.LIME_CONCRETE;
+                    case SOUND -> Material.EXPERIENCE_BOTTLE;
+                    case MUSIC -> Material.BARRIER;
+                };
+
         ItemStack stack = ItemStackCreator.getStack(name, icon, lore);
-        return equipped ? glowing(stack) : stack;
+        return owned ? glowing(stack) : stack;
     }
 
     private void choose(@NotNull Entry entry, @NotNull MccPlayer clicker) {

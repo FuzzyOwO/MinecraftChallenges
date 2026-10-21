@@ -47,6 +47,7 @@ public final class CosmeticCatalog {
             List<Cosmetic> cosmetics = new ArrayList<>();
             Collections.addAll(cosmetics, BlockCosmetic.values());
             Collections.addAll(cosmetics, SoundCosmetic.values());
+            Collections.addAll(cosmetics, MusicCosmetic.values());
             standard = new CosmeticCatalog(cosmetics);
         }
         return standard;

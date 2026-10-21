@@ -4,6 +4,7 @@ import gg.itzkatze.mcc.MinecraftChallenges;
 import gg.itzkatze.mcc.lobby.Lobby;
 import gg.itzkatze.mcc.lobby.LobbyFeature;
 import gg.itzkatze.mcc.lobby.cosmetics.CosmeticStore;
+import gg.itzkatze.mcc.lobby.cosmetics.MusicManager;
 import gg.itzkatze.mcc.lobby.cosmetics.PointsSidebar;
 import gg.itzkatze.mcc.lobby.cosmetics.PointsText;
 import gg.itzkatze.mcc.lobby.cosmetics.SoundCosmetic;
@@ -62,9 +63,12 @@ public class JumpAndRun implements LobbyFeature, Listener {
     private final Reservations reservations = new Reservations();
     private final Map<UUID, RunColor> lastColors = new HashMap<>();
     private @Nullable Arena arena;
+    private final RunMultiplier runMultiplier = new RunMultiplier();
+    private final MusicManager musicManager;
 
     public JumpAndRun(@NotNull Vector platePosition) {
         this.platePosition = platePosition.clone();
+        this.musicManager = new MusicManager(MinecraftChallenges.get());
     }
 
     @Override
@@ -177,6 +181,8 @@ public class JumpAndRun implements LobbyFeature, Listener {
         JumpRun run = new JumpRun(player, look, block, first);
         HopSteering.visit(run.getVisited(), block, arena.playArea());
         runs.put(id, run);
+
+        runMultiplier.reset(id);
         if (look.color() != null) {
             lastColors.put(id, look.color());
         }
@@ -184,6 +190,7 @@ public class JumpAndRun implements LobbyFeature, Listener {
         PointsSidebar.refresh(id);
         player.sendMessage(look.startMessage());
         player.playSound(PLATE_CLICK);
+        musicManager.start(player);
     }
 
     private @NotNull RunLook lookFor(@NotNull UUID id) {
@@ -212,7 +219,12 @@ public class JumpAndRun implements LobbyFeature, Listener {
         boolean onEvent = run.land();
         CosmeticStore store = CosmeticStore.get();
         Random random = ThreadLocalRandom.current();
-        store.recordLanding(run.getPlayer(), run.getScore());
+        int points = runMultiplier.awardLanding(
+                run.getPlayer(),
+                run.getScore()
+        );
+
+        store.recordLanding(run.getPlayer(), points);
         if (onEvent) {
             payEvent(arena, run, store, random);
         } else {
@@ -254,6 +266,7 @@ public class JumpAndRun implements LobbyFeature, Listener {
             removeBlock(arena, run.getNext(), run.isNextEvent() ? EventBlock.MATERIAL : run.getLook().block());
         }
         PointsSidebar.refresh(run.getId());
+        musicManager.stop(run.getPlayer());
         if (ending == Ending.SILENT) return;
 
         String reason = ending == Ending.NO_ROOM ? "There is no room for another block. " : "";
@@ -268,6 +281,7 @@ public class JumpAndRun implements LobbyFeature, Listener {
             }
             message = message.append(Component.text(" (" + CosmeticStore.get().points(run.getId()) + " total).", NamedTextColor.GRAY));
         }
+        runMultiplier.reset(run.getId());
         run.getPlayer().sendMessage(message);
         run.getPlayer().playSound(RUN_OVER);
     }
