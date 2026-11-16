@@ -22,6 +22,6 @@ public final class BingoHudLayout {
 
     public static String cell(int icon, int owner, boolean winning, Category category) {
         int state = owner < 0 ? 0 : owner + (winning ? 3 : 1);
-        return new StringBuilder().appendCodePoint(0xE020 + state).append('\uE010').appendCodePoint(0xF0000 + icon).appendCodePoint(0xF4000 + icon).appendCodePoint(0xE030 + category.ordinal()).append('\uE013').toString();
+        return new StringBuilder().appendCodePoint(0xE020 + state).append('\uE010').appendCodePoint(0xF0000 + icon).appendCodePoint(0xF4000 + icon).appendCodePoint(0xE030 + category.ordinal()).appendCodePoint(0xE040 + category.ordinal()).append('\uE013').toString();
     }
 }

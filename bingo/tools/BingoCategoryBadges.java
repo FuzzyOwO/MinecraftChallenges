@@ -1,5 +1,4 @@
 import javax.imageio.ImageIO;
-import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
@@ -22,11 +21,6 @@ final class BingoCategoryBadges {
             BufferedImage badge = new BufferedImage(RESOLUTION, RESOLUTION, BufferedImage.TYPE_INT_ARGB);
             Graphics2D graphics = badge.createGraphics();
             graphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
-            graphics.setColor(new Color(10, 14, 23, 245));
-            graphics.fillRoundRect(0, 0, 64, 64, 12, 12);
-            graphics.setColor(new Color(116, 132, 154));
-            graphics.setStroke(new BasicStroke(2));
-            graphics.drawRoundRect(1, 1, 61, 61, 10, 10);
             if (category.equals("STRUCTURE")) {
                 tower(graphics);
             } else {

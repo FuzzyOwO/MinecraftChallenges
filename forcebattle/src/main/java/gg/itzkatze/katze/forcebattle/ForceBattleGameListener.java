@@ -146,6 +146,7 @@ public class ForceBattleGameListener implements Listener {
             player.setCurrentObjective(null, false, false);
             player.getPlayer().teleport(GameWorldManager.getWorld().getSpawnLocation());
             player.getPlayer().setHealth(20);
+            player.getPlayer().setFoodLevel(20);
             player.getPlayer().setSaturation(20);
         }
     }

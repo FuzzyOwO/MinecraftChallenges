@@ -66,7 +66,14 @@ class BingoPackTest {
                 assertEquals(64, picture.getWidth());
                 assertEquals(64, picture.getHeight());
                 assertEquals(0, picture.getRGB(0, 0) >>> 24);
-                assertNotEquals(0, picture.getRGB(63, 32) >>> 24);
+                int lastOpaqueColumn = -1;
+                for (int x = 0; x < picture.getWidth(); x++) for (int y = 0; y < picture.getHeight(); y++) {
+                    if (picture.getRGB(x, y) >>> 24 != 0) lastOpaqueColumn = Math.max(lastOpaqueColumn, x);
+                }
+                assertTrue(lastOpaqueColumn >= 0, "Empty category badge: " + name);
+                int glyphAdvance = Math.round((lastOpaqueColumn + 1) * (float) BingoHudLayout.BADGE_SIZE / picture.getHeight()) + 1;
+                int compensation = advances.get(Character.toString(0xE040 + category)).getAsInt();
+                assertEquals(BingoHudLayout.BADGE_SIZE + 1, glyphAdvance + compensation);
             }
             int originalSprites = 0;
             var referencedIcons = new HashSet<String>();

@@ -22,7 +22,7 @@ class BingoHudLayoutTest {
     @Test void largeCatalogGlyphsDoNotOverlapIconsPaddingOrOwnershipFrames() {
         for (int index : new int[]{0, 1024, 2048, 4000}) {
             int[] points = BingoHudLayout.cell(index, -1, false, Category.ITEM).codePoints().toArray();
-            assertEquals(6, points.length);
+            assertEquals(7, points.length);
             assertEquals(0xF0000 + index, points[2]);
             assertEquals(0xF4000 + index, points[3]);
             assertNotEquals(points[2], points[3]);
@@ -34,7 +34,8 @@ class BingoHudLayoutTest {
             int[] points = BingoHudLayout.cell(12, -1, false, category).codePoints().toArray();
             assertTrue(glyphs.add(points[4]));
             assertEquals(0xE030 + category.ordinal(), points[4]);
-            assertEquals(0xE013, points[5]);
+            assertEquals(0xE040 + category.ordinal(), points[5]);
+            assertEquals(0xE013, points[6]);
         }
         assertTrue(BingoHudLayout.BADGE_OFFSET > 0);
         assertEquals(BingoHudLayout.CELL_SIZE - 1, BingoHudLayout.BADGE_OFFSET + BingoHudLayout.BADGE_SIZE);

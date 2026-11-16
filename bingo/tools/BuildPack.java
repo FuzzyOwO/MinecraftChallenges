@@ -21,8 +21,12 @@ public final class BuildPack {
     private record Icon(String texture, int advance) {}
 
     private static int advance(BufferedImage image) {
+        return advance(image, 16);
+    }
+
+    private static int advance(BufferedImage image, int height) {
         for (int x = image.getWidth() - 1; x >= 0; x--) for (int y = 0; y < image.getHeight(); y++) {
-            if ((image.getRGB(x, y) >>> 24) != 0) return Math.round((x + 1) * 16.0f / image.getHeight()) + 1;
+            if ((image.getRGB(x, y) >>> 24) != 0) return Math.round((x + 1) * (float) height / image.getHeight()) + 1;
         }
         return 1;
     }
@@ -145,6 +149,7 @@ public final class BuildPack {
             }
             int category = 0;
             for (String name : BingoCategoryBadges.CATEGORIES) {
+                spaces.advance(0xE040 + category, BADGE_SIZE + 1 - advance(badges.get(name), BADGE_SIZE));
                 providers.add(BingoPackAssets.bitmap("katzegames:bingo/categories/" + name.toLowerCase(Locale.ROOT) + ".png",
                         BADGE_SIZE, 7 - BADGE_OFFSET - row * ROW_PITCH, List.of(Character.toString(0xE030 + category++))));
             }

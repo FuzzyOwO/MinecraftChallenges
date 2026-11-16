@@ -33,4 +33,6 @@ Claim **five objectives in a row** on a shared 5×5 board before your opponent. 
 | `/recipe <item>` | Look up crafting and processing recipes.                      |
 | `/bingo matches` | Choose a match to watch after yours ends or while spectating. |
 
+The Pixelarts for the Bingo-Categories were made by Speisequark. Huge Thanks!
+
 [Server setup and pack tools](SETUP.md) · [Back to KatzeGames](../README.md)

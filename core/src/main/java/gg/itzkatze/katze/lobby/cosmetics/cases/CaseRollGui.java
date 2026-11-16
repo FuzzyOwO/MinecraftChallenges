@@ -150,6 +150,10 @@ public final class CaseRollGui extends KatzeGUI {
             ItemStack frame = pane(spin.prize().rarity());
             ItemStack filler = ItemStackCreator.fillerItem();
             for (int column = 0; column < CaseReel.WIDTH; column++) {
+                if (column == CENTER && spin.prize() instanceof CasePrize.Item item) {
+                    set(prizeButton(start + column, item));
+                    continue;
+                }
                 ItemStack stack = column == CENTER ? render(spin.prize(), true) : Math.abs(column - CENTER) == 1 ? frame : filler;
                 set(fixed(start + column, stack));
             }
@@ -280,6 +284,36 @@ public final class CaseRollGui extends KatzeGUI {
         KatzePlayer viewer = KatzePlayer.adapt(player);
         setItems(viewer);
         updateInventory(viewer);
+    }
+
+    private @NotNull GUIClickableItem prizeButton(int slot, @NotNull CasePrize.Item prize) {
+        return new GUIClickableItem(slot) {
+            @Override
+            public void run(InventoryClickEvent event, KatzePlayer clicker) {
+                Player online = clicker.getPlayer();
+                if (online == null) return;
+
+                if (CosmeticStore.get().equip(online, prize.cosmetic())) {
+                    online.playSound(ShopSounds.CLICK);
+                    redraw();
+                }
+            }
+
+            @Override
+            public ItemStack getItem(KatzePlayer viewer) {
+                Cosmetic cosmetic = prize.cosmetic();
+                boolean equipped = CosmeticStore.get().equipped(viewer.getUuid(), cosmetic.category())
+                        .map(current -> current.id().equals(cosmetic.id())).orElse(false);
+                ItemStack stack = render(prize, true);
+                ItemMeta meta = stack.getItemMeta();
+                List<Component> lore = new ArrayList<>(meta.lore());
+                lore.add(Component.translatable(equipped ? "katze.cosmetics.equipped" : "katze.cosmetics.click_to_equip")
+                        .color(equipped ? KatzeColor.LIME : KatzeColor.YELLOW));
+                meta.lore(lore);
+                stack.setItemMeta(meta);
+                return stack;
+            }
+        };
     }
 
     private @NotNull GUIClickableItem againButton(int slot) {

@@ -66,6 +66,10 @@ public class GameLifecycleManager implements Listener {
     }
 
     public static void sendToLobby(@NotNull KatzePlayer player) {
+        sendToLobby(player, false);
+    }
+
+    private static void sendToLobby(@NotNull KatzePlayer player, boolean preserveLobbyPosition) {
         if (player.getPlayer() == null) return;
 
         LobbyManager.createLobbyIfNeeded();
@@ -77,7 +81,7 @@ public class GameLifecycleManager implements Listener {
         SpectatorManager.leaveSpectatorMode(player.getPlayer());
         player.getPlayer().setGameMode(GameMode.ADVENTURE);
         Location spawn = LobbyManager.getSpawn();
-        if (spawn != null) {
+        if (spawn != null && (!preserveLobbyPosition || !spawn.getWorld().equals(player.getPlayer().getWorld()))) {
             player.getPlayer().teleport(spawn);
         }
         LobbyManager.onPlayerJoin(player);
@@ -148,7 +152,7 @@ public class GameLifecycleManager implements Listener {
         StructureScanner.clear();
 
         for (KatzePlayer player : KatzePlayer.getOnlinePlayers()) {
-            sendToLobby(player);
+            sendToLobby(player, true);
             if (player.getPlayer() != null) {
                 player.getPlayer().setRespawnLocation(LobbyManager.getSpawn(), true);
             }
