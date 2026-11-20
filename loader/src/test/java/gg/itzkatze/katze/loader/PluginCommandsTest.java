@@ -8,8 +8,30 @@ import java.util.jar.JarFile;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 class PluginCommandsTest {
+    @Test void packagedPluginIncludesLosslessCompressionAndItsServerPlatformLibraries() throws Exception {
+        try (JarFile jar = new JarFile(Path.of(System.getProperty("katzegames.test.pluginJar")).toFile())) {
+            assertNotNull(jar.getJarEntry("com/github/luben/zstd/ZstdInputStream.class"));
+            assertTrue(jar.stream().anyMatch(entry -> entry.getName().startsWith("linux/amd64/libzstd") && entry.getName().endsWith(".so")));
+            assertTrue(jar.stream().anyMatch(entry -> entry.getName().startsWith("linux/aarch64/libzstd") && entry.getName().endsWith(".so")));
+            assertTrue(jar.stream().anyMatch(entry -> entry.getName().startsWith("win/amd64/libzstd") && entry.getName().endsWith(".dll")));
+        }
+    }
+
+    @Test void packagedPluginUsesReplaysWithoutRegisteringTheOldResultsCommand() throws Exception {
+        try (JarFile jar = new JarFile(Path.of(System.getProperty("katzegames.test.pluginJar")).toFile());
+             var input = jar.getInputStream(jar.getJarEntry("plugin.yml"))) {
+            PluginDescriptionFile description = new PluginDescriptionFile(input);
+            assertTrue(description.getCommands().containsKey("replays"));
+            assertFalse(description.getCommands().containsKey("results"));
+            assertNotNull(jar.getJarEntry("gg/itzkatze/katze/commands/ReplaysCommand.class"));
+            assertNull(jar.getJarEntry("gg/itzkatze/katze/commands/ResultsCommand.class"));
+        }
+    }
+
     @Test void packagedPluginIncludesTheCustomArenaAndItsNbtReader() throws Exception {
         try (JarFile jar = new JarFile(Path.of(System.getProperty("katzegames.test.pluginJar")).toFile())) {
             assertNotNull(jar.getJarEntry("arena/village.schem"));

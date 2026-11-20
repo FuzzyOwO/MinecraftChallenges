@@ -1,6 +1,7 @@
 package gg.itzkatze.katze.allitems;
 
 import gg.itzkatze.katze.configuration.Setting;
+import gg.itzkatze.katze.replay.ReplaySaveMode;
 import gg.itzkatze.katze.configuration.SettingsManager;
 import gg.itzkatze.katze.configuration.states.OnOffState;
 import gg.itzkatze.katze.configuration.states.SettingStateType;
@@ -60,7 +61,8 @@ public class AllItemsSettings {
         MOBS(false, OnOffState.OFF),
         STRUCTURES(false, OnOffState.OFF),
         ADVANCEMENTS(false, OnOffState.OFF),
-        CHAIN_MODE(false, OnOffState.OFF);
+        CHAIN_MODE(false, OnOffState.OFF),
+        REPLAY_SAVING(false, ReplaySaveMode.fullGame());
 
         private final boolean updateOnChange;
         private final SettingStateType defaultState;
@@ -72,6 +74,7 @@ public class AllItemsSettings {
 
         @Override
         public Component getDisplayName() {
+            if (this == REPLAY_SAVING) return Component.translatable("katze.replay.saving.title");
             return Component.translatable("katze.allitems.setting." + name().toLowerCase(Locale.ROOT));
         }
 

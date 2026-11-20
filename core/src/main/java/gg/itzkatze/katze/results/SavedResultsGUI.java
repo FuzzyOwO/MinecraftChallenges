@@ -3,6 +3,7 @@ package gg.itzkatze.katze.results;
 import gg.itzkatze.katze.gui.GUIClickableItem;
 import gg.itzkatze.katze.gui.KatzeGUI;
 import gg.itzkatze.katze.player.KatzePlayer;
+import gg.itzkatze.katze.replay.ReplayService;
 import gg.itzkatze.katze.text.TextArg;
 import gg.itzkatze.katze.util.ItemStackCreator;
 import gg.itzkatze.katze.util.KatzeColor;
@@ -71,6 +72,14 @@ public final class SavedResultsGUI extends KatzeGUI {
                             : Component.translatable("katze.results.team_objectives", TextArg.number("id", teamId));
                 }
                 entries = playerId == null && teamId == null ? standings(battle) : objectives(battle);
+                if (playerId == null && teamId == null) {
+                    ReplayService replay = ReplayService.get();
+                    boolean available = replay != null && replay.available(battle.id());
+                    button(48, new Entry(ItemStackCreator.getStack(Component.translatable(available ? "katze.replay.watch" : "katze.replay.unavailable"),
+                            available ? Material.ENDER_EYE : Material.GRAY_DYE, List.of()), player -> {
+                        if (available && player.getPlayer() != null) replay.play(player.getPlayer(), battle.id());
+                    }));
+                }
             }
         } catch (IOException e) {
             throw new UncheckedIOException(e);
@@ -137,7 +146,7 @@ public final class SavedResultsGUI extends KatzeGUI {
         for (SavedBattle.Player player : players) {
             List<Component> lore = new ArrayList<>();
             if (battle.game() != SavedBattle.Game.DEATH_SWAP && battle.game() != SavedBattle.Game.MOB_ARMY) lore.add(score(battle, player.points()));
-            lore.addAll(player.statistics().stream().map(SavedResultsGUI::statistic).toList());
+            lore.addAll(statistics(battle, player).stream().map(SavedResultsGUI::statistic).toList());
             if (player.teamId() != null && battle.game() != SavedBattle.Game.ALL_ITEMS) {
                 lore.add(Component.translatable("katze.results.team", TextArg.number("id", player.teamId())));
             }
@@ -151,7 +160,7 @@ public final class SavedResultsGUI extends KatzeGUI {
         List<Entry> entries = new ArrayList<>();
         if (playerId != null) {
             battle.players().stream().filter(player -> player.id().equals(playerId)).findFirst().ifPresent(player -> {
-                for (SavedBattle.Statistic stat : player.statistics()) {
+                for (SavedBattle.Statistic stat : statistics(battle, player)) {
                     entries.add(new Entry(ItemStackCreator.getStack(statistic(stat), Material.PAPER, List.of()), ignored -> {}));
                 }
             });
@@ -159,6 +168,18 @@ public final class SavedResultsGUI extends KatzeGUI {
         List<SavedBattle.Objective> objectives = playerId != null
                 ? battle.players().stream().filter(player -> player.id().equals(playerId)).findFirst().map(SavedBattle.Player::objectives).orElse(List.of())
                 : battle.teams().stream().filter(team -> team.id() == teamId).findFirst().map(SavedBattle.Team::objectives).orElse(List.of());
+        if (battle.game() == SavedBattle.Game.MOB_ARMY) {
+            if (playerId != null && battle.players().stream().filter(player -> player.id().equals(playerId)).anyMatch(player -> !personalCollection(battle, player))) {
+                entries.add(new Entry(ItemStackCreator.getStack(Component.translatable("katze.results.personal_collection_unavailable"), Material.BOOK, List.of()), ignored -> {}));
+                return entries;
+            }
+            for (SavedBattle.Objective mob : SavedMobArmyResults.group(objectives)) {
+                Material icon = Material.matchMaterial(mob.icon());
+                entries.add(new Entry(ItemStackCreator.getStack(GsonComponentSerializer.gson().deserialize(mob.name()),
+                        icon == null ? Material.PAPER : icon, List.of(Component.translatable("katze.results.mob_count", TextArg.number("count", mob.count())))), ignored -> {}));
+            }
+            return entries;
+        }
         entries.addAll(objectives.stream().map(objective -> {
             Material icon = Material.matchMaterial(objective.icon());
             Component name = GsonComponentSerializer.gson().deserialize(objective.type())
@@ -176,6 +197,16 @@ public final class SavedResultsGUI extends KatzeGUI {
             return new Entry(ItemStackCreator.getStack(name, icon == null ? Material.BOOK : icon, lore), ignored -> {});
         }).toList());
         return entries;
+    }
+
+    private static List<SavedBattle.Statistic> statistics(SavedBattle battle, SavedBattle.Player player) {
+        return player.statistics().stream().filter(stat -> battle.game() != SavedBattle.Game.MOB_ARMY
+                || personalCollection(battle, player) || !stat.key().equals("collected")).toList();
+    }
+
+    private static boolean personalCollection(SavedBattle battle, SavedBattle.Player player) {
+        return player.personalCollection() || player.teamId() == null || battle.players().stream()
+                .filter(member -> player.teamId().equals(member.teamId())).count() == 1;
     }
 
     private static Component score(SavedBattle battle, int points) {

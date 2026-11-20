@@ -9,6 +9,7 @@ import gg.itzkatze.katze.event.TimerSetTimeEvent;
 import gg.itzkatze.katze.event.TimerStartEvent;
 import gg.itzkatze.katze.event.TimerStartTimeChangeEvent;
 import gg.itzkatze.katze.player.KatzePlayer;
+import gg.itzkatze.katze.replay.ReplayService;
 import gg.itzkatze.katze.util.KatzeColor;
 import gg.itzkatze.katze.util.StringUtility;
 import lombok.Getter;
@@ -49,7 +50,8 @@ public class KatzeTimer implements GameTimer {
 
     private void runActionbarTask() {
         Bukkit.getScheduler().runTaskTimer(KatzeGames.get(), () ->
-                KatzePlayer.getOnlinePlayers().forEach(player -> player.sendActionbar(getActionbarMessage(player))),
+                KatzePlayer.getOnlinePlayers().stream().filter(player -> ReplayService.get() == null || !ReplayService.get().reviewing(player.getUuid()))
+                        .forEach(player -> player.sendActionbar(getActionbarMessage(player))),
                 1L,
                 3L
         );

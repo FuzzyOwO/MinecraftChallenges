@@ -1,6 +1,7 @@
 package gg.itzkatze.katze.mobarmy;
 
 import org.bukkit.World;
+import org.bukkit.GameMode;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.IronGolem;
 import org.bukkit.entity.LivingEntity;
@@ -52,6 +53,9 @@ class MobArmyGolemTest {
         return type.cast(Proxy.newProxyInstance(type.getClassLoader(), new Class<?>[]{type}, (proxy, method, arguments) -> switch (method.getName()) {
             case "getUniqueId" -> id;
             case "getWorld" -> world;
+            case "isOnline" -> true;
+            case "isDead" -> false;
+            case "getGameMode" -> GameMode.SURVIVAL;
             default -> throw new AssertionError(method.getName());
         }));
     }

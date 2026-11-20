@@ -1,6 +1,7 @@
 package gg.itzkatze.katze.results;
 
 import gg.itzkatze.katze.KatzeGames;
+import gg.itzkatze.katze.replay.ReplayService;
 import gg.itzkatze.katze.util.JsonFiles;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,6 +37,7 @@ public final class BattleResultsStore {
 
     public void save(SavedBattle battle) throws IOException {
         JsonFiles.write(directory.resolve(battle.id() + ".json"), battle);
+        ReplayService.finishRound(battle.id());
     }
 
     public List<SavedBattle> forPlayer(UUID player) throws IOException {

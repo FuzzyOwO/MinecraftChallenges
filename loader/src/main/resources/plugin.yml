@@ -25,7 +25,7 @@ commands:
     recipe:
     reset:
     result:
-    results:
+    replays:
     settings:
         aliases: [ menu ]
     configsettings:

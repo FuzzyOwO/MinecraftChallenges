@@ -9,6 +9,7 @@ import gg.itzkatze.katze.commands.framework.CallerType;
 import gg.itzkatze.katze.commands.framework.CommandCaller;
 import gg.itzkatze.katze.event.PlayerExcludeEvent;
 import gg.itzkatze.katze.game.GameLifecycleManager;
+import gg.itzkatze.katze.replay.ReplayService;
 import gg.itzkatze.katze.spectator.SpectatorManager;
 import gg.itzkatze.katze.spectator.SpectatorReason;
 import gg.itzkatze.katze.team.KatzeTeam;
@@ -294,7 +295,7 @@ public class KatzePlayer implements CommandCaller {
     }
 
     public boolean isParticipating() {
-        return !isExcluded() && !isSpectator();
+        return !isExcluded() && !isSpectator() && (ReplayService.get() == null || !ReplayService.get().reviewing(uuid));
     }
 
     public boolean isRanked() {

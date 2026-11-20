@@ -1,6 +1,7 @@
 package gg.itzkatze.katze.forcebattle;
 
 import gg.itzkatze.katze.configuration.Setting;
+import gg.itzkatze.katze.replay.ReplaySaveMode;
 import gg.itzkatze.katze.configuration.states.OnOffState;
 import gg.itzkatze.katze.configuration.states.PlayerTeamBothState;
 import gg.itzkatze.katze.configuration.states.SettingStateType;
@@ -34,7 +35,8 @@ public enum ForceBattleSettings implements Setting {
     EXCLUDE_HEADS(true, OnOffState.ON),
     EXCLUDE_SNIFFER(true, OnOffState.ON),
     EXCLUDE_UNREALISTIC(true, OnOffState.ON),
-    EXCLUDE_MAPS(true, OnOffState.ON);
+    EXCLUDE_MAPS(true, OnOffState.ON),
+    REPLAY_SAVING(false, ReplaySaveMode.fullGame());
 
     private final boolean updateOnChange;
     private final SettingStateType defaultState;
@@ -46,6 +48,7 @@ public enum ForceBattleSettings implements Setting {
 
     @Override
     public Component getDisplayName() {
+        if (this == REPLAY_SAVING) return Component.translatable("katze.replay.saving.title");
         return Component.translatable("katze.forcebattle.setting." + name().toLowerCase(Locale.ROOT));
     }
 

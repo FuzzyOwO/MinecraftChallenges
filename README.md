@@ -31,7 +31,8 @@ Play Minecraft challenges solo or with friends, then return to the lobby for the
 | `/chat team`, `/chat all`                        | Choose your chat channel.                                   |
 | `/t chat <message>`                              | Send one message to your team.                              |
 | `/spectate`                                      | Choose whether to play the next round; use it in the lobby. |
-| `/results`                                       | Review saved rounds you played in.                          |
+| `/replays`                                       | Review saved rounds you played in.                          |
+| `/replays join <player>`                         | Join a viewer and share control of their replay.            |
 | `/level [player]`                                | Check your level or another player's level.                 |
 | `/achievements`                                  | Browse achievements and rewards.                            |
 

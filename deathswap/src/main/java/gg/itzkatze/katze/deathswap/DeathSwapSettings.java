@@ -1,6 +1,7 @@
 package gg.itzkatze.katze.deathswap;
 
 import gg.itzkatze.katze.configuration.Setting;
+import gg.itzkatze.katze.replay.ReplaySaveMode;
 import gg.itzkatze.katze.configuration.SettingsManager;
 import gg.itzkatze.katze.configuration.states.ConfigurableSettingState;
 import gg.itzkatze.katze.configuration.states.SettingStateType;
@@ -25,7 +26,8 @@ public class DeathSwapSettings {
 
     @Getter
     public enum DeathSwapSetting implements Setting {
-        SWAP_INTERVAL(true, SwapIntervalState.MIN_5);
+        SWAP_INTERVAL(true, SwapIntervalState.MIN_5),
+        REPLAY_SAVING(false, ReplaySaveMode.fullGame());
 
         private final boolean updateOnChange;
         private final SettingStateType defaultState;
@@ -37,6 +39,7 @@ public class DeathSwapSettings {
 
         @Override
         public Component getDisplayName() {
+            if (this == REPLAY_SAVING) return Component.translatable("katze.replay.saving.title");
             return Component.translatable("katze.deathswap.setting." + name().toLowerCase(Locale.ROOT));
         }
 

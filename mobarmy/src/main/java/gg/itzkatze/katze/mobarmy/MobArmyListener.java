@@ -3,6 +3,7 @@ package gg.itzkatze.katze.mobarmy;
 import gg.itzkatze.katze.KatzeGames;
 import gg.itzkatze.katze.event.PlayerTeamJoinEvent;
 import gg.itzkatze.katze.event.PlayerTeamLeaveEvent;
+import org.bukkit.Material;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
@@ -93,7 +94,9 @@ final class MobArmyListener implements Listener {
                 || !MobCapture.eligible(entity) || entity.getKiller() == null) return;
         var side = game.side(entity.getKiller().getUniqueId());
         if (side == null) return;
-        side.mobs.add(saved != null ? saved : MobCapture.capture(entity));
+        var collected = saved != null ? saved : MobCapture.capture(entity);
+        collected.collector = entity.getKiller().getUniqueId();
+        side.mobs.add(collected);
         game.dirty();
     }
 
@@ -253,8 +256,8 @@ final class MobArmyListener implements Listener {
         }
         var side = game.tracked(event.getEntity());
         if (side == null) return;
-        if (event.getTarget() instanceof Player player && (game.blocked(player) || game.side(player.getUniqueId()) != side)) event.setCancelled(true);
-        if (event.getEntity() instanceof IronGolem && event.getTarget() != null && !(event.getTarget() instanceof Player)) event.setCancelled(true);
+        if (event.getTarget() != null && (!(event.getTarget() instanceof Player player)
+                || !game.combat() || !MobArmyTargeting.canFight(side, player, event.getEntity().getWorld()))) event.setCancelled(true);
     }
 
     private boolean canBuild(Player player, Block block) {
@@ -290,8 +293,13 @@ final class MobArmyListener implements Listener {
     public void breakBlock(BlockBreakEvent event) {
         if (!game.protectedPhase()) return;
         var side = game.side(event.getPlayer().getUniqueId());
-        if (!canBuild(event.getPlayer(), event.getBlock()) || !game.arena.placed(side, event.getBlock())) event.setCancelled(true);
-        else game.dirty();
+        Block block = event.getBlock();
+        if (!canBuild(event.getPlayer(), block) || !game.arena.placed(side, block) && block.getType().getHardness() != 0) {
+            event.setCancelled(true);
+            return;
+        }
+        game.arena.remember(side, block, true);
+        game.dirty();
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
@@ -378,14 +386,22 @@ final class MobArmyListener implements Listener {
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void flow(BlockFromToEvent event) {
         if (!game.arena.owns(event.getBlock().getWorld())) return;
-        int index = game.match == null ? -1 : game.arena.index(event.getToBlock().getLocation(), game.match.sides.size());
-        if (index < 0 || !game.combat() || game.match.sides.get(index).preparing || event.getToBlock().getY() <= MobArmyArena.FLOOR
-                || event.getToBlock().getY() >= game.arena.roofHeight() - 2) {
+        var side = fluidSide(event.getToBlock());
+        if (side == null) {
             event.setCancelled(true);
             return;
         }
-        game.arena.remember(game.match.sides.get(index), event.getToBlock(), true);
+        game.arena.remember(side, event.getToBlock(), true);
         game.dirty();
+    }
+
+    private MobArmyMatch.Side fluidSide(Block block) {
+        if (!game.combat()) return null;
+        int index = game.arena.index(block.getLocation(), game.match.sides.size());
+        if (index < 0) return null;
+        var side = game.match.sides.get(index);
+        return !side.preparing && !side.finished && game.arena.inside(index, block.getLocation(), false)
+                && block.getY() > MobArmyArena.FLOOR && block.getY() < game.arena.roofHeight() - 2 ? side : null;
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
@@ -420,7 +436,19 @@ final class MobArmyListener implements Listener {
     public void spread(BlockSpreadEvent event) {if (game.arena.owns(event.getBlock().getWorld())) event.setCancelled(true);}
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
-    public void form(BlockFormEvent event) {if (game.arena.owns(event.getBlock().getWorld())) event.setCancelled(true);}
+    public void form(BlockFormEvent event) {
+        Block block = event.getBlock();
+        if (!game.arena.owns(block.getWorld())) return;
+        var side = fluidSide(block);
+        Material formed = event.getNewState().getType();
+        if (side == null || !block.isLiquid() || formed != Material.STONE && formed != Material.COBBLESTONE
+                && formed != Material.OBSIDIAN && formed != Material.BASALT) {
+            event.setCancelled(true);
+            return;
+        }
+        game.arena.remember(side, block, true);
+        game.dirty();
+    }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void fade(BlockFadeEvent event) {if (game.arena.owns(event.getBlock().getWorld())) event.setCancelled(true);}

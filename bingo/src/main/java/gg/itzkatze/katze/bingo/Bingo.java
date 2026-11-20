@@ -14,6 +14,7 @@ import gg.itzkatze.katze.configuration.ChallengeSettingsManager;
 import gg.itzkatze.katze.game.GameTimer;
 import gg.itzkatze.katze.gui.KatzeGUI;
 import gg.itzkatze.katze.player.KatzePlayer;
+import gg.itzkatze.katze.text.TextArg;
 import gg.itzkatze.katze.scoreboard.ScoreboardContent;
 import gg.itzkatze.katze.recipe.RecipeCommand;
 import gg.itzkatze.katze.util.StringUtility;
@@ -22,6 +23,7 @@ import net.kyori.adventure.text.Component;
 import org.bukkit.event.Listener;
 
 import java.util.List;
+import java.util.ArrayList;
 
 public final class Bingo implements Challenge {
     private final BingoResourcePack pack = new BingoResourcePack();
@@ -62,5 +64,17 @@ public final class Bingo implements Challenge {
     @Override public List<Component> getSpectatorInfo(KatzePlayer target) {
         var match = matches.assigned(target.getUuid());
         return match == null ? List.of() : List.of(scoreboard.status(match));
+    }
+
+    @Override public List<Component> getReplayInfo(KatzePlayer target) {
+        var match = matches.assigned(target.getUuid());
+        if (match == null) return List.of();
+        List<Component> lines = new ArrayList<>();
+        for (int side = 0; side < match.competitors.size(); side++) lines.add(Component.translatable("katze.replay.sidebar.competitor",
+                TextArg.text("name", match.competitors.get(side).name()), TextArg.number("points", match.tiles(side))));
+        if (match.remaining >= 0) lines.add(Component.translatable("katze.replay.sidebar.remaining",
+                TextArg.text("time", StringUtility.formatTime(match.remaining))));
+        lines.add(scoreboard.status(match));
+        return lines;
     }
 }

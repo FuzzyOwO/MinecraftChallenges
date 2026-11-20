@@ -48,14 +48,18 @@ public record SavedBattle(UUID id, long startedAt, long endedAt, int durationSec
         return players.stream().anyMatch(entry -> entry.id().equals(player));
     }
 
-    public record Player(UUID id, String name, Integer teamId, int points, List<Objective> objectives, List<Statistic> statistics) {
+    public record Player(UUID id, String name, Integer teamId, int points, List<Objective> objectives, List<Statistic> statistics, boolean personalCollection) {
         public Player {
             objectives = List.copyOf(objectives);
             statistics = statistics == null ? List.of() : List.copyOf(statistics);
         }
 
         public Player(UUID id, String name, Integer teamId, int points, List<Objective> objectives) {
-            this(id, name, teamId, points, objectives, List.of());
+            this(id, name, teamId, points, objectives, List.of(), false);
+        }
+
+        public Player(UUID id, String name, Integer teamId, int points, List<Objective> objectives, List<Statistic> statistics) {
+            this(id, name, teamId, points, objectives, statistics, false);
         }
     }
 
@@ -68,6 +72,14 @@ public record SavedBattle(UUID id, long startedAt, long endedAt, int durationSec
     }
 
     public record Objective(String name, String type, String icon, String finishedBy,
-                            int remainingSeconds, boolean finished, boolean skipped) {
+                            int remainingSeconds, boolean finished, boolean skipped, int count) {
+        public Objective {
+            count = Math.max(1, count);
+        }
+
+        public Objective(String name, String type, String icon, String finishedBy,
+                         int remainingSeconds, boolean finished, boolean skipped) {
+            this(name, type, icon, finishedBy, remainingSeconds, finished, skipped, 1);
+        }
     }
 }

@@ -7,6 +7,7 @@ import gg.itzkatze.katze.game.seed.SeedGenerator;
 import gg.itzkatze.katze.level.GameXp;
 import gg.itzkatze.katze.lobby.LobbyManager;
 import gg.itzkatze.katze.player.KatzePlayer;
+import gg.itzkatze.katze.replay.ReplayService;
 import gg.itzkatze.katze.spectator.SpectatorManager;
 import gg.itzkatze.katze.util.KatzeColor;
 import gg.itzkatze.katze.util.StructureScanner;
@@ -89,6 +90,7 @@ public class GameLifecycleManager implements Listener {
     }
 
     public static void startGame() {
+        ReplayService.get().closeViewers();
         GameXp.begin();
         KatzePlayer.removeOfflinePlayers();
         LobbyManager.destroyLobby();
@@ -141,12 +143,14 @@ public class GameLifecycleManager implements Listener {
     public static void resetGame(Runnable onSuccess, Runnable onFailure) {
         SeedGenerator.cancel();
         if (GameWorldManager.isResetting()) return;
+        ReplayService.get().closeViewers();
         StartCountdown.cancel();
         KatzeGames.get().releasePause();
         KatzeGames.getTimer().stop();
         GameXp.onReset();
         AchievementService.get().reset();
         ChallengeManager.resetGameState();
+        ReplayService.get().finishRecordings();
         SessionPersistence.delete();
         KatzePlayer.removeOfflinePlayers();
         StructureScanner.clear();

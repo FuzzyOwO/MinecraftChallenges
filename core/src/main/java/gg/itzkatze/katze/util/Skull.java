@@ -1,6 +1,8 @@
 package gg.itzkatze.katze.util;
 
 import com.destroystokyo.paper.profile.PlayerProfile;
+import io.papermc.paper.datacomponent.DataComponentTypes;
+import io.papermc.paper.datacomponent.item.ResolvableProfile;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
@@ -70,12 +72,9 @@ public enum Skull {
 
         public static @NotNull ItemStack getSkullByUUID(UUID uuid) {
             ItemStack skullStack = new ItemStack(Material.PLAYER_HEAD);
-            SkullMeta skullMeta = (SkullMeta) skullStack.getItemMeta();
-            PlayerProfile profile = Bukkit.getOfflinePlayer(uuid).getPlayerProfile();
-
-            if (skullMeta != null) {
-                skullMeta.setPlayerProfile(profile);
-                skullStack.setItemMeta(skullMeta);
+            var properties = PlayerHeadProfiles.textures(uuid);
+            if (!properties.isEmpty()) {
+                skullStack.setData(DataComponentTypes.PROFILE, ResolvableProfile.resolvableProfile().uuid(uuid).addProperties(properties).build());
             }
 
             return skullStack;

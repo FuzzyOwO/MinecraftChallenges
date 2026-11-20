@@ -9,6 +9,8 @@ import gg.itzkatze.katze.game.GameTimer;
 import gg.itzkatze.katze.lobby.LobbyManager;
 import gg.itzkatze.katze.lobby.PointsSidebar;
 import gg.itzkatze.katze.player.KatzePlayer;
+import gg.itzkatze.katze.replay.ReplayService;
+import gg.itzkatze.katze.replay.ReplaySession;
 import gg.itzkatze.katze.text.Texts;
 import gg.itzkatze.katze.util.KatzeColor;
 import io.papermc.paper.scoreboard.numbers.NumberFormat;
@@ -46,6 +48,7 @@ public class ScoreboardManager {
 
         boolean lobbyDue = lobbySidebarDue();
         for (KatzePlayer katzePlayer : KatzePlayer.getOnlinePlayers()) {
+            if (renderReplay(katzePlayer)) continue;
             boolean retained = ChallengeManager.isGameStarted() && ChallengeManager.getActiveChallenges().stream()
                     .anyMatch(challenge -> challenge.showScoreboard(katzePlayer));
             boolean shouldHaveScoreboard = retained || katzePlayer.isParticipating() && gameActive;
@@ -62,6 +65,7 @@ public class ScoreboardManager {
     }
 
     public static void refreshLobby(@NotNull KatzePlayer player) {
+        if (renderReplay(player)) return;
         if (!lobbySidebarDue() || player.getPlayer() == null) return;
 
         render(player, LOBBY_CONTENT);
@@ -80,6 +84,7 @@ public class ScoreboardManager {
     }
 
     public static void updateScoreboard(KatzePlayer player) {
+        if (renderReplay(player)) return;
         Set<Challenge> activeChallenges = ChallengeManager.getActiveChallenges();
         if (activeChallenges.isEmpty()) return;
 
@@ -97,6 +102,14 @@ public class ScoreboardManager {
         if (content == null) return;
 
         render(player, content);
+    }
+
+    private static boolean renderReplay(KatzePlayer player) {
+        ReplaySession replay = ReplayService.get() == null ? null : ReplayService.get().session(player.getUuid());
+        if (replay == null || player.getPlayer() == null) return false;
+        if (SettingsManager.isEnabled(GlobalSetting.SHOW_SCOREBOARD)) render(player, replay.scoreboard());
+        else removeSidebar(player);
+        return true;
     }
 
     private static void render(@NotNull KatzePlayer player, @NotNull ScoreboardContent content) {

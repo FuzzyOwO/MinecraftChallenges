@@ -6,6 +6,7 @@ import gg.itzkatze.katze.gui.GUIClickableItem;
 import gg.itzkatze.katze.gui.GUIItem;
 import gg.itzkatze.katze.gui.KatzeGUI;
 import gg.itzkatze.katze.player.KatzePlayer;
+import gg.itzkatze.katze.replay.ReplaySession;
 import gg.itzkatze.katze.team.KatzeTeam;
 import gg.itzkatze.katze.text.TextArg;
 import gg.itzkatze.katze.util.ItemStackCreator;
@@ -42,11 +43,20 @@ public class PlayerViewGui extends KatzeGUI implements SpectatorView {
 
     private final UUID targetId;
     private final String targetName;
+    private final ReplaySession replay;
 
     public PlayerViewGui(@NotNull KatzePlayer target) {
         super(Component.translatable("katze.spectator.player_view.title", TextArg.text("name", target.getName())), 54);
         this.targetId = target.getUuid();
         this.targetName = target.getName();
+        this.replay = null;
+    }
+
+    public PlayerViewGui(@NotNull ReplaySession replay, @NotNull UUID targetId, @NotNull String targetName) {
+        super(Component.translatable("katze.spectator.player_view.title", TextArg.text("name", targetName)), 54);
+        this.targetId = targetId;
+        this.targetName = targetName;
+        this.replay = replay;
     }
 
     public static @NotNull Component infoLine(@NotNull String label, @NotNull Component value) {
@@ -95,6 +105,7 @@ public class PlayerViewGui extends KatzeGUI implements SpectatorView {
         return new GUIItem(guiSlot) {
             @Override
             public ItemStack getItem(KatzePlayer viewer) {
+                if (replay != null) return replay.inventoryItem(targetId, inventorySlot);
                 Player target = target();
                 return target == null ? null : copy(target.getInventory().getItem(inventorySlot));
             }
@@ -106,7 +117,8 @@ public class PlayerViewGui extends KatzeGUI implements SpectatorView {
             @Override
             public ItemStack getItem(KatzePlayer viewer) {
                 Player target = target();
-                ItemStack worn = target == null ? null : copy(piece.apply(target.getInventory()));
+                ItemStack worn = replay == null ? target == null ? null : copy(piece.apply(target.getInventory()))
+                        : replay.equipment(targetId, slot == OFFHAND_SLOT ? 1 : slot + 2);
                 return worn != null ? worn : ItemStackCreator.createNamedItemStack(Material.GRAY_STAINED_GLASS_PANE, Component.translatable(emptyName).color(KatzeColor.LIGHT_GRAY));
             }
         };
@@ -116,6 +128,10 @@ public class PlayerViewGui extends KatzeGUI implements SpectatorView {
         return new GUIClickableItem(BACKPACK_SLOT) {
             @Override
             public void run(InventoryClickEvent event, KatzePlayer viewer) {
+                if (replay != null) {
+                    if (replay.hasBackpack(targetId)) new BackpackViewGui(replay, targetId, targetName).open(viewer);
+                    return;
+                }
                 KatzePlayer target = KatzePlayer.adapt(targetId).orElse(null);
                 if (target != null && target.getBackpackContents() != null) {
                     new BackpackViewGui(target).open(viewer);
@@ -124,6 +140,8 @@ public class PlayerViewGui extends KatzeGUI implements SpectatorView {
 
             @Override
             public ItemStack getItem(KatzePlayer viewer) {
+                if (replay != null) return ItemStackCreator.createNamedItemStack(replay.hasBackpack(targetId) ? Material.CHEST : Material.GRAY_DYE,
+                        Component.translatable(replay.hasBackpack(targetId) ? "katze.spectator.player_view.backpack" : "katze.spectator.player_view.no_backpack").color(KatzeColor.YELLOW));
                 KatzePlayer target = KatzePlayer.adapt(targetId).orElse(null);
                 if (target == null || target.getBackpackContents() == null) {
                     return ItemStackCreator.createNamedItemStack(Material.GRAY_DYE, Component.translatable("katze.spectator.player_view.no_backpack").color(KatzeColor.LIGHT_GRAY));
@@ -137,6 +155,8 @@ public class PlayerViewGui extends KatzeGUI implements SpectatorView {
         return new GUIItem(INFO_SLOT) {
             @Override
             public ItemStack getItem(KatzePlayer viewer) {
+                if (replay != null) return ItemStackCreator.getPlayerSkull(targetId, Component.text(targetName, KatzeColor.YELLOW), 1,
+                        replay.playerInfo(targetId).toArray(Component[]::new));
                 Player target = target();
                 if (target == null) return ItemStackCreator.fillerItem();
                 return ItemStackCreator.getPlayerSkull(targetId, Component.text(targetName, KatzeColor.YELLOW), 1, infoLines(target).toArray(Component[]::new));
@@ -168,6 +188,10 @@ public class PlayerViewGui extends KatzeGUI implements SpectatorView {
             @Override
             public void run(InventoryClickEvent event, KatzePlayer viewer) {
                 Player spectator = viewer.getPlayer();
+                if (replay != null) {
+                    if (spectator != null) { spectator.closeInventory(); replay.follow(targetId); }
+                    return;
+                }
                 Player target = target();
                 if (spectator == null || target == null || spectator.getGameMode() != GameMode.SPECTATOR) return;
 

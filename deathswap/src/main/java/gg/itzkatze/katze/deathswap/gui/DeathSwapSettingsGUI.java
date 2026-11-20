@@ -11,6 +11,7 @@ import gg.itzkatze.katze.gui.SettingsMenu;
 import gg.itzkatze.katze.gui.sign.NumberSignInput;
 import gg.itzkatze.katze.gui.impl.SettingsGUI;
 import gg.itzkatze.katze.player.KatzePlayer;
+import gg.itzkatze.katze.replay.ReplaySettings;
 import gg.itzkatze.katze.text.TextArg;
 import gg.itzkatze.katze.util.ItemStackCreator;
 import gg.itzkatze.katze.util.KatzeColor;
@@ -68,6 +69,7 @@ public class DeathSwapSettingsGUI extends SettingsMenu {
         });
 
         setBack(new SettingsGUI());
+        set(ReplaySettings.button(15, ChallengeType.DEATH_SWAP, DeathSwapSettings.DeathSwapSetting.REPLAY_SAVING, this));
     }
 
     private DeathSwapSettings.SwapIntervalState getIntervalState() {

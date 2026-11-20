@@ -1,6 +1,8 @@
 package gg.itzkatze.katze.mobarmy;
 
 import gg.itzkatze.katze.challenges.ChallengeManager;
+import gg.itzkatze.katze.challenges.ChallengeType;
+import gg.itzkatze.katze.replay.ReplaySettings;
 import gg.itzkatze.katze.game.SessionPersistence;
 import gg.itzkatze.katze.gui.GUIClickableItem;
 import gg.itzkatze.katze.gui.KatzeGUI;
@@ -158,7 +160,7 @@ final class MobArmyMenus {
                 set(button(
                         9 + i - start, mobItem(type.getValue(), wave, details), (event, player) -> {
                             if (!details && editing(player) && (event.isLeftClick() || event.isRightClick())) {
-                                game.allocate(side, type.getKey(), wave, event.isLeftClick());
+                                game.allocate(side, type.getKey(), wave, event.isLeftClick(), event.isShiftClick() ? 10 : 1);
                             }
                         }
                 ));
@@ -222,6 +224,10 @@ final class MobArmyMenus {
             clear();
             int slot = 10;
             for (MobArmySettings setting : MobArmySettings.values()) {
+                if (setting == MobArmySettings.REPLAY_SAVING) {
+                    set(ReplaySettings.button(slot++, ChallengeType.MOB_ARMY, setting, this));
+                    continue;
+                }
                 Material material = setting == MobArmySettings.BACKPACK
                         ? Material.CHEST
                         : setting == MobArmySettings.COLLECTION_DURATION ? Material.CLOCK : Material.DIAMOND_PICKAXE;

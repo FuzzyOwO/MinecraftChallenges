@@ -5,6 +5,7 @@ import gg.itzkatze.katze.challenges.ChallengeManager;
 import gg.itzkatze.katze.game.GameWorldManager;
 import gg.itzkatze.katze.gui.KatzeGUI;
 import gg.itzkatze.katze.player.KatzePlayer;
+import gg.itzkatze.katze.replay.ReplayService;
 import gg.itzkatze.katze.text.TextArg;
 import gg.itzkatze.katze.util.KatzeColor;
 import net.kyori.adventure.text.Component;
@@ -62,7 +63,7 @@ public class SpectatorListener implements Listener {
             Player viewer = Bukkit.getPlayer(entry.getKey());
             if (viewer == null || viewer.getOpenInventory().getTopInventory().getHolder(false) != gui) continue;
             KatzePlayer wrapper = KatzePlayer.adapt(viewer);
-            if (Bukkit.getPlayer(view.targetId()) == null) {
+            if (Bukkit.getPlayer(view.targetId()) == null && (ReplayService.get() == null || ReplayService.get().session(viewer.getUniqueId()) == null)) {
                 gui.close(wrapper, KatzeGUI.CloseReason.SERVER_EXITED);
                 viewer.sendMessage(Component.translatable("katze.spectator.target_left", TextArg.text("name", view.targetName())).color(KatzeColor.LIGHT_GRAY));
             } else {

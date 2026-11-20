@@ -1,9 +1,11 @@
 package gg.itzkatze.katze.forcebattle;
 
 import gg.itzkatze.katze.KatzeGames;
+import gg.itzkatze.katze.challenges.ChallengeType;
 import gg.itzkatze.katze.player.KatzePlayer;
 import gg.itzkatze.katze.results.BattleResultsStore;
 import gg.itzkatze.katze.results.SavedBattle;
+import gg.itzkatze.katze.replay.ReplayService;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import net.kyori.adventure.text.Component;
 
@@ -34,6 +36,7 @@ public final class ForceBattleHistory {
 
     public static void restore(Round saved) {
         round = saved;
+        if (round != null) ReplayService.beginRound(round.id(), round.members().stream().map(Member::id).toList(), ChallengeType.FORCE_BATTLE);
     }
 
     public static void begin() {
@@ -43,6 +46,7 @@ public final class ForceBattleHistory {
                 .map(player -> new Member(player.getUuid(), player.getName(), player.isInTeam() ? player.getTeam().getId() : null))
                 .toList();
         round = new Round(UUID.randomUUID(), System.currentTimeMillis(), members);
+        ReplayService.beginRound(round.id(), members.stream().map(Member::id).toList(), ChallengeType.FORCE_BATTLE);
     }
 
     public static void finish() {

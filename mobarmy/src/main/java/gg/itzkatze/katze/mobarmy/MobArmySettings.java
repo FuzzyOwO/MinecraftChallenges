@@ -1,6 +1,7 @@
 package gg.itzkatze.katze.mobarmy;
 
 import gg.itzkatze.katze.configuration.Setting;
+import gg.itzkatze.katze.replay.ReplaySaveMode;
 import gg.itzkatze.katze.configuration.states.ConfigurableSettingState;
 import gg.itzkatze.katze.configuration.states.OnOffState;
 import gg.itzkatze.katze.configuration.states.SettingStateType;
@@ -13,7 +14,8 @@ import java.util.Locale;
 enum MobArmySettings implements Setting {
     STARTER_EQUIPMENT(OnOffState.ON),
     BACKPACK(OnOffState.ON),
-    COLLECTION_DURATION(new Duration(90));
+    COLLECTION_DURATION(new Duration(90)),
+    REPLAY_SAVING(ReplaySaveMode.withBattlePhase());
 
     private final SettingStateType initial;
 
@@ -23,7 +25,7 @@ enum MobArmySettings implements Setting {
     public String getId() {return name();}
 
     @Override
-    public Component getDisplayName() {return Component.translatable("katze.mobarmy.setting." + name().toLowerCase(Locale.ROOT));}
+    public Component getDisplayName() {return Component.translatable(this == REPLAY_SAVING ? "katze.replay.saving.title" : "katze.mobarmy.setting." + name().toLowerCase(Locale.ROOT));}
 
     @Override
     public SettingStateType getDefaultState() {return initial;}

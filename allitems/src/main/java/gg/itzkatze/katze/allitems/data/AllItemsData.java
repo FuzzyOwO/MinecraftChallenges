@@ -2,6 +2,7 @@ package gg.itzkatze.katze.allitems.data;
 
 import gg.itzkatze.katze.KatzeGames;
 import gg.itzkatze.katze.results.ResultRoster;
+import gg.itzkatze.katze.replay.ReplayService;
 import gg.itzkatze.katze.allitems.AllItemsNames;
 import gg.itzkatze.katze.allitems.AllItemsObjective;
 import gg.itzkatze.katze.allitems.AllItemsObjectiveType;
@@ -48,7 +49,7 @@ public class AllItemsData {
     }
 
     public void beginRound() {
-        resultRoster = ResultRoster.capture();
+        resultRoster = ResultRoster.capture(ChallengeType.ALL_ITEMS);
     }
 
     public List<AllItemsObjective> getRecordedDiscoveries(@Nullable UUID player) {
@@ -429,6 +430,7 @@ public class AllItemsData {
 
             clearAllProgress();
             resultRoster = data.resultRoster;
+            if (resultRoster != null) ReplayService.beginRound(resultRoster.id(), resultRoster.members().stream().map(ResultRoster.Member::id).toList(), ChallengeType.ALL_ITEMS);
             if (data.teamItems != null) {
                 data.teamItems.forEach((key, entry) -> {
                     Material material = Material.matchMaterial(key);

@@ -4,6 +4,7 @@ import gg.itzkatze.katze.gui.GUIClickableItem;
 import gg.itzkatze.katze.gui.GUIItem;
 import gg.itzkatze.katze.gui.KatzeGUI;
 import gg.itzkatze.katze.player.KatzePlayer;
+import gg.itzkatze.katze.replay.ReplaySession;
 import gg.itzkatze.katze.text.TextArg;
 import gg.itzkatze.katze.util.ItemStackCreator;
 import gg.itzkatze.katze.util.KatzeColor;
@@ -25,6 +26,7 @@ public class BackpackViewGui extends KatzeGUI implements SpectatorView {
 
     private final UUID targetId;
     private final String targetName;
+    private final ReplaySession replay;
     private List<ItemStack> contents = List.of();
     private int page;
 
@@ -32,6 +34,14 @@ public class BackpackViewGui extends KatzeGUI implements SpectatorView {
         super(Component.translatable("katze.spectator.backpack.title", TextArg.text("name", target.getName())), 54);
         this.targetId = target.getUuid();
         this.targetName = target.getName();
+        replay = null;
+    }
+
+    public BackpackViewGui(@NotNull ReplaySession replay, @NotNull UUID targetId, @NotNull String targetName) {
+        super(Component.translatable("katze.spectator.backpack.title", TextArg.text("name", targetName)), 54);
+        this.targetId = targetId;
+        this.targetName = targetName;
+        this.replay = replay;
     }
 
     @Override
@@ -58,7 +68,7 @@ public class BackpackViewGui extends KatzeGUI implements SpectatorView {
     // Every render reads the backpack once, so the page and its slots agree even when the backpack shrank since the last one.
     @Override
     public void updateInventory(KatzePlayer viewer) {
-        List<ItemStack> current = KatzePlayer.adapt(targetId).map(KatzePlayer::getBackpackContents).orElse(null);
+        List<ItemStack> current = replay == null ? KatzePlayer.adapt(targetId).map(KatzePlayer::getBackpackContents).orElse(null) : replay.backpack(targetId);
         contents = current == null ? List.of() : current;
         page = Math.clamp(page, 0, pages() - 1);
         super.updateInventory(viewer);
@@ -111,6 +121,7 @@ public class BackpackViewGui extends KatzeGUI implements SpectatorView {
         return new GUIClickableItem(BACK_SLOT) {
             @Override
             public void run(InventoryClickEvent event, KatzePlayer viewer) {
+                if (replay != null) { new PlayerViewGui(replay, targetId, targetName).open(viewer); return; }
                 KatzePlayer.adapt(targetId).ifPresent(target -> new PlayerViewGui(target).open(viewer));
             }
 

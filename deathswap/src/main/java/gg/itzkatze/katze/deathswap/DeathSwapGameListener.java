@@ -12,6 +12,7 @@ import gg.itzkatze.katze.level.LevelStore;
 import gg.itzkatze.katze.player.KatzePlayer;
 import gg.itzkatze.katze.results.ResultArchives;
 import gg.itzkatze.katze.results.ResultRoster;
+import gg.itzkatze.katze.replay.ReplayService;
 import gg.itzkatze.katze.spectator.SpectatorManager;
 import gg.itzkatze.katze.spectator.SpectatorReason;
 import gg.itzkatze.katze.text.TextArg;
@@ -85,7 +86,7 @@ public class DeathSwapGameListener implements Listener {
     public void startGame() {
         initialize();
         started = true;
-        resultRoster = ResultRoster.capture();
+        resultRoster = ResultRoster.capture(ChallengeType.DEATH_SWAP);
         elapsedTimer = new ChallengeTimer(1_000L);
         swapTimer = new ChallengeTimer(getSwapIntervalMillis());
     }
@@ -113,6 +114,7 @@ public class DeathSwapGameListener implements Listener {
         resultRoster = data.resultRoster;
         if (data.eliminations != null) eliminations.addAll(data.eliminations);
         finished = data.finished;
+        if (resultRoster != null && started && !finished) ReplayService.beginRound(resultRoster.id(), resultRoster.members().stream().map(ResultRoster.Member::id).toList(), ChallengeType.DEATH_SWAP);
         if (data.eliminated != null) {
             data.eliminated.stream().map(DeathSwapGameListener::parseUuid).filter(Objects::nonNull).forEach(eliminatedPlayers::add);
         }
@@ -225,6 +227,15 @@ public class DeathSwapGameListener implements Listener {
         }
 
         return message;
+    }
+
+    public List<Component> getReplayInfo() {
+        if (!started) return List.of();
+        return List.of(
+                Component.translatable("katze.replay.sidebar.alive", TextArg.number("count", getAlivePlayers().size())),
+                Component.translatable("katze.replay.sidebar.swaps", TextArg.number("count", swapCount)),
+                Component.translatable("katze.replay.sidebar.next_swap", TextArg.text("time", StringUtility.formatTime(swapTimer == null ? 0 : swapTimer.getSecondsRemaining()))),
+                Component.translatable("katze.replay.sidebar.elapsed", TextArg.text("time", StringUtility.formatTime(elapsedSeconds))));
     }
 
     private boolean swapAlivePlayers() {

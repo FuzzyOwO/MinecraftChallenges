@@ -1,6 +1,7 @@
 package gg.itzkatze.katze.mobarmy;
 
 import gg.itzkatze.katze.results.SavedBattle;
+import gg.itzkatze.katze.results.SavedMobArmyResults;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 
@@ -19,15 +20,20 @@ final class MobArmyResults {
         for (var side : match.sides) {
             Integer teamId = side.id.startsWith("team-") ? Integer.valueOf(side.id.substring(5)) : null;
             int points = winners.contains(side) ? 1 : 0;
-            var objectives = side.mobs.stream().map(MobArmyResults::mob).toList();
+            var objectives = objectives(side.mobs);
             int place = side.forfeited ? match.sides.size() : 1 + (int) match.sides.stream()
                     .filter(other -> !other.forfeited && other.elapsedTicks < side.elapsedTicks).count();
-            List<SavedBattle.Statistic> statistics = List.of(
-                    new SavedBattle.Statistic("place", place, -1),
-                    new SavedBattle.Statistic("battle_ticks", (int) side.elapsedTicks, -1),
-                    new SavedBattle.Statistic("collected", side.mobs.size(), -1),
-                    new SavedBattle.Statistic("forfeited", side.forfeited ? 1 : 0, -1));
-            side.members.forEach((id, name) -> players.add(new SavedBattle.Player(id, name, teamId, points, objectives, statistics)));
+            side.members.forEach((id, name) -> {
+                var personal = side.mobs.stream().filter(mob -> id.equals(mob.collector) || mob.collector == null && side.members.size() == 1).toList();
+                List<SavedBattle.Statistic> statistics = new ArrayList<>(List.of(
+                        new SavedBattle.Statistic("place", place, -1),
+                        new SavedBattle.Statistic("battle_ticks", (int) side.elapsedTicks, -1),
+                        new SavedBattle.Statistic("collected", personal.size(), -1),
+                        new SavedBattle.Statistic("forfeited", side.forfeited ? 1 : 0, -1)));
+                int unattributed = side.members.size() == 1 ? 0 : (int) side.mobs.stream().filter(mob -> mob.collector == null).count();
+                if (unattributed > 0) statistics.add(new SavedBattle.Statistic("unattributed_collection", unattributed, -1));
+                players.add(new SavedBattle.Player(id, name, teamId, points, objectives(personal), statistics, true));
+            });
             if (teamId != null) teams.add(new SavedBattle.Team(teamId, points, objectives));
         }
         players.sort(Comparator.comparingInt(player -> player.statistics().getFirst().value()));
@@ -35,9 +41,13 @@ final class MobArmyResults {
         return new SavedBattle(match.id, match.startedAt, match.endedAt, duration, players, teams, SavedBattle.Game.MOB_ARMY);
     }
 
-    private static SavedBattle.Objective mob(MobArmyMatch.CapturedMob mob) {
+    private static List<SavedBattle.Objective> objectives(List<MobArmyMatch.CapturedMob> mobs) {
+        return SavedMobArmyResults.group(mobs.stream().map(mob -> mob(mob, 1)).toList());
+    }
+
+    private static SavedBattle.Objective mob(MobArmyMatch.CapturedMob mob, int count) {
         var gson = GsonComponentSerializer.gson();
         return new SavedBattle.Objective(gson.serialize(Component.translatable("entity.minecraft." + mob.type.toLowerCase(Locale.ROOT))),
-                gson.serialize(Component.translatable("katze.results.collected_mob")), mob.type + "_SPAWN_EGG", "", -1, true, false);
+                gson.serialize(Component.translatable("katze.results.collected_mob")), mob.type + "_SPAWN_EGG", "", -1, true, false, count);
     }
 }

@@ -2,6 +2,7 @@ package gg.itzkatze.katze.bingo;
 
 import gg.itzkatze.katze.bingo.board.BingoObjective;
 import gg.itzkatze.katze.configuration.Setting;
+import gg.itzkatze.katze.replay.ReplaySaveMode;
 import gg.itzkatze.katze.configuration.SettingsManager;
 import gg.itzkatze.katze.configuration.GlobalSetting;
 import gg.itzkatze.katze.KatzeGames;
@@ -23,7 +24,7 @@ public final class BingoSettings {
         EXCLUDE_MUSIC_DISCS(OnOffState.ON), EXCLUDE_BANNER_PATTERNS(OnOffState.ON), EXCLUDE_ARMOR_TEMPLATES(OnOffState.ON),
         EXCLUDE_POTTERY_SHERDS(OnOffState.ON), EXCLUDE_ORES(OnOffState.ON), EXCLUDE_END(OnOffState.ON), EXCLUDE_TRIAL_ITEMS(OnOffState.ON),
         EXCLUDE_OXIDIZED_COPPER(OnOffState.ON), EXCLUDE_HEADS(OnOffState.ON), EXCLUDE_SNIFFER(OnOffState.ON),
-        EXCLUDE_UNREALISTIC(OnOffState.ON), EXCLUDE_MAPS(OnOffState.ON);
+        EXCLUDE_UNREALISTIC(OnOffState.ON), EXCLUDE_MAPS(OnOffState.ON), REPLAY_SAVING(ReplaySaveMode.fullGame());
 
         private final SettingStateType defaultState;
         Option(SettingStateType defaultState) { this.defaultState = defaultState; }
@@ -31,6 +32,7 @@ public final class BingoSettings {
         @Override public SettingStateType getDefaultState() { return defaultState; }
         @Override public boolean shouldUpdateOnChange() { return false; }
         @Override public Component getDisplayName() {
+            if (this == REPLAY_SAVING) return Component.translatable("katze.replay.saving.title");
             if (name().startsWith("EXCLUDE_")) return Arrays.stream(ObjectiveExclusion.values()).filter(group -> name().equals(group.getSettingId())).findFirst().orElseThrow().getDisplayName();
             return Component.translatable("katze.bingo.setting." + name().toLowerCase(Locale.ROOT));
         }

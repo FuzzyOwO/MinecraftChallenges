@@ -40,6 +40,7 @@ import gg.itzkatze.katze.lobby.cosmetics.cases.CaseRollGui;
 import gg.itzkatze.katze.lobby.jumpandrun.EventBlock;
 import gg.itzkatze.katze.player.AfkTracker;
 import gg.itzkatze.katze.player.data.PlayerDataStore;
+import gg.itzkatze.katze.replay.ReplayService;
 import gg.itzkatze.katze.scoreboard.NameTags;
 import gg.itzkatze.katze.scoreboard.ScoreboardManager;
 import gg.itzkatze.katze.spectator.SpectatorChat;
@@ -47,6 +48,7 @@ import gg.itzkatze.katze.spectator.SpectatorListener;
 import gg.itzkatze.katze.text.LanguageListener;
 import gg.itzkatze.katze.text.Texts;
 import gg.itzkatze.katze.util.StructureScanner;
+import gg.itzkatze.katze.util.PlayerHeadProfiles;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -93,6 +95,8 @@ public final class KatzeGames extends JavaPlugin {
             throw new RuntimeException("settings.json File not found", e);
         }
         Texts.load(getFile());
+        PlayerHeadProfiles.install(this);
+        ReplayService.install(this);
         installTimerEngine();
         PlayerDataStore.load();
         CosmeticStore.load();
@@ -137,6 +141,7 @@ public final class KatzeGames extends JavaPlugin {
         GameWorldManager.loadSavedWorlds();
         SessionPersistence.restore();
         GameWorldManager.initialize();
+        ReplayService.get().recoverWorlds();
         getServer().getPluginManager().registerEvents(new GameWorldListener(), this);
         getServer().getPluginManager().registerEvents(new LimboBiomes(), this);
         achievementSampler.start();
@@ -146,6 +151,8 @@ public final class KatzeGames extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        PlayerHeadProfiles.shutdown();
+        if (ReplayService.get() != null) ReplayService.get().shutdown();
         SeedGenerator.cancel();
         SignInput.closeAll();
         pauseManager.shutdown();

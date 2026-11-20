@@ -11,6 +11,38 @@ import java.util.Collections;
 import static org.junit.jupiter.api.Assertions.*;
 
 class MobArmyMatchTest {
+    @Test void bulkEditsMoveUpToTenEligibleMobsWithoutChangingOtherWavesOrTypes() {
+        var match = match(2);
+        var side = match.sides.getFirst();
+        for (int i = 0; i < 13; i++) side.mobs.add(mob("drowned-" + i));
+        var otherWave = mob("other-wave");
+        otherWave.wave = 1;
+        var otherType = mob("other-type");
+        otherType.type = "ZOMBIE";
+        side.mobs.addAll(List.of(otherWave, otherType));
+
+        side.ready = true;
+        assertTrue(match.allocate(side, "DROWNED", 0, true, 10));
+        assertFalse(side.ready);
+        assertEquals(10, side.mobs.stream().filter(mob -> mob.wave == 0).count());
+        assertTrue(match.allocate(side, "DROWNED", 0, true, 10));
+        assertEquals(13, side.mobs.stream().filter(mob -> mob.wave == 0).count());
+        side.ready = true;
+        assertFalse(match.allocate(side, "DROWNED", 0, true, 10));
+        assertTrue(side.ready);
+
+        assertTrue(match.allocate(side, "DROWNED", 0, false, 10));
+        assertFalse(side.ready);
+        assertEquals(3, side.mobs.stream().filter(mob -> mob.wave == 0).count());
+        assertTrue(match.allocate(side, "DROWNED", 0, false, 10));
+        assertEquals(0, side.mobs.stream().filter(mob -> mob.wave == 0).count());
+        side.ready = true;
+        assertFalse(match.allocate(side, "DROWNED", 0, false, 10));
+        assertTrue(side.ready);
+        assertEquals(1, otherWave.wave);
+        assertEquals(-1, otherType.wave);
+    }
+
     @Test void competingTeammateEditsCannotSpendTheSameKillTwice() {
         var match = match(2);
         var side = match.sides.getFirst();
@@ -129,7 +161,8 @@ class MobArmyMatchTest {
     }
 
     @Test void penaltiesPauseAndResetOnlyWhenAnOpponentSetEnds() {
-        assertArrayEquals(new int[]{30, 60, 90, 120, 150, 180}, java.util.stream.IntStream.rangeClosed(1, 6).map(MobArmyMatch::penaltySeconds).toArray());
+        assertArrayEquals(new int[]{30, 60, 90, 120, 120, 120}, java.util.stream.IntStream.rangeClosed(1, 6).map(MobArmyMatch::penaltySeconds).toArray());
+        assertEquals(120, MobArmyMatch.penaltySeconds(Integer.MAX_VALUE));
         var match = match(3);
         var side = match.sides.getFirst();
         UUID player = side.members.keySet().iterator().next();
@@ -190,6 +223,41 @@ class MobArmyMatchTest {
         match = match(2);
         match.phase = MobArmyMatch.Phase.COMBAT;
         assertThrows(IllegalStateException.class, match::validate);
+    }
+
+    @Test void replaysKeepEveryTeamsRosterAcrossFarmingAndCombat() {
+        var match = match(3);
+        var participants = match.sides.stream().flatMap(side -> side.members.keySet().stream()).toList();
+        for (var phase : MobArmyMatch.Phase.values()) {
+            match.phase = phase;
+            match.sides.getFirst().finished = true;
+            match.sides.get(1).forfeited = true;
+            assertEquals(participants, match.participants());
+        }
+    }
+
+    @Test void combatReplaySourcesIncludeAllTeamsRegardlessOfDeathCooldownOrPreparation() {
+        var match = match(3);
+        var mobs = new ArrayList<UUID>();
+        for (var side : match.sides) {
+            UUID mob = UUID.randomUUID();
+            mobs.add(mob);
+            side.live.put(mob, new MobArmyMatch.LiveMob("mob", 1, 80, 1, 0, 0));
+            side.roofTicks.put(side.members.keySet().iterator().next(), 600L);
+        }
+        match.sides.getFirst().preparing = true;
+        match.phase = MobArmyMatch.Phase.COLLECTION;
+        assertTrue(match.replayEntities(match.id).isEmpty());
+        match.phase = MobArmyMatch.Phase.CONFIGURATION;
+        assertTrue(match.replayEntities(match.id).isEmpty());
+        match.phase = MobArmyMatch.Phase.COMBAT;
+        assertEquals(mobs, match.replayEntities(match.id));
+        assertTrue(match.replayEntities(UUID.randomUUID()).isEmpty());
+        match.sides.getFirst().live.clear();
+        match.sides.getFirst().finished = true;
+        assertEquals(mobs.subList(1, 3), match.replayEntities(match.id));
+        match.phase = MobArmyMatch.Phase.RESULTS;
+        assertTrue(match.replayEntities(match.id).isEmpty());
     }
 
     private static MobArmyMatch match(int count) {

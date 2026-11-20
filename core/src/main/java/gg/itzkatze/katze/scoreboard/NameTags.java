@@ -10,6 +10,7 @@ import gg.itzkatze.katze.text.Texts;
 import gg.itzkatze.katze.text.TextArg;
 import gg.itzkatze.katze.util.KatzeColor;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.scoreboard.Scoreboard;
@@ -119,6 +120,11 @@ public final class NameTags {
     }
 
     private static @NotNull Component suffix(@NotNull KatzePlayer target, List<Challenge> challenges) {
+        if (target.isSpectator()) {
+            return Component.space().append(Component.translatable("katze.spectator.nametag")
+                    .color(KatzeColor.LIGHT_GRAY).decorate(TextDecoration.ITALIC))
+                    .decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE);
+        }
         return challenges.stream()
                 .map(challenge -> challenge.getNametagSuffix(target))
                 .filter(Objects::nonNull)

@@ -7,12 +7,15 @@ import gg.itzkatze.katze.game.seed.SeedRequirement;
 import gg.itzkatze.katze.scoreboard.ScoreboardContent;
 import net.kyori.adventure.text.Component;
 import org.bukkit.event.Listener;
+import org.bukkit.entity.Entity;
 import org.bukkit.inventory.Inventory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Arrays;
+import java.util.UUID;
 
 public interface Challenge extends ChallengeSettings {
 
@@ -77,6 +80,13 @@ public interface Challenge extends ChallengeSettings {
     @NotNull default List<Component> getSpectatorInfo(@NotNull KatzePlayer target) {
         return Collections.emptyList();
     }
+
+    @NotNull default List<Component> getReplayInfo(@NotNull KatzePlayer target) {
+        ScoreboardContent scoreboard = getScoreboardContent();
+        return scoreboard == null ? getSpectatorInfo(target) : Arrays.asList(scoreboard.getLines(target));
+    }
+
+    @NotNull default List<Entity> getReplayEntities(UUID round) { return List.of(); }
 
     @Nullable default Component getNametagSuffix(@NotNull KatzePlayer target) {
         return null;

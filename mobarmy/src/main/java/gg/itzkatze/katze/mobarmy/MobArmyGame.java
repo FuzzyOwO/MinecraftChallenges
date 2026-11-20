@@ -7,6 +7,7 @@ import gg.itzkatze.katze.game.GameTimer;
 import gg.itzkatze.katze.game.SessionPersistence;
 import gg.itzkatze.katze.player.KatzePlayer;
 import gg.itzkatze.katze.results.ResultArchives;
+import gg.itzkatze.katze.replay.ReplayService;
 import gg.itzkatze.katze.spectator.SpectatorManager;
 import gg.itzkatze.katze.team.KatzeTeam;
 import gg.itzkatze.katze.text.TextArg;
@@ -23,7 +24,7 @@ import org.bukkit.NamespacedKey;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Entity;
-import org.bukkit.entity.IronGolem;
+import org.bukkit.entity.Mob;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.InventoryHolder;
@@ -60,6 +61,7 @@ final class MobArmyGame {
     private boolean restoring;
     private int saveTicks;
     private int viewTicks;
+    private int targetTicks;
     private boolean failed;
     boolean preparingArena;
 
@@ -117,11 +119,13 @@ final class MobArmyGame {
 
     void start() {
         failed = false;
+        targetTicks = 0;
         match = new MobArmyMatch();
         match.minecraftVersion = Bukkit.getMinecraftVersion();
         match.arenaFingerprint = arena.template().fingerprint();
         match.arenaWorldVersion = 1;
         match.sides = roster();
+        ReplayService.beginRound(match.id, match.participants(), ChallengeType.MOB_ARMY, false);
         backpacks.clear();
         if (challenge.settings.isEnabled(MobArmySettings.STARTER_EQUIPMENT)) {
             for (var side : match.sides)
@@ -161,6 +165,7 @@ final class MobArmyGame {
 
     void configure() {
         if (match == null || match.phase != MobArmyMatch.Phase.COLLECTION || !ChallengeManager.isGameStarted()) return;
+        ReplayService.checkpoint(match.id);
         closeMenus();
         match.phase = MobArmyMatch.Phase.CONFIGURATION;
         audience.refresh(match);
@@ -201,8 +206,8 @@ final class MobArmyGame {
         dirty();
     }
 
-    void allocate(MobArmyMatch.Side side, String type, int wave, boolean add) {
-        if (running() && match.allocate(side, type, wave, add)) {
+    void allocate(MobArmyMatch.Side side, String type, int wave, boolean add, int amount) {
+        if (running() && match.allocate(side, type, wave, add, amount)) {
             refresh(side);
             dirty();
         }
@@ -222,6 +227,9 @@ final class MobArmyGame {
             if (!side.forfeited) {
                 resetSet(side, () -> beginWave(side));
             }
+        ReplayService.beginRound(match.id, match.participants(), ChallengeType.MOB_ARMY, true);
+        ReplayService.markCombat(match.id);
+        ReplayService.checkpoint(match.id);
         dirty();
     }
 
@@ -306,6 +314,8 @@ final class MobArmyGame {
             dirty();
         }
         if (combat()) {
+            boolean refreshVex = ++targetTicks >= 1200;
+            if (refreshVex) targetTicks = 0;
             for (var side : match.sides) {
                 if (side.finished || side.preparing) continue;
                 match.tickClock(side, true);
@@ -330,19 +340,14 @@ final class MobArmyGame {
                         throw exception;
                     }
                 }
+                List<Player> fighters = side.members.keySet().stream().map(Bukkit::getPlayer).filter(player -> player != null).toList();
                 for (UUID uuid : new ArrayList<>(side.live.keySet())) {
                     Entity entity = Bukkit.getEntity(uuid);
                     if (!(entity instanceof LivingEntity living) || living.isDead()) continue;
                     MobHabitat.maintain(living);
                     int index = match.sides.indexOf(side);
                     if (!arena.insideMob(index, living.getLocation())) living.teleport(arena.spawn(index, living));
-                    if (living instanceof IronGolem golem) {
-                        Player target = side.members.keySet().stream().map(Bukkit::getPlayer)
-                                .filter(player -> player != null && !player.isDead() && !roof(player) && player.getWorld().equals(golem.getWorld()))
-                                .min(Comparator.comparingDouble(player -> player.getLocation().distanceSquared(golem.getLocation()))).orElse(null);
-                        golem.setPlayerCreated(false);
-                        golem.setTarget(target);
-                    }
+                    if (living instanceof Mob mobEntity) MobArmyTargeting.update(mobEntity, side, fighters, refreshVex);
                 }
                 if (side.queue.isEmpty() && side.live.isEmpty()) advance(side);
             }
@@ -608,6 +613,7 @@ final class MobArmyGame {
         match.arenaFingerprint = arena.template().fingerprint();
         if (match.arenaWorldVersion != 1) throw new IllegalStateException("Unsupported MobArmy arena world version; use /reset to start a new round");
         if (match.phase == MobArmyMatch.Phase.RESULTS) archive();
+        else ReplayService.beginRound(match.id, match.participants(), ChallengeType.MOB_ARMY, match.phase == MobArmyMatch.Phase.COMBAT);
         if (!protectedPhase()) return;
         restoring = true;
         try {

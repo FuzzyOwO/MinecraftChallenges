@@ -3,6 +3,7 @@ package gg.itzkatze.katze.text;
 import gg.itzkatze.katze.KatzeGames;
 import gg.itzkatze.katze.gui.KatzeGUI;
 import gg.itzkatze.katze.player.KatzePlayer;
+import gg.itzkatze.katze.replay.ReplayService;
 import gg.itzkatze.katze.scoreboard.ScoreboardManager;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -17,6 +18,11 @@ public final class LanguageListener implements Listener {
         Player player = event.getPlayer();
         Bukkit.getScheduler().runTask(KatzeGames.get(), () -> {
             if (!player.isOnline()) return;
+
+            if (ReplayService.get() != null) {
+                var replay = ReplayService.get().session(player.getUniqueId());
+                if (replay != null) replay.refreshControls();
+            }
 
             KatzeGUI gui = KatzeGUI.GUI_MAP.get(player.getUniqueId());
             if (gui != null) {

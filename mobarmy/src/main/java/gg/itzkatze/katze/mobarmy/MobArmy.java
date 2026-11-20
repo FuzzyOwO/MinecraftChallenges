@@ -12,11 +12,16 @@ import gg.itzkatze.katze.player.KatzePlayer;
 import gg.itzkatze.katze.text.TextArg;
 import net.kyori.adventure.text.Component;
 import org.bukkit.event.Listener;
+import org.bukkit.Bukkit;
+import org.bukkit.entity.Entity;
 import org.bukkit.inventory.Inventory;
 import org.jspecify.annotations.NonNull;
 
 import java.util.List;
+import java.util.ArrayList;
 import java.util.Locale;
+import java.util.UUID;
+import java.util.Objects;
 
 public final class MobArmy implements Challenge {
 
@@ -128,6 +133,33 @@ public final class MobArmy implements Challenge {
                 Component.text(side.name()),
                 Component.translatable("katze.mobarmy.collected", TextArg.number("count", side.mobs.size()))
         );
+    }
+
+    @Override
+    public @NonNull List<Component> getReplayInfo(KatzePlayer target) {
+        if (game.match == null) return List.of();
+        List<Component> lines = new ArrayList<>();
+        lines.add(Component.translatable("katze.mobarmy.phase." + game.match.phase.name().toLowerCase(Locale.ROOT)));
+        var side = game.side(target.getUuid());
+        if (side == null) return lines;
+        lines.add(Component.translatable("katze.replay.sidebar.team_collection", TextArg.number("count", side.mobs.size())));
+        if (game.combat()) {
+            var opponents = game.match.opponents(side);
+            if (!opponents.isEmpty()) lines.add(Component.translatable("katze.replay.sidebar.opponent",
+                    TextArg.text("player", opponents.get(Math.min(side.opponent, opponents.size() - 1)).name())));
+            lines.add(Component.translatable("katze.replay.sidebar.wave", TextArg.number("wave", side.wave + 1)));
+            lines.add(Component.translatable("katze.replay.sidebar.mobs_left", TextArg.number("count", side.live.size() + side.queue.size())));
+            lines.add(Component.translatable("katze.replay.sidebar.battle_time", TextArg.text("time", MobArmyGame.time(side))));
+            lines.add(Component.translatable("katze.replay.sidebar.deaths", TextArg.number("count", side.deaths.getOrDefault(target.getUuid(), 0))));
+            Long respawn = side.roofTicks.get(target.getUuid());
+            if (respawn != null) lines.add(Component.translatable("katze.replay.sidebar.respawn", TextArg.number("seconds", (respawn + 19) / 20)));
+        }
+        return lines;
+    }
+
+    @Override
+    public @NonNull List<Entity> getReplayEntities(UUID round) {
+        return game.match == null ? List.of() : game.match.replayEntities(round).stream().map(Bukkit::getEntity).filter(Objects::nonNull).toList();
     }
 
 }

@@ -85,6 +85,11 @@ public class DeathSwap implements Challenge {
     }
 
     @Override
+    public @NotNull List<Component> getReplayInfo(@NotNull KatzePlayer target) {
+        return gameListener.getReplayInfo();
+    }
+
+    @Override
     public KatzeGUI getSettingsGUI() {
         return new DeathSwapSettingsGUI();
     }

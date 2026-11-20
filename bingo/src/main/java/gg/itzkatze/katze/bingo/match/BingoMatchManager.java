@@ -18,6 +18,7 @@ import gg.itzkatze.katze.bingo.gui.BingoBoardGUI;
 import gg.itzkatze.katze.player.KatzePlayer;
 import gg.itzkatze.katze.results.ResultArchives;
 import gg.itzkatze.katze.results.SavedBattle;
+import gg.itzkatze.katze.replay.ReplayService;
 import gg.itzkatze.katze.spectator.SpectatorManager;
 import gg.itzkatze.katze.text.TextArg;
 import gg.itzkatze.katze.util.JsonFiles;
@@ -134,6 +135,8 @@ public final class BingoMatchManager {
         roundEnded = false;
         lastTick = Bukkit.getCurrentTick();
         for (int i = 0; i < roster.size() / 2; i++) matches.add(new BingoMatch(roster.subList(i * 2, i * 2 + 2), preparedBoards.get(i), BingoSettings.seconds(), generationSeed + i));
+        for (BingoMatch match : matches) ReplayService.beginRound(match.id,
+                match.competitors.stream().flatMap(competitor -> competitor.members().stream()).map(BingoCompetitor.Member::id).toList(), ChallengeType.BINGO);
         for (Player player : Bukkit.getOnlinePlayers()) {
             BingoMatch match = assigned(player.getUniqueId());
             if (match == null) continue;
@@ -355,6 +358,8 @@ public final class BingoMatchManager {
                 }
             }
             matches.addAll(state.matches());
+            for (BingoMatch match : matches) if (match.result == BingoMatch.Result.ACTIVE) ReplayService.beginRound(match.id,
+                    match.competitors.stream().flatMap(competitor -> competitor.members().stream()).map(BingoCompetitor.Member::id).toList(), ChallengeType.BINGO);
             roundEnded = state.ended();
             lastTick = Bukkit.getCurrentTick();
         } catch (IOException | RuntimeException exception) { throw new IllegalStateException("Bingo recovery stopped; preserve " + WorldStorage.getFilePath(FILE) + " and repair the save before retrying", exception); }

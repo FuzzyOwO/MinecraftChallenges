@@ -2,6 +2,8 @@ package gg.itzkatze.katze.bingo.gui;
 
 import gg.itzkatze.katze.bingo.BingoSettings;
 import gg.itzkatze.katze.challenges.ChallengeManager;
+import gg.itzkatze.katze.challenges.ChallengeType;
+import gg.itzkatze.katze.replay.ReplaySettings;
 import gg.itzkatze.katze.configuration.SettingsManager;
 import gg.itzkatze.katze.gui.GUIClickableItem;
 import gg.itzkatze.katze.gui.SettingsMenu;
@@ -17,11 +19,11 @@ import org.bukkit.inventory.ItemStack;
 import java.util.List;
 
 public final class BingoSettingsGUI extends SettingsMenu {
-    public BingoSettingsGUI() { super(Component.translatable("katze.bingo.settings.title"), 27); }
+    public BingoSettingsGUI() { super(Component.translatable("katze.bingo.settings.title"), 36); }
     @Override public void setItems(KatzePlayer player) {
         fill(ItemStackCreator.fillerItem());
         for (BingoSettings.Option option : BingoSettings.Option.values()) {
-            if (option.name().startsWith("EXCLUDE_")) continue;
+            if (option.name().startsWith("EXCLUDE_") || option == BingoSettings.Option.REPLAY_SAVING) continue;
             set(new GUIClickableItem(10 + option.ordinal()) {
                 @Override public void run(InventoryClickEvent event, KatzePlayer viewer) {
                     if (ChallengeManager.isGameStarted()) { viewer.sendMessage(Component.translatable("katze.bingo.error.locked")); return; }
@@ -47,5 +49,6 @@ public final class BingoSettingsGUI extends SettingsMenu {
         }
         setForward(new BingoExclusionsGUI());
         setBack(new SettingsGUI());
+        set(ReplaySettings.button(19, ChallengeType.BINGO, BingoSettings.Option.REPLAY_SAVING, this));
     }
 }

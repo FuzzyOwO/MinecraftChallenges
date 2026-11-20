@@ -11,11 +11,11 @@ import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 
-final class GameWorldDirectory {
+public final class GameWorldDirectory {
 
     private final Path path;
 
-    GameWorldDirectory(Server server, NamespacedKey key) throws IOException {
+    public GameWorldDirectory(Server server, NamespacedKey key) throws IOException {
         this(server.getLevelDirectory(), key);
     }
 
@@ -29,7 +29,7 @@ final class GameWorldDirectory {
         validate();
     }
 
-    void validateWorldPath(Path actual) throws IOException {
+    public void validateWorldPath(Path actual) throws IOException {
         validate();
         if (!actual.toRealPath().equals(path.toRealPath())) {
             throw new IOException("Unexpected game world directory: " + actual);
@@ -44,7 +44,7 @@ final class GameWorldDirectory {
         }
     }
 
-    void delete() throws IOException {
+    public void delete() throws IOException {
         validate();
         if (!Files.exists(path)) return;
         Files.walkFileTree(path, new SimpleFileVisitor<>() {

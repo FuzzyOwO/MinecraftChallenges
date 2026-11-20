@@ -24,11 +24,17 @@ public final class MobArmyMatch {
 
     public static int penaltySeconds(int deaths) {
         if (deaths < 1) throw new IllegalArgumentException("Death count must be positive");
-        return deaths * 30;
+        return Math.min(deaths, 4) * 30;
     }
 
     public Side side(UUID player) {
         return sides.stream().filter(side -> side.members.containsKey(player)).findFirst().orElse(null);
+    }
+
+    List<UUID> participants() { return sides.stream().flatMap(side -> side.members.keySet().stream()).toList(); }
+
+    List<UUID> replayEntities(UUID round) {
+        return id.equals(round) && phase == Phase.COMBAT ? sides.stream().flatMap(side -> side.live.keySet().stream()).toList() : List.of();
     }
 
     public List<Side> opponents(Side side) {
@@ -41,11 +47,15 @@ public final class MobArmyMatch {
     }
 
     public boolean allocate(Side side, String type, int wave, boolean add) {
-        if (phase != Phase.CONFIGURATION || !sides.contains(side) || side.finished || wave < 0 || wave > 2) return false;
-        CapturedMob mob = side.mobs.stream().filter(entry -> entry.type.equals(type)
-                && (add ? entry.wave == -1 : entry.wave == wave)).findFirst().orElse(null);
-        if (mob == null) return false;
-        mob.wave = add ? wave : -1;
+        return allocate(side, type, wave, add, 1);
+    }
+
+    public boolean allocate(Side side, String type, int wave, boolean add, int amount) {
+        if (phase != Phase.CONFIGURATION || !sides.contains(side) || side.finished || wave < 0 || wave > 2 || amount < 1) return false;
+        List<CapturedMob> mobs = side.mobs.stream().filter(entry -> entry.type.equals(type)
+                && (add ? entry.wave == -1 : entry.wave == wave)).limit(amount).toList();
+        if (mobs.isEmpty()) return false;
+        mobs.forEach(mob -> mob.wave = add ? wave : -1);
         side.ready = false;
         return true;
     }
@@ -194,6 +204,7 @@ public final class MobArmyMatch {
 
     public static final class CapturedMob {
 
+        UUID collector;
         String type;
         String data;
         String variant;

@@ -10,6 +10,8 @@ import gg.itzkatze.katze.gui.impl.SettingsGUI;
 import gg.itzkatze.katze.gui.GUIClickableItem;
 import gg.itzkatze.katze.gui.SettingsMenu;
 import gg.itzkatze.katze.player.KatzePlayer;
+import gg.itzkatze.katze.challenges.ChallengeType;
+import gg.itzkatze.katze.replay.ReplaySettings;
 import gg.itzkatze.katze.util.ItemStackCreator;
 import gg.itzkatze.katze.util.KatzeColor;
 import net.kyori.adventure.text.Component;
@@ -92,6 +94,7 @@ public class AllItemsSettingsGUI extends SettingsMenu {
 
         // Go back button
         setBack(new SettingsGUI());
+        set(ReplaySettings.button(24, ChallengeType.ALL_ITEMS, AllItemsSettings.AllItemsSetting.REPLAY_SAVING, this));
     }
 
     private static void toggleGameMode(AllItemsSettingsGUI gui, KatzePlayer player) {

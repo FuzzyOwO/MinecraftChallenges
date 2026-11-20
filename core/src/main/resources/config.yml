@@ -5,6 +5,11 @@ swaps: 1
 reset-advancements-on-finish: true
 first-startup: true
 
+replays:
+    enabled: true
+    chunk-radius: 2
+    max-viewers: 4
+
 ### --- Your own additions to ForceBattle's objective exclusions. Restart the server afterwards --- ###
 ### Names are case-insensitive; a "minecraft:" prefix is optional. Unobtainable objectives are excluded automatically. ###
 exclude:
