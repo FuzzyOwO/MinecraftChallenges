@@ -1,6 +1,7 @@
 package gg.itzkatze.katze.mobarmy;
 
 import gg.itzkatze.katze.KatzeGames;
+import gg.itzkatze.katze.game.entry.GameEntryService;
 import gg.itzkatze.katze.event.PlayerTeamJoinEvent;
 import gg.itzkatze.katze.event.PlayerTeamLeaveEvent;
 import org.bukkit.Material;
@@ -69,6 +70,10 @@ final class MobArmyListener implements Listener {
 
     MobArmyListener(MobArmyGame game) {this.game = game;}
 
+    private boolean waiting(Player player) {
+        GameEntryService entries = GameEntryService.get();
+        return entries.currentRoundId() != null && !entries.isPlaying(player.getUniqueId());
+    }
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void capture(EntityDamageEvent event) {
         if (game.match == null || game.match.phase != MobArmyMatch.Phase.COLLECTION
@@ -92,6 +97,7 @@ final class MobArmyListener implements Listener {
         var saved = lethal.remove(entity.getUniqueId());
         if (game.match == null || !game.running() || game.match.phase != MobArmyMatch.Phase.COLLECTION
                 || !MobCapture.eligible(entity) || entity.getKiller() == null) return;
+        if (waiting(entity.getKiller())) return;
         var side = game.side(entity.getKiller().getUniqueId());
         if (side == null) return;
         var collected = saved != null ? saved : MobCapture.capture(entity);
@@ -102,6 +108,7 @@ final class MobArmyListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST)
     public void death(PlayerDeathEvent event) {
+        if (waiting(event.getEntity())) return;
         if (game.match != null && game.match.phase == MobArmyMatch.Phase.COLLECTION) {
             var player = event.getEntity();
             var side = game.side(player.getUniqueId());
@@ -140,6 +147,7 @@ final class MobArmyListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST)
     public void respawn(PlayerRespawnEvent event) {
+        if (GameEntryService.get().currentRoundId() != null && !GameEntryService.get().isPlaying(event.getPlayer().getUniqueId())) return;
         var side = game.side(event.getPlayer().getUniqueId());
         if (side == null || !game.protectedPhase()) return;
         int index = game.match.sides.indexOf(side);
@@ -152,7 +160,7 @@ final class MobArmyListener implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void quit(PlayerQuitEvent event) {
-        game.rememberPlayer(event.getPlayer());
+        if (GameEntryService.get().currentRoundId() == null || GameEntryService.get().isPlaying(event.getPlayer().getUniqueId())) game.rememberPlayer(event.getPlayer());
         game.dirty();
     }
 
@@ -304,18 +312,21 @@ final class MobArmyListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void interact(PlayerInteractEvent event) {
+        if (waiting(event.getPlayer())) return;
         if (!game.protectedPhase()) return;
         if (game.blocked(event.getPlayer())) event.setCancelled(true);
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void interactEntity(PlayerInteractEntityEvent event) {
+        if (waiting(event.getPlayer())) return;
         if (game.protectedPhase() && (game.blocked(event.getPlayer()) || event.getRightClicked() instanceof Player
                 || game.tracked(event.getRightClicked()) != game.side(event.getPlayer().getUniqueId()))) event.setCancelled(true);
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void move(PlayerMoveEvent event) {
+        if (waiting(event.getPlayer())) return;
         if (!game.protectedPhase()) return;
         var side = game.side(event.getPlayer().getUniqueId());
         if (side == null || side.finished) return;
@@ -365,7 +376,7 @@ final class MobArmyListener implements Listener {
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
-    public void drop(PlayerDropItemEvent event) {if (game.protectedPhase() && game.blocked(event.getPlayer())) event.setCancelled(true);}
+    public void drop(PlayerDropItemEvent event) {if (!waiting(event.getPlayer()) && game.protectedPhase() && game.blocked(event.getPlayer())) event.setCancelled(true);}
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void bucket(PlayerBucketEmptyEvent event) {

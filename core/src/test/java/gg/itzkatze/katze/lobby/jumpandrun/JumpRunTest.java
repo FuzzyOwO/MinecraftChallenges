@@ -1,6 +1,9 @@
 package gg.itzkatze.katze.lobby.jumpandrun;
 
 import gg.itzkatze.katze.lobby.cosmetics.CosmeticCatalog;
+import gg.itzkatze.katze.game.entry.GameEntryService;
+import gg.itzkatze.katze.spectator.SpectatorManager;
+import gg.itzkatze.katze.spectator.SpectatorReason;
 import gg.itzkatze.katze.lobby.cosmetics.CosmeticCategory;
 import gg.itzkatze.katze.lobby.cosmetics.CosmeticStore;
 import gg.itzkatze.katze.lobby.cosmetics.BlockHighlightCosmetic;
@@ -36,6 +39,19 @@ class JumpRunTest {
         CosmeticStore.install(null);
     }
 
+    @Test void activeParticipantCannotStartLobbyRunButEliminatedViewerCan() {
+        UUID id = UUID.randomUUID();
+        GameEntryService entries = GameEntryService.get();
+        entries.beginRound(UUID.randomUUID(), Set.of(id));
+        try {
+            assertFalse(JumpAndRun.mayUseLobbyRun(id));
+            SpectatorManager.restore(id, SpectatorReason.ELIMINATED);
+            assertTrue(JumpAndRun.mayUseLobbyRun(id));
+        } finally {
+            entries.reset();
+            SpectatorManager.remove(id);
+        }
+    }
     @Test
     void slimeAndFinalBlockFormOneScoringJump() {
         JumpRun run = run();

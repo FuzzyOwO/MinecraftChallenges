@@ -1,6 +1,7 @@
 package gg.itzkatze.katze.allitems;
 
 import gg.itzkatze.katze.KatzeGames;
+import gg.itzkatze.katze.game.entry.GameEntryService;
 import gg.itzkatze.katze.allitems.data.AllItemsData;
 import gg.itzkatze.katze.data.BiomeSimplified;
 import gg.itzkatze.katze.data.KatzeAdvancement;
@@ -85,7 +86,7 @@ public class AllItemsGameListener implements Listener {
         if (!KatzeGames.getTimer().isRunning() || !pendingInventoryChecks.add(id)) return;
         Bukkit.getScheduler().runTask(KatzeGames.get(), () -> {
             pendingInventoryChecks.remove(id);
-            if (player.isOnline() && KatzeGames.getTimer().isRunning() && KatzePlayer.adapt(player).isParticipating()) {
+            if (player.isOnline() && KatzeGames.getTimer().isRunning() && KatzePlayer.adapt(player).isParticipating() && GameEntryService.get().allowsProgress(player.getUniqueId())) {
                 checkInventory(player);
             }
         });
@@ -100,7 +101,7 @@ public class AllItemsGameListener implements Listener {
             return;
         }
         Player player = event.getPlayer();
-        if (!KatzePlayer.adapt(player).isParticipating()) {
+        if (!KatzePlayer.adapt(player).isParticipating() || !GameEntryService.get().allowsProgress(player.getUniqueId())) {
             return;
         }
         if (event.getFrom().getBlockX() == event.getTo().getBlockX()
@@ -132,7 +133,7 @@ public class AllItemsGameListener implements Listener {
         if (killer == null) {
             return;
         }
-        if (!KatzePlayer.adapt(killer).isParticipating()) {
+        if (!KatzePlayer.adapt(killer).isParticipating() || !GameEntryService.get().allowsProgress(killer.getUniqueId())) {
             return;
         }
 
@@ -155,7 +156,7 @@ public class AllItemsGameListener implements Listener {
             return;
         }
         Player player = event.getPlayer();
-        if (!KatzePlayer.adapt(player).isParticipating()) {
+        if (!KatzePlayer.adapt(player).isParticipating() || !GameEntryService.get().allowsProgress(player.getUniqueId())) {
             return;
         }
 
@@ -187,7 +188,7 @@ public class AllItemsGameListener implements Listener {
 
             Registry<Structure> registry = RegistryAccess.registryAccess().getRegistry(RegistryKey.STRUCTURE);
             for (KatzePlayer katzePlayer : KatzePlayer.getOnlinePlayers()) {
-                if (!katzePlayer.isParticipating()) continue;
+                if (!katzePlayer.isParticipating() || !GameEntryService.get().allowsProgress(katzePlayer.getUuid())) continue;
                 Player player = katzePlayer.getPlayer();
                 if (player == null) continue;
 

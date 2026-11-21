@@ -1,5 +1,7 @@
 package gg.itzkatze.katze.forcebattle;
 
+import gg.itzkatze.katze.game.entry.GameEntryService;
+
 import gg.itzkatze.katze.level.GameXp;
 import gg.itzkatze.katze.level.LevelStore;
 import gg.itzkatze.katze.player.KatzePlayer;
@@ -32,7 +34,7 @@ final class ForceBattleWalking {
         Set<UUID> counted = new HashSet<>();
         for (KatzePlayer participant : KatzePlayer.getOnlinePlayers()) {
             Player player = participant.getPlayer();
-            if (!(participant instanceof ForceBattlePlayer) || player == null || !participant.isParticipating()) continue;
+            if (!(participant instanceof ForceBattlePlayer) || player == null || !participant.isParticipating() || !GameEntryService.get().allowsProgress(participant.getUuid())) continue;
 
             UUID id = participant.getUuid();
             counted.add(id);

@@ -6,6 +6,9 @@ import gg.itzkatze.katze.challenges.ChallengeManager;
 import gg.itzkatze.katze.configuration.GlobalSetting;
 import gg.itzkatze.katze.configuration.SettingsManager;
 import gg.itzkatze.katze.game.GameTimer;
+import gg.itzkatze.katze.game.GameWorldManager;
+import gg.itzkatze.katze.game.entry.GameEntryService;
+import org.bukkit.World;
 import gg.itzkatze.katze.lobby.LobbyManager;
 import gg.itzkatze.katze.lobby.PointsSidebar;
 import gg.itzkatze.katze.player.KatzePlayer;
@@ -34,6 +37,12 @@ public class ScoreboardManager {
     private static final Map<KatzePlayer, Map<Integer, Component>> LAST_LINES = new HashMap<>();
     private static final ScoreboardContent LOBBY_CONTENT = new PointsSidebar();
 
+    enum EntrySidebar { GAME, LOBBY, UNCHANGED }
+
+    static EntrySidebar entrySidebar(GameEntryService entries, UUID id, World world) {
+        if (entries.isPlaying(id) || entries.isViewing(id)) return EntrySidebar.GAME;
+        return GameWorldManager.isLimbo(world) ? EntrySidebar.LOBBY : EntrySidebar.UNCHANGED;
+    }
     public static void startUpdater() {
         Bukkit.getScheduler().runTaskTimer(KatzeGames.get(), ScoreboardManager::updateAll, 20L, 20L);
     }
@@ -49,6 +58,14 @@ public class ScoreboardManager {
         boolean lobbyDue = lobbySidebarDue();
         for (KatzePlayer katzePlayer : KatzePlayer.getOnlinePlayers()) {
             if (renderReplay(katzePlayer)) continue;
+            GameEntryService entries = GameEntryService.get();
+            if (entries.currentRoundId() != null && katzePlayer.getPlayer() != null) {
+                EntrySidebar sidebar = entrySidebar(entries, katzePlayer.getUuid(), katzePlayer.getPlayer().getWorld());
+                if (!SettingsManager.isEnabled(GlobalSetting.SHOW_SCOREBOARD)) removeSidebar(katzePlayer);
+                else if (sidebar == EntrySidebar.GAME) updateScoreboard(katzePlayer);
+                else if (sidebar == EntrySidebar.LOBBY && LobbyManager.isActive()) render(katzePlayer, LOBBY_CONTENT);
+                continue;
+            }
             boolean retained = ChallengeManager.isGameStarted() && ChallengeManager.getActiveChallenges().stream()
                     .anyMatch(challenge -> challenge.showScoreboard(katzePlayer));
             boolean shouldHaveScoreboard = retained || katzePlayer.isParticipating() && gameActive;
@@ -66,7 +83,12 @@ public class ScoreboardManager {
 
     public static void refreshLobby(@NotNull KatzePlayer player) {
         if (renderReplay(player)) return;
-        if (!lobbySidebarDue() || player.getPlayer() == null) return;
+        if (player.getPlayer() == null) return;
+        GameEntryService entries = GameEntryService.get();
+        if (entries.currentRoundId() != null) {
+            if (!LobbyManager.isActive() || !SettingsManager.isEnabled(GlobalSetting.SHOW_SCOREBOARD)
+                    || entrySidebar(entries, player.getUuid(), player.getPlayer().getWorld()) != EntrySidebar.LOBBY) return;
+        } else if (!lobbySidebarDue()) return;
 
         render(player, LOBBY_CONTENT);
     }

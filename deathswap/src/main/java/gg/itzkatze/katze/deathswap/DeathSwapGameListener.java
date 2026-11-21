@@ -1,6 +1,7 @@
 package gg.itzkatze.katze.deathswap;
 
 import gg.itzkatze.katze.KatzeGames;
+import gg.itzkatze.katze.game.entry.GameEntryService;
 import gg.itzkatze.katze.achievements.AchievementService;
 import gg.itzkatze.katze.challenges.ChallengeType;
 import gg.itzkatze.katze.deathswap.DeathSwapResults.Elimination;
@@ -51,6 +52,7 @@ public class DeathSwapGameListener implements Listener {
     private final Random random = new Random();
     private boolean started = false;
     private boolean finished = false;
+    boolean isFinished() { return finished; }
     private int swapCount = 0;
     private UUID winnerId = null;
     private ResultRoster resultRoster;
@@ -191,15 +193,19 @@ public class DeathSwapGameListener implements Listener {
 
     @EventHandler
     public void onPlayerDeath(PlayerDeathEvent event) {
+        GameEntryService entries = GameEntryService.get();
+        if (entries.currentRoundId() != null && !entries.isPlaying(event.getEntity().getUniqueId())) return;
         eliminate(event.getEntity());
     }
 
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
+        GameEntryService entries = GameEntryService.get();
+        if (entries.isShuttingDown() || entries.currentRoundId() != null) return;
         eliminate(event.getPlayer());
     }
 
-    private void eliminate(Player player) {
+    void eliminate(Player player) {
         if (!started || finished || SpectatorManager.isSpectator(player.getUniqueId())) return;
         if (eliminatedPlayers.add(player.getUniqueId())) {
             SpectatorManager.eliminate(player.getUniqueId());
@@ -239,7 +245,9 @@ public class DeathSwapGameListener implements Listener {
     }
 
     private boolean swapAlivePlayers() {
-        List<Player> alivePlayers = getAlivePlayers();
+        GameEntryService entries = GameEntryService.get();
+        List<Player> alivePlayers = new ArrayList<>(getAlivePlayers().stream()
+                .filter(player -> entries.currentRoundId() == null || entries.isPlaying(player.getUniqueId())).toList());
         if (alivePlayers.size() < 2) return false;
 
         Collections.shuffle(alivePlayers, random);

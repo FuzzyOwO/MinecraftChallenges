@@ -1,6 +1,7 @@
 package gg.itzkatze.katze.achievements;
 
 import gg.itzkatze.katze.KatzeGames;
+import gg.itzkatze.katze.game.entry.GameEntryService;
 import gg.itzkatze.katze.event.PlayerExcludeEvent;
 import gg.itzkatze.katze.event.TimerPauseEvent;
 import gg.itzkatze.katze.event.TimerStartEvent;
@@ -321,7 +322,11 @@ public final class AchievementGameplayListener implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onMode(PlayerGameModeChangeEvent event) {
-        if (event.getNewGameMode() != GameMode.SURVIVAL) service.disqualify(event.getPlayer().getUniqueId());
+        GameEntryService entries = GameEntryService.get();
+        if (event.getNewGameMode() != GameMode.SURVIVAL
+                && (entries.currentRoundId() == null || entries.isPlaying(event.getPlayer().getUniqueId()))) {
+            service.disqualify(event.getPlayer().getUniqueId());
+        }
         sampler.invalidate(event.getPlayer().getUniqueId());
     }
 

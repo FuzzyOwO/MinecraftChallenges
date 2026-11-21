@@ -3,6 +3,7 @@ package gg.itzkatze.katze.spectator;
 import gg.itzkatze.katze.KatzeGames;
 import gg.itzkatze.katze.challenges.ChallengeManager;
 import gg.itzkatze.katze.game.GameWorldManager;
+import gg.itzkatze.katze.game.entry.GameEntryService;
 import gg.itzkatze.katze.gui.KatzeGUI;
 import gg.itzkatze.katze.player.KatzePlayer;
 import gg.itzkatze.katze.replay.ReplayService;
@@ -39,6 +40,10 @@ public class SpectatorListener implements Listener {
         if (KatzePlayer.adapt(player.getUniqueId()).isEmpty()) {
             SpectatorManager.markLateJoin(player.getUniqueId());
             KatzePlayer.adapt(player);
+            if (GameEntryService.get().isRoutingEnabled()) {
+                player.sendMessage(WELCOME);
+                return;
+            }
             player.getInventory().clear();
             World world = GameWorldManager.getWorld();
             if (world != null) {
@@ -46,7 +51,7 @@ public class SpectatorListener implements Listener {
             }
             player.sendMessage(WELCOME);
         }
-        if (SpectatorManager.isSpectator(player.getUniqueId())) {
+        if (!GameEntryService.get().isRoutingEnabled() && SpectatorManager.isSpectator(player.getUniqueId())) {
             SpectatorManager.enterSpectatorMode(player);
         }
     }
@@ -91,7 +96,8 @@ public class SpectatorListener implements Listener {
         if (!ChallengeManager.isGameStarted() || !SpectatorManager.isSpectator(player.getUniqueId())) return;
 
         Bukkit.getScheduler().runTask(KatzeGames.get(), () -> {
-            if (player.isOnline() && ChallengeManager.isGameStarted() && SpectatorManager.isSpectator(player.getUniqueId())) {
+            if (player.isOnline() && ChallengeManager.isGameStarted() && SpectatorManager.isSpectator(player.getUniqueId())
+                    && (!GameEntryService.get().isRoutingEnabled() || GameEntryService.get().isViewing(player.getUniqueId()))) {
                 SpectatorManager.enterSpectatorMode(player);
             }
         });

@@ -1,6 +1,10 @@
 package gg.itzkatze.katze.randomizer;
 
 import gg.itzkatze.katze.challenges.Challenge;
+import gg.itzkatze.katze.game.entry.GameEntryService;
+import java.util.UUID;
+import java.util.Set;
+import java.util.ArrayList;
 import gg.itzkatze.katze.challenges.ChallengeManager;
 import gg.itzkatze.katze.challenges.ChallengeType;
 import net.kyori.adventure.text.Component;
@@ -43,6 +47,26 @@ class RandomizerGameListenerTest {
         } finally {
             ChallengeManager.getActiveChallenges().clear();
             ChallengeManager.getActiveChallenges().addAll(previous);
+        }
+    }
+    @Test void waitingParticipantCannotRandomizeDrops() {
+        UUID id = UUID.randomUUID();
+        Player player = (Player) Proxy.newProxyInstance(Player.class.getClassLoader(), new Class<?>[]{Player.class},
+                (proxy, method, arguments) -> {
+                    if (method.getName().equals("getUniqueId")) return id;
+                    throw new AssertionError(method.getName());
+                });
+        ItemStack item = new ItemStack() {
+            @Override public boolean isEmpty() { throw new AssertionError("Waiting player changed drops"); }
+        };
+        List<ItemStack> drops = new ArrayList<>(List.of(item));
+        GameEntryService service = GameEntryService.get();
+        service.beginRound(UUID.randomUUID(), Set.of(id));
+        try {
+            assertDoesNotThrow(() -> new RandomizerGameListener(List.of()).randomize(drops, player));
+            assertSame(item, drops.getFirst());
+        } finally {
+            service.reset();
         }
     }
 }

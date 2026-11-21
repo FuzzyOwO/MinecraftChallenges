@@ -1,6 +1,8 @@
 package gg.itzkatze.katze.deathswap;
 
 import gg.itzkatze.katze.challenges.Challenge;
+import gg.itzkatze.katze.game.entry.LeaveReason;
+import org.bukkit.entity.Player;
 import gg.itzkatze.katze.challenges.ChallengeType;
 import gg.itzkatze.katze.commands.framework.KatzeCommand;
 import gg.itzkatze.katze.configuration.ChallengeSettingsManager;
@@ -16,6 +18,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class DeathSwap implements Challenge {
+    @Override public boolean isRoundFinished() { return gameListener.isFinished(); }
 
     private final DeathSwapGameListener gameListener = new DeathSwapGameListener();
     private final ChallengeSettingsManager settingsManager =
@@ -47,6 +50,10 @@ public class DeathSwap implements Challenge {
         gameListener.startGame();
     }
 
+    @Override
+    public void onPlayerLeaving(Player player, LeaveReason reason) {
+        if (reason == LeaveReason.DISCONNECT || reason == LeaveReason.LIMBO) gameListener.eliminate(player);
+    }
     @Override
     public void onGameReset() {
         gameListener.deleteFile();

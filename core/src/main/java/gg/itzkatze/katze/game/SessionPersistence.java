@@ -2,6 +2,9 @@ package gg.itzkatze.katze.game;
 
 import com.google.gson.annotations.SerializedName;
 import gg.itzkatze.katze.KatzeGames;
+import gg.itzkatze.katze.game.entry.GameEntryService;
+import gg.itzkatze.katze.game.entry.SavedGamePlayerState;
+import java.util.stream.Collectors;
 import gg.itzkatze.katze.achievements.AchievementService;
 import gg.itzkatze.katze.challenges.Challenge;
 import gg.itzkatze.katze.challenges.ChallengeManager;
@@ -57,7 +60,7 @@ public final class SessionPersistence {
 
     public static void restore() {
         try {
-            SessionData session = WorldStorage.load(FILE_NAME, SessionData.class);
+            SessionData session = WorldStorage.loadChecked(FILE_NAME, SessionData.class);
             if (session != null) {
                 restore(session);
             }
@@ -106,7 +109,7 @@ public final class SessionPersistence {
             return;
         }
 
-        WorldStorage.save(FILE_NAME, snapshot());
+        WorldStorage.saveChecked(FILE_NAME, snapshot());
         GameXp.save();
         AchievementService.get().save();
         for (Challenge challenge : ChallengeManager.getActiveChallenges()) {
@@ -158,6 +161,9 @@ public final class SessionPersistence {
         if (session.gameStarted && challengeRestored && !recoveryFailed) {
             ChallengeManager.markGameStarted();
         }
+        Set<UUID> participants = KatzePlayer.PLAYERS.stream().filter(KatzePlayer::isParticipating)
+                .map(KatzePlayer::getUuid).collect(Collectors.toSet());
+        restoreEntry(GameEntryService.get(), session.entry, ChallengeManager.isGameStarted(), participants);
         restoreTimer(session.timer);
         AchievementService.get().restore(session.achievementRoundId);
 
@@ -166,6 +172,17 @@ public final class SessionPersistence {
         logger.info("Restored the saved game session with {} active challenge(s).", ChallengeManager.getActiveChallenges().size());
     }
 
+    static void restoreEntry(GameEntryService service, GameEntryService.Snapshot entry, boolean started, Set<UUID> participants) {
+        if (entry != null && (entry.version() != 1 || entry.savedStates() == null)) throw new IllegalStateException("Invalid saved entry state");
+        if (!started && entry != null && entry.roundId() != null) {
+            service.restore(new GameEntryService.Snapshot(entry.version(), null, Set.of(), entry.savedStates()));
+        } else if (started && (entry == null || entry.roundId() == null)) {
+            Map<UUID, SavedGamePlayerState> states = entry == null ? Map.of() : entry.savedStates();
+            service.restore(new GameEntryService.Snapshot(1, UUID.randomUUID(), participants, states));
+        } else {
+            service.restore(entry);
+        }
+    }
     private static void restoreSettings(@Nullable Map<String, Map<String, String>> settings) {
         if (settings == null) {
             return;
@@ -267,6 +284,8 @@ public final class SessionPersistence {
 
     private static @NotNull SessionData snapshot() {
         SessionData session = new SessionData();
+        GameEntryService.get().capturePlaying();
+        session.entry = GameEntryService.get().snapshot();
         session.activeChallenges = ChallengeManager.getActiveChallenges().stream()
                 .map(Challenge::getType)
                 .sorted()
@@ -296,6 +315,7 @@ public final class SessionPersistence {
     }
 
     private static final class SessionData {
+        GameEntryService.Snapshot entry;
         UUID achievementRoundId;
         List<String> activeChallenges = new ArrayList<>();
         boolean gameStarted;

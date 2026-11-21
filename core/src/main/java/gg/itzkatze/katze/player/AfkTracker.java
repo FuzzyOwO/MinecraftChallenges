@@ -1,6 +1,7 @@
 package gg.itzkatze.katze.player;
 
 import gg.itzkatze.katze.util.KatzeColor;
+import gg.itzkatze.katze.game.entry.GameEntryService;
 import io.papermc.paper.event.player.AsyncChatEvent;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
@@ -48,6 +49,12 @@ public final class AfkTracker implements Listener {
         long now = clock.getAsLong();
         for (Player player : Bukkit.getOnlinePlayers()) {
             UUID id = player.getUniqueId();
+            GameEntryService entries = GameEntryService.get();
+            if (entries.currentRoundId() != null && !entries.isPlaying(id)) {
+                afk.remove(id);
+                lastInput.put(id, now);
+                continue;
+            }
             long idle = now - lastInput.computeIfAbsent(id, key -> now);
             if (idle >= IDLE_MILLIS) {
                 if (afk.add(id)) {

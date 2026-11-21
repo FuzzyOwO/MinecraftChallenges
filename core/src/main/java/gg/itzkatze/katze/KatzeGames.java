@@ -12,6 +12,10 @@ import gg.itzkatze.katze.commands.framework.CommandVisibilityListener;
 import gg.itzkatze.katze.commands.framework.KatzeCommand;
 import gg.itzkatze.katze.configuration.SettingsFile;
 import gg.itzkatze.katze.game.GameLifecycleManager;
+import gg.itzkatze.katze.game.entry.GameEntryService;
+import gg.itzkatze.katze.game.entry.LimboListener;
+import gg.itzkatze.katze.player.KatzePlayer;
+import org.bukkit.Location;
 import gg.itzkatze.katze.game.GameTimer;
 import gg.itzkatze.katze.game.GameWorldListener;
 import gg.itzkatze.katze.game.GameWorldManager;
@@ -142,6 +146,18 @@ public final class KatzeGames extends JavaPlugin {
         SessionPersistence.restore();
         GameWorldManager.initialize();
         ReplayService.get().recoverWorlds();
+        LobbyManager.createLobbyIfNeeded();
+        Location limboSpawn = LobbyManager.getSpawn();
+        if (limboSpawn == null) throw new IllegalStateException("No safe limbo spawn is available");
+        LimboListener limbo = new LimboListener(limboSpawn);
+        GameEntryService entries = GameEntryService.get();
+        entries.setLobbyTransition(player -> {
+            GameLifecycleManager.sendToLobby(KatzePlayer.adapt(player));
+            limbo.giveCompass(player);
+        });
+        getServer().getPluginManager().registerEvents(limbo, this);
+        entries.setRoutingEnabled(true);
+        getServer().getScheduler().runTaskTimer(this, entries::tick, 1L, 1L);
         getServer().getPluginManager().registerEvents(new GameWorldListener(), this);
         getServer().getPluginManager().registerEvents(new LimboBiomes(), this);
         achievementSampler.start();
@@ -151,6 +167,7 @@ public final class KatzeGames extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        GameEntryService.get().shutdown();
         PlayerHeadProfiles.shutdown();
         if (ReplayService.get() != null) ReplayService.get().shutdown();
         SeedGenerator.cancel();

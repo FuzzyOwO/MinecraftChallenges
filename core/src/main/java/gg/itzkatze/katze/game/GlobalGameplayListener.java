@@ -20,14 +20,14 @@ public final class GlobalGameplayListener implements Listener {
     @EventHandler
     public void onDamage(EntityDamageEvent event) {
         boolean combatDamage = ChallengeManager.getActiveChallenges().stream().anyMatch(challenge -> challenge.requiresCombatDamage());
-        if (event.getEntity() instanceof Player && (isInactiveGame() || (!combatDamage && SettingsManager.isEnabled(GlobalSetting.NO_DAMAGE)))) {
+        if (event.getEntity() instanceof Player player && (GameWorldManager.isLimbo(player.getWorld()) || isInactiveGame() || (!combatDamage && SettingsManager.isEnabled(GlobalSetting.NO_DAMAGE)))) {
             event.setCancelled(true);
         }
     }
 
     @EventHandler
     public void onHunger(FoodLevelChangeEvent event) {
-        if (event.getEntity() instanceof Player player && (isInactiveGame() || SettingsManager.isEnabled(GlobalSetting.NO_HUNGER))) {
+        if (event.getEntity() instanceof Player player && (GameWorldManager.isLimbo(player.getWorld()) || isInactiveGame() || SettingsManager.isEnabled(GlobalSetting.NO_HUNGER))) {
             event.setCancelled(true);
             player.setFoodLevel(20);
             player.setSaturation(20);

@@ -4,6 +4,7 @@ import org.bukkit.plugin.PluginDescriptionFile;
 import org.junit.jupiter.api.Test;
 
 import java.nio.file.Path;
+import java.io.InputStream;
 import java.util.jar.JarFile;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -46,6 +47,16 @@ class PluginCommandsTest {
             assertTrue(description.getCommands().containsKey("waves"));
             assertTrue(description.getCommands().containsKey("tracker"));
             assertTrue(description.getCommands().containsKey("watch"));
+        }
+    }
+    @Test void packagedPluginIncludesEntryCommands() throws Exception {
+        try (JarFile jar = new JarFile(Path.of(System.getProperty("katzegames.test.pluginJar")).toFile());
+             InputStream input = jar.getInputStream(jar.getJarEntry("plugin.yml"))) {
+            PluginDescriptionFile description = new PluginDescriptionFile(input);
+            assertTrue(description.getCommands().containsKey("rejoin"));
+            assertTrue(description.getCommands().containsKey("limbo"));
+            assertNotNull(jar.getJarEntry("gg/itzkatze/katze/commands/RejoinCommand.class"));
+            assertNotNull(jar.getJarEntry("gg/itzkatze/katze/commands/LimboCommand.class"));
         }
     }
 }

@@ -1,6 +1,7 @@
 package gg.itzkatze.katze.level;
 
 import gg.itzkatze.katze.KatzeGames;
+import gg.itzkatze.katze.game.entry.GameEntryService;
 import gg.itzkatze.katze.challenges.ChallengeManager;
 import gg.itzkatze.katze.player.AfkTracker;
 import gg.itzkatze.katze.player.KatzePlayer;
@@ -47,7 +48,7 @@ public final class PlaytimeXp {
                     lobbySeconds.remove(id);
                     LevelStore.get().grant(player, 1);
                 }
-            } else if (gameRunning) {
+            } else if (gameRunning && GameEntryService.get().allowsProgress(id)) {
                 Optional<KatzePlayer> participant = KatzePlayer.adapt(id).filter(KatzePlayer::isParticipating);
                 if (participant.isPresent() && GameXp.creditActiveSecond(participant.get()) % 60 == 0) {
                     LevelStore.get().grant(participant.get(), GAME_XP_PER_MINUTE);

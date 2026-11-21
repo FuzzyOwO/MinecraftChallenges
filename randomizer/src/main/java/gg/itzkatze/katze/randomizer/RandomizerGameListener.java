@@ -3,6 +3,7 @@ package gg.itzkatze.katze.randomizer;
 import gg.itzkatze.katze.challenges.ChallengeManager;
 import gg.itzkatze.katze.challenges.ChallengeType;
 import gg.itzkatze.katze.game.SessionPersistence;
+import gg.itzkatze.katze.game.entry.GameEntryService;
 import gg.itzkatze.katze.player.KatzePlayer;
 import gg.itzkatze.katze.team.KatzeTeam;
 import gg.itzkatze.katze.util.WorldStorage;
@@ -172,6 +173,7 @@ public class RandomizerGameListener implements Listener {
     }
 
     ItemStack randomizeBlockDrop(ItemStack stack, List<ItemStack> contents, Player player) {
+        if (player != null && !GameEntryService.get().allowsProgress(player.getUniqueId())) return stack;
         if (stack == null || stack.isEmpty()) return stack;
         int storedAmount = contents.stream().filter(content -> content.isSimilar(stack)).mapToInt(ItemStack::getAmount).sum();
         if (storedAmount < stack.getAmount()) return randomize(stack, player);
@@ -221,6 +223,7 @@ public class RandomizerGameListener implements Listener {
     }
 
     void randomize(List<ItemStack> drops, Player player) {
+        if (player != null && !GameEntryService.get().allowsProgress(player.getUniqueId())) return;
         drops.replaceAll(stack -> randomize(stack, player));
     }
 

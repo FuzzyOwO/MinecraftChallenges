@@ -4,6 +4,7 @@ import gg.itzkatze.katze.KatzeGames;
 import gg.itzkatze.katze.challenges.ChallengeManager;
 import gg.itzkatze.katze.challenges.ChallengeType;
 import gg.itzkatze.katze.game.GameTimer;
+import gg.itzkatze.katze.game.entry.GameEntryService;
 import gg.itzkatze.katze.game.SessionPersistence;
 import gg.itzkatze.katze.player.KatzePlayer;
 import gg.itzkatze.katze.results.ResultArchives;
@@ -77,7 +78,7 @@ final class MobArmyGame {
     static void online(MobArmyMatch.Side side, Consumer<Player> action) {
         for (UUID uuid : side.members.keySet()) {
             Player player = Bukkit.getPlayer(uuid);
-            if (player != null) action.accept(player);
+            if (player != null && (GameEntryService.get().currentRoundId() == null || GameEntryService.get().isPlaying(uuid))) action.accept(player);
         }
     }
 
@@ -125,26 +126,50 @@ final class MobArmyGame {
         match.arenaFingerprint = arena.template().fingerprint();
         match.arenaWorldVersion = 1;
         match.sides = roster();
+        match.deferredAdmissions = GameEntryService.get().currentRoundId() != null;
         ReplayService.beginRound(match.id, match.participants(), ChallengeType.MOB_ARMY, false);
         backpacks.clear();
-        if (challenge.settings.isEnabled(MobArmySettings.STARTER_EQUIPMENT)) {
-            for (var side : match.sides)
-                online(
-                        side, player -> {
-                            for (Material material : List.of(Material.DIAMOND_AXE, Material.DIAMOND_PICKAXE, Material.DIAMOND_SHOVEL)) {
-                                ItemStack item = new ItemStack(material);
-                                item.addEnchantment(Enchantment.EFFICIENCY, 1);
-                                MobArmyEquipment.mark(item);
-                                player.getInventory().addItem(item);
-                            }
-                        }
-                );
+        if (GameEntryService.get().currentRoundId() == null) {
+            for (MobArmyMatch.Side side : match.sides) online(side, this::initialEquipment);
+            for (MobArmyMatch.Side side : match.sides) online(side, this::rememberPlayer);
+            match.validate();
         }
-        for (var side : match.sides) online(side, this::rememberPlayer);
-        match.validate();
         dirty();
     }
 
+    void initialEquipment(Player player) {
+        if (!challenge.settings.isEnabled(MobArmySettings.STARTER_EQUIPMENT)) return;
+        for (Material material : List.of(Material.DIAMOND_AXE, Material.DIAMOND_PICKAXE, Material.DIAMOND_SHOVEL)) {
+            ItemStack item = new ItemStack(material);
+            item.addEnchantment(Enchantment.EFFICIENCY, 1);
+            MobArmyEquipment.mark(item);
+            player.getInventory().addItem(item);
+        }
+    }
+
+    void admitted(Player player, boolean initial) {
+        if (initial) initialEquipment(player);
+        MobArmyMatch.Side admissionSide = side(player.getUniqueId());
+        if (!initial && admissionSide != null && admissionSide.pendingBaseline.contains(player.getUniqueId())) {
+            PlayerLoadout baseline = admissionSide.baselines.get(player.getUniqueId());
+            if (baseline == null) throw new IllegalStateException("Missing participant baseline");
+            baseline.restore(player, false);
+            admissionSide.pendingBaseline.remove(player.getUniqueId());
+        }
+        if (initial && admissionSide != null) admissionSide.pendingBaseline.remove(player.getUniqueId());
+        if (protectedPhase()) player.setGameMode(match.phase == MobArmyMatch.Phase.CONFIGURATION || roof(player) ? GameMode.ADVENTURE : GameMode.SURVIVAL);
+        rememberPlayer(player);
+        if (initial && match.phase == MobArmyMatch.Phase.COMBAT) {
+            MobArmyMatch.Side side = side(player.getUniqueId());
+            side.baselines.put(player.getUniqueId(), side.players.get(player.getUniqueId()));
+            side.pendingBaseline.remove(player.getUniqueId());
+        }
+        if (initial && match.sides.stream().allMatch(side -> side.players.keySet().containsAll(side.members.keySet()))) {
+            match.deferredAdmissions = false;
+            match.validate();
+        }
+        dirty();
+    }
     MobArmyMatch.Side side(UUID uuid) {return match == null ? null : match.side(uuid);}
 
     boolean combat() {return match != null && match.phase == MobArmyMatch.Phase.COMBAT;}
@@ -220,7 +245,7 @@ final class MobArmyGame {
             online(side, this::rememberPlayer);
             side.baselines.putAll(side.players);
             side.backpackBaseline = PlayerLoadout.encode(backpack(side).getInventory().getContents());
-            if (!side.baselines.keySet().containsAll(side.members.keySet())) throw new IllegalStateException("Missing participant loadout");
+            if (!match.deferredAdmissions && !side.baselines.keySet().containsAll(side.members.keySet())) throw new IllegalStateException("Missing participant loadout");
         }
         match.phase = MobArmyMatch.Phase.COMBAT;
         for (var side : match.sides)
@@ -324,7 +349,7 @@ final class MobArmyGame {
                     if (remaining <= 0) {
                         side.roofTicks.remove(entry.getKey());
                         Player player = Bukkit.getPlayer(entry.getKey());
-                        if (player != null && !player.isDead()) {
+                        if (player != null && (GameEntryService.get().currentRoundId() == null || GameEntryService.get().isPlaying(entry.getKey())) && !player.isDead()) {
                             player.setGameMode(GameMode.SURVIVAL);
                             player.teleport(arena.entrance(match.sides.indexOf(side)));
                         }
@@ -340,7 +365,7 @@ final class MobArmyGame {
                         throw exception;
                     }
                 }
-                List<Player> fighters = side.members.keySet().stream().map(Bukkit::getPlayer).filter(player -> player != null).toList();
+                List<Player> fighters = side.members.keySet().stream().map(Bukkit::getPlayer).filter(player -> player != null && (GameEntryService.get().currentRoundId() == null || GameEntryService.get().isPlaying(player.getUniqueId()))).toList();
                 for (UUID uuid : new ArrayList<>(side.live.keySet())) {
                     Entity entity = Bukkit.getEntity(uuid);
                     if (!(entity instanceof LivingEntity living) || living.isDead()) continue;
@@ -411,6 +436,7 @@ final class MobArmyGame {
     }
 
     void join(Player player) {
+        if (GameEntryService.get().currentRoundId() != null) return;
         var side = side(player.getUniqueId());
         if (side == null || !protectedPhase()) return;
         if (side.finished) {
@@ -427,6 +453,7 @@ final class MobArmyGame {
     }
 
     void respawn(Player player) {
+        if (GameEntryService.get().currentRoundId() != null && !GameEntryService.get().isPlaying(player.getUniqueId())) return;
         var side = side(player.getUniqueId());
         if (side == null || !protectedPhase()) return;
         if (side.finished) {
@@ -493,6 +520,7 @@ final class MobArmyGame {
     private void updateSpectators() {
         if (!combat()) return;
         for (Player viewer : Bukkit.getOnlinePlayers()) {
+            if (GameEntryService.get().currentRoundId() != null && !GameEntryService.get().isViewing(viewer.getUniqueId())) continue;
             if (!canWatch(viewer) || viewer.isDead()) continue;
             int viewed = arena.index(viewer.getLocation(), match.sides.size());
             if (viewed < 0 || match.sides.get(viewed).finished) {

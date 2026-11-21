@@ -4,6 +4,7 @@ import gg.itzkatze.katze.KatzeGames;
 import gg.itzkatze.katze.challenges.ChallengeManager;
 import gg.itzkatze.katze.game.ChallengeTimer;
 import gg.itzkatze.katze.game.GameTimer;
+import gg.itzkatze.katze.game.entry.GameEntryService;
 import gg.itzkatze.katze.spectator.SpectatorManager;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -20,7 +21,9 @@ import java.util.Random;
 
 public class ItemRainGameListener implements Listener {
 
-    private static final List<Material> ITEM_MATERIALS = buildItemMaterials();
+    private static final class ItemPool {
+        private static final List<Material> ITEMS = buildItemMaterials();
+    }
 
     private final Random random = new Random();
     private ChallengeTimer dropTimer;
@@ -51,15 +54,20 @@ public class ItemRainGameListener implements Listener {
         if (dropTimer.hasElapsed()) {
             dropTimer.consumeElapsed();
             for (Player player : Bukkit.getOnlinePlayers()) {
-                if (SpectatorManager.isSpectator(player.getUniqueId())) continue;
+                if (!canReceive(player)) continue;
                 giveRandomItem(player);
             }
         }
     }
 
+    static boolean canReceive(Player player) {
+        GameEntryService entries = GameEntryService.get();
+        return !SpectatorManager.isSpectator(player.getUniqueId())
+                && (entries.currentRoundId() == null || entries.canProgress(player.getUniqueId()));
+    }
     private void giveRandomItem(Player player) {
-        if (ITEM_MATERIALS.isEmpty()) return;
-        Material material = ITEM_MATERIALS.get(random.nextInt(ITEM_MATERIALS.size()));
+        if (ItemPool.ITEMS.isEmpty()) return;
+        Material material = ItemPool.ITEMS.get(random.nextInt(ItemPool.ITEMS.size()));
         ItemStack item = new ItemStack(material, 1);
 
         if (ItemRainSettings.isSkyDropEnabled()) {

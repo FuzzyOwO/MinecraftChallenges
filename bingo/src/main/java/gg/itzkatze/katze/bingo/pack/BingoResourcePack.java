@@ -1,6 +1,7 @@
 package gg.itzkatze.katze.bingo.pack;
 
 import gg.itzkatze.katze.KatzeGames;
+import gg.itzkatze.katze.game.GameWorldManager;
 import gg.itzkatze.katze.text.Texts;
 import gg.itzkatze.katze.spectator.SpectatorManager;
 import net.kyori.adventure.text.Component;
@@ -78,8 +79,8 @@ public final class BingoResourcePack implements Listener {
     public void offer(Player player) {
         if (!enabled) return;
         admission.begin(player.getUniqueId(), Bukkit.getCurrentTick());
-        modes.putIfAbsent(player.getUniqueId(), player.getGameMode());
-        player.setGameMode(GameMode.SPECTATOR);
+        if (!GameWorldManager.isLimbo(player.getWorld())) modes.putIfAbsent(player.getUniqueId(), player.getGameMode());
+        hold(player);
         player.setResourcePack(id, url, hash, Texts.render(Component.translatable("katze.bingo.pack.prompt"), player), true);
     }
 
@@ -93,12 +94,12 @@ public final class BingoResourcePack implements Listener {
     }
 
     public void hold(Player player) {
-        if (enabled && !ready(player.getUniqueId()) && player.getGameMode() != GameMode.SPECTATOR) player.setGameMode(GameMode.SPECTATOR);
+        if (enabled && !GameWorldManager.isLimbo(player.getWorld()) && !ready(player.getUniqueId()) && player.getGameMode() != GameMode.SPECTATOR) player.setGameMode(GameMode.SPECTATOR);
     }
 
     private void release(Player player) {
         GameMode previous = modes.remove(player.getUniqueId());
-        if (previous != null && !player.isDead()) {
+        if (previous != null && !player.isDead() && !GameWorldManager.isLimbo(player.getWorld())) {
             if (SpectatorManager.isSpectator(player.getUniqueId())) SpectatorManager.enterSpectatorMode(player);
             else player.setGameMode(previous);
         }

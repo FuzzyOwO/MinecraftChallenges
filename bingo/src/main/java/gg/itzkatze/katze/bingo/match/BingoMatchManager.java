@@ -1,6 +1,7 @@
 package gg.itzkatze.katze.bingo.match;
 
 import gg.itzkatze.katze.KatzeGames;
+import gg.itzkatze.katze.game.entry.GameEntryService;
 import gg.itzkatze.katze.achievements.AchievementService;
 import gg.itzkatze.katze.bingo.BingoSettings;
 import gg.itzkatze.katze.bingo.board.BingoBoard;
@@ -170,7 +171,7 @@ public final class BingoMatchManager {
     public boolean online(BingoMatch match, int side) {
         return match.competitors.get(side).members().stream().anyMatch(member -> {
             Player player = Bukkit.getPlayer(member.id());
-            return player != null && pack.ready(member.id()) && !SpectatorManager.isSpectator(member.id());
+            return player != null && GameEntryService.get().allowsProgress(member.id()) && pack.ready(member.id()) && !SpectatorManager.isSpectator(member.id());
         });
     }
 
@@ -180,11 +181,12 @@ public final class BingoMatchManager {
     }
 
     public boolean eligible(Player player) {
-        return player.getGameMode() == GameMode.SURVIVAL && pack.ready(player.getUniqueId())
+        return GameEntryService.get().allowsProgress(player.getUniqueId()) && player.getGameMode() == GameMode.SURVIVAL && pack.ready(player.getUniqueId())
                 && !SpectatorManager.isSpectator(player.getUniqueId()) && active(assigned(player.getUniqueId()));
     }
 
     public boolean frozen(Player player) {
+        if (GameWorldManager.isLimbo(player.getWorld())) return false;
         if (!pack.ready(player.getUniqueId())) return true;
         BingoMatch match = assigned(player.getUniqueId());
         return ChallengeManager.isGameStarted() && match != null && match.result == BingoMatch.Result.ACTIVE && !active(match);

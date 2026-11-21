@@ -2,6 +2,7 @@ package gg.itzkatze.katze.game;
 
 import gg.itzkatze.katze.challenges.ChallengeManager;
 import gg.itzkatze.katze.lobby.LobbyManager;
+import gg.itzkatze.katze.game.entry.GameEntryService;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.event.EventHandler;
@@ -77,7 +78,8 @@ public final class GameWorldListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGH)
     public void onRespawn(PlayerRespawnEvent event) {
-        if (!ChallengeManager.isGameStarted()) {
+        if (!ChallengeManager.isGameStarted() || (GameWorldManager.isLimbo(event.getPlayer().getWorld())
+                && !GameEntryService.get().isPlaying(event.getPlayer().getUniqueId()))) {
             LobbyManager.createLobbyIfNeeded();
             Location spawn = LobbyManager.getSpawn();
             if (spawn != null) event.setRespawnLocation(spawn);

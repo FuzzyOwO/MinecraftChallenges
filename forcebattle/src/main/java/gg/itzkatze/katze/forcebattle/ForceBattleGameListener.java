@@ -1,6 +1,7 @@
 package gg.itzkatze.katze.forcebattle;
 
 import gg.itzkatze.katze.KatzeGames;
+import gg.itzkatze.katze.game.entry.GameEntryService;
 import gg.itzkatze.katze.achievements.AchievementService;
 import gg.itzkatze.katze.configuration.GlobalSetting;
 import gg.itzkatze.katze.configuration.SettingsManager;
@@ -110,12 +111,7 @@ public class ForceBattleGameListener implements Listener {
                 player.getTeam().updateObjective(player, false, false);
             }
 
-            player.getPlayer().getInventory().addItem(Joker.getPlayerSkipItem(KatzeGames.get().getConfig().getInt("playerSkips", 3)));
-            player.getPlayer().getInventory().addItem(Joker.getSwapItem(KatzeGames.get().getConfig().getInt("swaps", 1)));
-
-            if (SettingsManager.isEnabled(GlobalSetting.EXTRA_TEAM_OBJECTIVE) && player.isInTeam()) {
-                player.getPlayer().getInventory().addItem(Joker.getTeamSkipItem(KatzeGames.get().getConfig().getInt("teamSkips", 1)));
-            }
+            if (GameEntryService.get().currentRoundId() == null) giveStartItems(player);
         }
 
         for (KatzeTeam team : KatzeTeam.teams) {
@@ -125,6 +121,14 @@ public class ForceBattleGameListener implements Listener {
         }
     }
 
+    void giveStartItems(ForceBattlePlayer player) {
+        if (player.getPlayer() == null) return;
+        player.getPlayer().getInventory().addItem(Joker.getPlayerSkipItem(KatzeGames.get().getConfig().getInt("playerSkips", 3)));
+        player.getPlayer().getInventory().addItem(Joker.getSwapItem(KatzeGames.get().getConfig().getInt("swaps", 1)));
+        if (SettingsManager.isEnabled(GlobalSetting.EXTRA_TEAM_OBJECTIVE) && player.isInTeam()) {
+            player.getPlayer().getInventory().addItem(Joker.getTeamSkipItem(KatzeGames.get().getConfig().getInt("teamSkips", 1)));
+        }
+    }
     public void handleBattleEnd() {
         KatzeGames.broadcast(Component.translatable("katze.forcebattle.battle_over"));
 
@@ -144,6 +148,7 @@ public class ForceBattleGameListener implements Listener {
                 team.setObjective(null);
             }
             player.setCurrentObjective(null, false, false);
+            if (GameEntryService.get().currentRoundId() != null && !GameEntryService.get().isPlaying(player.getUuid())) continue;
             player.getPlayer().teleport(GameWorldManager.getWorld().getSpawnLocation());
             player.getPlayer().setHealth(20);
             player.getPlayer().setFoodLevel(20);
@@ -191,7 +196,7 @@ public class ForceBattleGameListener implements Listener {
         if (event.getHand() == null || !event.getHand().equals(EquipmentSlot.HAND)) {return;}
         if (event.getAction() != Action.RIGHT_CLICK_BLOCK && event.getAction() != Action.RIGHT_CLICK_AIR) {return;}
         if (event.getItem() == null || !Joker.isPlayerSkipItem(event.getItem())) {return;}
-        if (!player.isParticipating()) return;
+        if (!player.isParticipating() || !GameEntryService.get().allowsProgress(player.getUuid())) return;
 
         event.setCancelled(true);
 
@@ -234,7 +239,7 @@ public class ForceBattleGameListener implements Listener {
         if (event.getAction() != Action.RIGHT_CLICK_BLOCK && event.getAction() != Action.RIGHT_CLICK_AIR) {return;}
         if (event.getItem() == null || !Joker.isTeamSkipItem(event.getItem())) {return;}
         ForceBattleTeam team = (ForceBattleTeam) katzePlayer.getTeam();
-        if (!katzePlayer.isParticipating()) return;
+        if (!katzePlayer.isParticipating() || !GameEntryService.get().allowsProgress(katzePlayer.getUuid())) return;
         if (team == null) return;
 
         event.setCancelled(true);
@@ -286,7 +291,7 @@ public class ForceBattleGameListener implements Listener {
         if (event.getHand() == null || !event.getHand().equals(EquipmentSlot.HAND)) return;
         if (event.getAction() != Action.RIGHT_CLICK_BLOCK && event.getAction() != Action.RIGHT_CLICK_AIR) return;
         if (event.getItem() == null || !Joker.isSwapItem(event.getItem())) return;
-        if (!katzePlayer.isParticipating()) return;
+        if (!katzePlayer.isParticipating() || !GameEntryService.get().allowsProgress(katzePlayer.getUuid())) return;
         event.setCancelled(true);
 
         if (!KatzeGames.getTimer().isRunning()) {
@@ -358,7 +363,7 @@ public class ForceBattleGameListener implements Listener {
     @EventHandler
     public void onPlayerDeath(PlayerDeathEvent event) {
         if (!(KatzePlayer.adapt(event.getEntity()) instanceof ForceBattlePlayer katzePlayer)) return;
-        if (!KatzeGames.getTimer().isRunning() || !katzePlayer.isParticipating()) return;
+        if (!KatzeGames.getTimer().isRunning() || (!katzePlayer.isParticipating() || !GameEntryService.get().allowsProgress(katzePlayer.getUuid()))) return;
 
         DeathTask.onDeath(event);
 
