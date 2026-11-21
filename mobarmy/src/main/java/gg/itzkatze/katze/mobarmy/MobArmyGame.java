@@ -56,6 +56,7 @@ final class MobArmyGame {
     final MobArmyAudience audience = new MobArmyAudience();
     final MobArmyTracker tracker = new MobArmyTracker(this);
     final Map<String, MobArmyMenus.Backpack> backpacks = new HashMap<>();
+    final MobCapCounter cap = new MobCapCounter();
     MobArmyMatch match;
     private BukkitTask ticker;
     private boolean restoring;
@@ -127,6 +128,7 @@ final class MobArmyGame {
         match.sides = roster();
         ReplayService.beginRound(match.id, match.participants(), ChallengeType.MOB_ARMY, false);
         backpacks.clear();
+        cap.reset();
         if (challenge.settings.isEnabled(MobArmySettings.STARTER_EQUIPMENT)) {
             for (var side : match.sides)
                 online(
@@ -650,6 +652,7 @@ final class MobArmyGame {
         failed = false;
         preparingArena = false;
         backpacks.clear();
+        cap.reset();
         WorldStorage.delete(FILE);
         arena.cleanup();
     }

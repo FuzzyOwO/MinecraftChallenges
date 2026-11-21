@@ -3,10 +3,13 @@ package gg.itzkatze.katze.mobarmy;
 import gg.itzkatze.katze.KatzeGames;
 import gg.itzkatze.katze.event.PlayerTeamJoinEvent;
 import gg.itzkatze.katze.event.PlayerTeamLeaveEvent;
+import gg.itzkatze.katze.text.TextArg;
+import net.kyori.adventure.text.Component;
 import org.bukkit.Material;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.IronGolem;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
@@ -59,11 +62,13 @@ import org.bukkit.potion.PotionEffectType;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 
 final class MobArmyListener implements Listener {
 
+    private static final int SPECIAL_MOB_LIMIT = 3;
     private final MobArmyGame game;
     private final Map<UUID, MobArmyMatch.CapturedMob> lethal = new HashMap<>();
 
@@ -94,9 +99,20 @@ final class MobArmyListener implements Listener {
                 || !MobCapture.eligible(entity) || entity.getKiller() == null) return;
         var side = game.side(entity.getKiller().getUniqueId());
         if (side == null) return;
+        var type = entity.getType();
+        int kills = game.cap.recordKill(side.id, type.name());
+        int limit = type == EntityType.WITHER || type == EntityType.WARDEN
+                ? SPECIAL_MOB_LIMIT
+                : ((MobArmySettings.MobLimit) game.challenge.settings.getState(MobArmySettings.MOB_LIMIT)).amount();
+        if (kills > limit) return;
         var collected = saved != null ? saved : MobCapture.capture(entity);
         collected.collector = entity.getKiller().getUniqueId();
         side.mobs.add(collected);
+        if (kills == limit) MobArmyGame.online(side, player -> {
+            player.sendMessage(Component.translatable("katze.mobarmy.limit.reached",
+                    TextArg.number("amount", limit), TextArg.text("mob", type.name().toLowerCase(Locale.ROOT))));
+            player.sendMessage(Component.translatable("katze.mobarmy.limit.blocked"));
+        });
         game.dirty();
     }
 
