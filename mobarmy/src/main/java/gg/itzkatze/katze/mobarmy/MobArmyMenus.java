@@ -230,7 +230,8 @@ final class MobArmyMenus {
                 }
                 Material material = setting == MobArmySettings.BACKPACK
                         ? Material.CHEST
-                        : setting == MobArmySettings.COLLECTION_DURATION ? Material.CLOCK : Material.DIAMOND_PICKAXE;
+                        : setting == MobArmySettings.COLLECTION_DURATION ? Material.CLOCK
+                        : setting == MobArmySettings.MOB_LIMIT ? Material.ZOMBIE_HEAD : Material.DIAMOND_PICKAXE;
                 set(button(
                         slot++, item(material, setting.getDisplayName(), List.of(challenge.settings.getState(setting).getDisplayName())), (event, player) -> {
                             if (!editable(player)) return;
@@ -240,6 +241,17 @@ final class MobArmyMenus {
                                         player, setting.getDisplayName(), current, 1, 1440, (who, minutes) -> {
                                             if (editable(who)) {
                                                 challenge.settings.setState(setting, new MobArmySettings.Duration(minutes));
+                                                SessionPersistence.requestSave();
+                                            }
+                                            open(who);
+                                        }, KatzePlayer::sendMessage
+                                );
+                            } else if (setting == MobArmySettings.MOB_LIMIT) {
+                                int current = ((MobArmySettings.MobLimit) challenge.settings.getState(setting)).amount();
+                                NumberSignInput.open(
+                                        player, setting.getDisplayName(), current, 1, 1000, (who, amount) -> {
+                                            if (editable(who)) {
+                                                challenge.settings.setState(setting, new MobArmySettings.MobLimit(amount));
                                                 SessionPersistence.requestSave();
                                             }
                                             open(who);
