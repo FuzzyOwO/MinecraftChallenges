@@ -5,6 +5,7 @@ import gg.itzkatze.katze.game.GameWorldManager;
 import gg.itzkatze.katze.lobby.LobbyManager;
 import gg.itzkatze.katze.event.TimerStartEvent;
 import gg.itzkatze.katze.replay.ReplayService;
+import gg.itzkatze.katze.text.Texts;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.Location;
@@ -99,7 +100,7 @@ public final class LimboListener implements Listener {
         meta.displayName(Component.translatable("katze.game.limbo.compass"));
         meta.getPersistentDataContainer().set(COMPASS_KEY, PersistentDataType.BYTE, (byte) 1);
         compass.setItemMeta(meta);
-        player.getInventory().setItem(8, compass);
+        player.getInventory().setItem(8, Texts.render(compass, player));
     }
     @EventHandler
     public void onDrop(PlayerDropItemEvent event) {
