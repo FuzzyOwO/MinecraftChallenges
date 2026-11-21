@@ -1,6 +1,7 @@
 package gg.itzkatze.katze.replay;
 
 import gg.itzkatze.katze.KatzeGames;
+import gg.itzkatze.katze.game.entry.GameEntryService;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -53,6 +54,7 @@ import com.destroystokyo.paper.event.player.PlayerStopSpectatingEntityEvent;
 import org.bukkit.event.player.PlayerItemHeldEvent;
 
 import java.util.Locale;
+import java.util.UUID;
 
 final class ReplayListener implements Listener {
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
@@ -74,6 +76,7 @@ final class ReplayListener implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onJoin(PlayerJoinEvent event) {
+        if (GameEntryService.get().isRoutingEnabled()) return;
         Bukkit.getScheduler().runTask(KatzeGames.get(), () -> ReplayService.get().recover(event.getPlayer()));
     }
 
@@ -90,7 +93,11 @@ final class ReplayListener implements Listener {
     public void onTeleport(PlayerTeleportEvent event) {
         if (!ReplayService.get().reviewing(event.getPlayer().getUniqueId()) || !ReplayService.isReplayWorld(event.getFrom().getWorld())
                 || ReplayService.isReplayWorld(event.getTo().getWorld())) return;
+        UUID round = GameEntryService.get().currentRoundId();
+        long generation = GameEntryService.get().generation(event.getPlayer().getUniqueId());
         Bukkit.getScheduler().runTask(KatzeGames.get(), () -> {
+            if (!java.util.Objects.equals(round, GameEntryService.get().currentRoundId())
+                    || generation != GameEntryService.get().generation(event.getPlayer().getUniqueId())) return;
             if (ReplayService.get().reviewing(event.getPlayer().getUniqueId())) ReplayService.get().leave(event.getPlayer());
         });
     }

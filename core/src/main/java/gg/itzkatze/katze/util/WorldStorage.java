@@ -7,6 +7,7 @@ import org.bukkit.NamespacedKey;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -36,6 +37,21 @@ public final class WorldStorage {
         }
     }
 
+    public static void saveChecked(String fileName, Object value) {
+        try {
+            JsonFiles.write(getFilePath(fileName), value);
+        } catch (IOException e) {
+            throw new UncheckedIOException("Failed to save " + fileName, e);
+        }
+    }
+
+    public static <T> T loadChecked(String fileName, Class<T> type) {
+        try {
+            return JsonFiles.read(getFilePath(fileName), type);
+        } catch (IOException e) {
+            throw new UncheckedIOException("Failed to load " + fileName, e);
+        }
+    }
     public static <T> T load(String fileName, Class<T> clazz) {
         Path path = getFilePath(fileName);
         try {

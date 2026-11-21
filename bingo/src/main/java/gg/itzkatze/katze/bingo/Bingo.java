@@ -4,6 +4,8 @@ import gg.itzkatze.katze.bingo.board.BingoObjectiveCatalog;
 import gg.itzkatze.katze.bingo.match.BingoMatch;
 import gg.itzkatze.katze.bingo.gui.BingoSettingsGUI;
 import gg.itzkatze.katze.bingo.match.BingoMatchManager;
+import gg.itzkatze.katze.bingo.match.BingoEntryPolicy;
+import gg.itzkatze.katze.game.entry.GameEntryPolicy;
 import gg.itzkatze.katze.bingo.pack.BingoResourcePack;
 import gg.itzkatze.katze.challenges.Challenge;
 import gg.itzkatze.katze.challenges.ChallengeManager;
@@ -31,6 +33,7 @@ public final class Bingo implements Challenge {
     private final ChallengeSettingsManager settings = new ChallengeSettingsManager(this, BingoSettings.Option.class);
     private final BingoScoreboard scoreboard = new BingoScoreboard(matches);
 
+    @Override public GameEntryPolicy getEntryPolicy() { return new BingoEntryPolicy(matches, pack); }
     @Override public Component getEnableError() { return pack.configurationError(); }
     @Override public Component getStartError() { return matches.startError(); }
     @Override public void onEnable() { matches.load(); pack.enable(); }

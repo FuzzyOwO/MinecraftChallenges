@@ -3,6 +3,11 @@ package gg.itzkatze.katze.achievements;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import gg.itzkatze.katze.challenges.ChallengeType;
+import gg.itzkatze.katze.game.entry.GameEntryService;
+import org.bukkit.entity.Player;
+import org.bukkit.GameMode;
+import org.bukkit.event.player.PlayerGameModeChangeEvent;
+import java.lang.reflect.Proxy;
 import gg.itzkatze.katze.level.LevelStore;
 import gg.itzkatze.katze.player.data.PlayerDataStore;
 import gg.itzkatze.katze.text.TextStyle;
@@ -57,6 +62,23 @@ final class AchievementServiceTest {
         return new AchievementService(store, (id, unlock) -> notices.add(unlock), id -> {}, AchievementNamePackFixtures.custom());
     }
 
+    @Test void temporaryLimboModeDoesNotDisqualifyParticipant() {
+        service.begin(Set.of(ChallengeType.FORCE_BATTLE), Map.of(player, "Player"));
+        GameEntryService entries = GameEntryService.get();
+        entries.beginRound(UUID.randomUUID(), Set.of(player));
+        Player bukkit = (Player) Proxy.newProxyInstance(Player.class.getClassLoader(), new Class<?>[]{Player.class},
+                (proxy, method, args) -> {
+                    if (method.getName().equals("getUniqueId")) return player;
+                    throw new AssertionError(method.getName());
+                });
+        try {
+            AchievementGameplayListener listener = new AchievementGameplayListener(service, new AchievementSampler(service));
+            listener.onMode(new PlayerGameModeChangeEvent(bukkit, GameMode.ADVENTURE, PlayerGameModeChangeEvent.Cause.PLUGIN, null));
+            assertTrue(service.round().player(player).fullRound());
+        } finally {
+            entries.reset();
+        }
+    }
     @Test
     void catalogueHasExactlyThePdfEntriesAndConfirmedRewards() {
         assertEquals(42, Achievement.values().length);

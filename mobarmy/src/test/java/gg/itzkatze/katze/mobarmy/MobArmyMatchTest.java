@@ -225,6 +225,16 @@ class MobArmyMatchTest {
         assertThrows(IllegalStateException.class, match::validate);
     }
 
+    @Test void deferredInitialAdmissionsSurviveRecovery() {
+        MobArmyMatch match = match(2);
+        match.sides.getFirst().players.clear();
+        assertThrows(IllegalStateException.class, match::validate);
+        match.deferredAdmissions = true;
+        MobArmyMatch restored = new Gson().fromJson(new Gson().toJson(match), MobArmyMatch.class);
+        restored.validate();
+        assertTrue(restored.deferredAdmissions);
+    }
+
     @Test void replaysKeepEveryTeamsRosterAcrossFarmingAndCombat() {
         var match = match(3);
         var participants = match.sides.stream().flatMap(side -> side.members.keySet().stream()).toList();

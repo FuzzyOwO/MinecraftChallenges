@@ -1,6 +1,7 @@
 package gg.itzkatze.katze.forcebattle.tasks;
 
 import gg.itzkatze.katze.KatzeGames;
+import gg.itzkatze.katze.game.entry.GameEntryService;
 import gg.itzkatze.katze.configuration.GlobalSetting;
 import gg.itzkatze.katze.configuration.SettingsManager;
 import gg.itzkatze.katze.configuration.states.PlayerTeamBothState;
@@ -27,7 +28,7 @@ public class DeathTask {
         Player damager = event.getPlayer();
 
         if (!(KatzePlayer.adapt(damager) instanceof ForceBattlePlayer katzePlayer)) return;
-        if (!katzePlayer.isParticipating()) return;
+        if ((!katzePlayer.isParticipating() || !GameEntryService.get().allowsProgress(katzePlayer.getUuid()))) return;
 
         checkPlayerObjective(katzePlayer, event.getDamageSource().getDamageType(), event);
         checkTeamObjective(katzePlayer, event.getDamageSource().getDamageType(), event);

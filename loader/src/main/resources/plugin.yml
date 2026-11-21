@@ -4,6 +4,8 @@ main: gg.itzkatze.katze.KatzeGames
 api-version: '26.3'
 
 commands:
+    rejoin:
+    limbo:
     tracker:
     watch:
     waves:

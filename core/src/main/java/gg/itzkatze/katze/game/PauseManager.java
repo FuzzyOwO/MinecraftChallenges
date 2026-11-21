@@ -186,7 +186,7 @@ public class PauseManager implements Listener {
 
     @EventHandler
     public void onPlayerMove(PlayerMoveEvent event) {
-        if (event.getPlayer().getGameMode() == GameMode.SPECTATOR) {
+        if (event.getPlayer().getGameMode() == GameMode.SPECTATOR || GameWorldManager.isLimbo(event.getFrom().getWorld())) {
             frozenLocations.remove(event.getPlayer().getUniqueId());
             return;
         }
@@ -204,7 +204,7 @@ public class PauseManager implements Listener {
 
     @EventHandler
     public void onInteract(PlayerInteractEvent event) {
-        if (isPausedGameplay()) event.setCancelled(true);
+        if (isPausedGameplay() && !GameWorldManager.isLimbo(event.getPlayer().getWorld())) event.setCancelled(true);
     }
 
     @EventHandler

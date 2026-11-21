@@ -7,6 +7,7 @@ import gg.itzkatze.katze.commands.framework.CallerType;
 import gg.itzkatze.katze.commands.framework.CommandCaller;
 import gg.itzkatze.katze.commands.framework.KatzeCommand;
 import gg.itzkatze.katze.game.GameLifecycleManager;
+import gg.itzkatze.katze.game.entry.GameEntryService;
 import gg.itzkatze.katze.game.GameWorldManager;
 import gg.itzkatze.katze.game.GameTimer;
 import gg.itzkatze.katze.game.SessionPersistence;
@@ -61,6 +62,10 @@ public class StartCommand extends KatzeCommand {
             caller.sendMessage(Component.translatable("katze.game.reset.not_ready").color(KatzeColor.RED));
             return false;
         }
+        if (GameEntryService.get().isRoutingEnabled() && !GameEntryService.get().policiesCompatible()) {
+            caller.sendMessage(Component.translatable("katze.game.challenge.incompatible").color(KatzeColor.RED));
+            return false;
+        }
         if (ChallengeManager.getActiveChallenges().isEmpty()) {
             caller.sendMessage(Component.translatable("katze.game.start.no_challenge").color(KatzeColor.RED));
             return false;
@@ -101,9 +106,8 @@ public class StartCommand extends KatzeCommand {
             caller.sendMessage(reason == null ? Component.translatable("katze.game.start.failed").color(KatzeColor.RED) : Component.text(reason).color(KatzeColor.RED));
             return;
         }
-        if (KatzeGames.getTimer().getMode() != GameTimer.Mode.DISABLED) {
-            KatzeGames.getTimer().start();
-        }
+        if (GameEntryService.get().isRoutingEnabled()) GameEntryService.get().completeRoundStart();
+        else if (KatzeGames.getTimer().getMode() != GameTimer.Mode.DISABLED) KatzeGames.getTimer().start();
         SessionPersistence.checkpoint();
         caller.sendMessage(Component.translatable("katze.game.start.success").color(KatzeColor.LIME));
     }

@@ -1,6 +1,10 @@
 package gg.itzkatze.katze.challenges;
 
 import gg.itzkatze.katze.bossbar.BossbarContent;
+import gg.itzkatze.katze.game.entry.GameEntryPolicy;
+import gg.itzkatze.katze.game.entry.EntryReason;
+import gg.itzkatze.katze.game.entry.LeaveReason;
+import org.bukkit.entity.Player;
 import gg.itzkatze.katze.commands.framework.KatzeCommand;
 import gg.itzkatze.katze.player.KatzePlayer;
 import gg.itzkatze.katze.game.seed.SeedRequirement;
@@ -18,6 +22,9 @@ import java.util.Arrays;
 import java.util.UUID;
 
 public interface Challenge extends ChallengeSettings {
+    default boolean isRoundFinished() { return false; }
+
+    @Nullable default GameEntryPolicy getEntryPolicy() { return null; }
 
     default boolean allowsGameplay(ChallengeType type) { return true; }
 
@@ -40,6 +47,10 @@ public interface Challenge extends ChallengeSettings {
     default void onDisable() {}
 
     default void onGameStart() {}
+
+    default void onPlayerAdmitted(Player player, EntryReason reason) {}
+
+    default void onPlayerLeaving(Player player, LeaveReason reason) {}
 
     default void onGameReset() {}
 

@@ -1,6 +1,7 @@
 package gg.itzkatze.katze.forcebattle.tasks;
 
 import gg.itzkatze.katze.KatzeGames;
+import gg.itzkatze.katze.game.entry.GameEntryService;
 import gg.itzkatze.katze.configuration.GlobalSetting;
 import gg.itzkatze.katze.configuration.SettingsManager;
 import gg.itzkatze.katze.configuration.states.PlayerTeamBothState;
@@ -28,7 +29,7 @@ public class MobsTask {
                 ? player : target.getKiller();
         if (damager == null) return;
         if (!(KatzePlayer.adapt(damager) instanceof ForceBattlePlayer katzePlayer)) return;
-        if (!katzePlayer.isParticipating()) return;
+        if ((!katzePlayer.isParticipating() || !GameEntryService.get().allowsProgress(katzePlayer.getUuid()))) return;
         checkPlayerObjective(katzePlayer, target.getType());
         checkTeamObjective(katzePlayer, target.getType());
     }

@@ -1,5 +1,7 @@
 package gg.itzkatze.katze.achievements;
 
+import gg.itzkatze.katze.game.entry.GameEntryService;
+
 import gg.itzkatze.katze.challenges.ChallengeManager;
 import gg.itzkatze.katze.challenges.ChallengeType;
 import gg.itzkatze.katze.game.SessionPersistence;
@@ -210,7 +212,7 @@ public final class AchievementService {
     }
 
     public boolean eligible(Player player) {
-        return round != null && !round.finished() && GameXp.isGameRunning()
+        return GameEntryService.get().allowsProgress(player.getUniqueId()) && round != null && !round.finished() && GameXp.isGameRunning()
                 && player.getGameMode() == GameMode.SURVIVAL && KatzePlayer.adapt(player).isParticipating();
     }
 

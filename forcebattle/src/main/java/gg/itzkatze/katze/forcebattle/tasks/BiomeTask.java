@@ -1,6 +1,7 @@
 package gg.itzkatze.katze.forcebattle.tasks;
 
 import gg.itzkatze.katze.KatzeGames;
+import gg.itzkatze.katze.game.entry.GameEntryService;
 import gg.itzkatze.katze.configuration.GlobalSetting;
 import gg.itzkatze.katze.configuration.SettingsManager;
 import gg.itzkatze.katze.configuration.states.PlayerTeamBothState;
@@ -29,7 +30,7 @@ public class BiomeTask implements ForceTask {
             Player player = katzePlayer.getPlayer();
 
             if (player == null) continue;
-            if (!katzePlayer.isParticipating()) continue;
+            if ((!katzePlayer.isParticipating() || !GameEntryService.get().allowsProgress(katzePlayer.getUuid()))) continue;
 
             Biome currentBiome = player.getWorld().getBiome(player.getLocation());
             checkPlayerObjective(fbPlayer, currentBiome);

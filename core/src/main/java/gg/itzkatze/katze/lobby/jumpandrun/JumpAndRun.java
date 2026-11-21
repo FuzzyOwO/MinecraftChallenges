@@ -1,6 +1,7 @@
 package gg.itzkatze.katze.lobby.jumpandrun;
 
 import gg.itzkatze.katze.KatzeGames;
+import gg.itzkatze.katze.game.entry.GameEntryService;
 import gg.itzkatze.katze.achievements.AchievementService;
 import gg.itzkatze.katze.lobby.Lobby;
 import gg.itzkatze.katze.lobby.LobbyFeature;
@@ -162,7 +163,12 @@ public class JumpAndRun implements LobbyFeature, Listener {
         }
     }
 
+    static boolean mayUseLobbyRun(UUID playerId) {
+        return !GameEntryService.get().isEligible(playerId);
+    }
+
     private boolean takesPart(@NotNull Arena arena, @NotNull Player player) {
+        if (!mayUseLobbyRun(player.getUniqueId())) return false;
         GameMode mode = player.getGameMode();
         return (mode == GameMode.ADVENTURE || mode == GameMode.SURVIVAL) && arena.world().equals(player.getWorld());
     }

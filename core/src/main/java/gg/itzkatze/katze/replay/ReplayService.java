@@ -19,6 +19,7 @@ import org.bukkit.NamespacedKey;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitTask;
 
 import java.io.IOException;
@@ -67,20 +68,37 @@ public final class ReplayService {
         boolean restore(Player player) {
             World target = Bukkit.getWorld(NamespacedKey.fromString(world));
             Location location = target == null || isReplayWorld(target) ? LobbyManager.getSpawn() : new Location(target, x, y, z, yaw, pitch);
+            if (location == null) return false;
             if (player.getGameMode() == GameMode.SPECTATOR) player.setSpectatorTarget(null);
-            if (location == null || !player.teleport(location)) return false;
-            player.setGameMode(GameMode.valueOf(mode));
+            if (!player.teleport(location)) return false;
+            apply(player);
+            return true;
+        }
+
+        Location restoreInLimbo(Player player) {
+            World target = Bukkit.getWorld(NamespacedKey.fromString(world));
+            if (target == null || isReplayWorld(target)) throw new IllegalStateException("Replay return world is unavailable: " + world);
+            Location location = new Location(target, x, y, z, yaw, pitch);
+            if (player.getGameMode() == GameMode.SPECTATOR) player.setSpectatorTarget(null);
+            apply(player);
+            return location;
+        }
+
+        private void apply(Player player) {
+            ItemStack[] contents = inventory == null ? null : ReplayItems.decode(inventory);
+            ItemStack cursorItem = inventory == null ? null : ReplayItems.decode(cursor);
+            GameMode gameMode = GameMode.valueOf(mode);
+            player.setGameMode(gameMode);
             player.setAllowFlight(flight);
             player.setFlying(flight && flying);
-            if (inventory != null) {
-                player.getInventory().setContents(ReplayItems.decode(inventory));
+            if (contents != null) {
+                player.getInventory().setContents(contents);
                 player.getInventory().setHeldItemSlot(Math.clamp(heldSlot, 0, 8));
-                player.setItemOnCursor(ReplayItems.decode(cursor));
+                player.setItemOnCursor(cursorItem);
                 player.setInvisible(invisible);
                 player.setInvulnerable(invulnerable);
                 player.setCollidable(collidable);
             }
-            return true;
         }
     }
 
@@ -307,6 +325,26 @@ public final class ReplayService {
         ScoreboardManager.updateAll();
     }
 
+    public record LimboRecovery(boolean success, Location location, boolean pendingFile) {}
+
+    public LimboRecovery recoverForLimbo(Player player) {
+        try {
+            ReturnState state = JsonFiles.read(returnFile(player.getUniqueId()), ReturnState.class);
+            if (state == null) return new LimboRecovery(true, null, false);
+            return new LimboRecovery(true, state.restoreInLimbo(player), true);
+        } catch (IOException | RuntimeException e) {
+            log("Failed to restore replay viewer " + player.getUniqueId(), e);
+            return new LimboRecovery(false, null, true);
+        }
+    }
+
+    public void finishLimboRecovery(Player player) {
+        try {
+            Files.deleteIfExists(returnFile(player.getUniqueId()));
+        } catch (IOException e) {
+            log("Failed to remove recovered replay state for " + player.getUniqueId(), e);
+        }
+    }
     public boolean recover(Player player) {
         try {
             ReturnState state = JsonFiles.read(returnFile(player.getUniqueId()), ReturnState.class);

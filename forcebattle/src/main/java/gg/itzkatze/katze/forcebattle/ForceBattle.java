@@ -1,6 +1,8 @@
 package gg.itzkatze.katze.forcebattle;
 
 import gg.itzkatze.katze.KatzeGames;
+import gg.itzkatze.katze.game.entry.EntryReason;
+import org.bukkit.entity.Player;
 import gg.itzkatze.katze.bossbar.BossbarManager;
 import gg.itzkatze.katze.team.KatzeTeam;
 import gg.itzkatze.katze.player.KatzePlayer;
@@ -91,6 +93,12 @@ public class ForceBattle implements Challenge {
         ForceBattleHistory.begin();
     }
 
+    @Override
+    public void onPlayerAdmitted(Player player, EntryReason reason) {
+        if (reason != EntryReason.ROUND_START) return;
+        KatzePlayer participant = KatzePlayer.adapt(player);
+        if (participant instanceof ForceBattlePlayer forceBattlePlayer) gameListener.giveStartItems(forceBattlePlayer);
+    }
     @Override
     public List<SeedRequirement> getSeedRequirements() {
         return ForceBattleSeedRequirements.current();

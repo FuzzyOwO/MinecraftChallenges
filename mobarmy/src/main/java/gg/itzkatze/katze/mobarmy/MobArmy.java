@@ -7,6 +7,7 @@ import gg.itzkatze.katze.challenges.TimerSpec;
 import gg.itzkatze.katze.commands.framework.KatzeCommand;
 import gg.itzkatze.katze.configuration.ChallengeSettingsManager;
 import gg.itzkatze.katze.game.GameTimer;
+import gg.itzkatze.katze.game.entry.GameEntryPolicy;
 import gg.itzkatze.katze.gui.KatzeGUI;
 import gg.itzkatze.katze.player.KatzePlayer;
 import gg.itzkatze.katze.text.TextArg;
@@ -27,6 +28,8 @@ public final class MobArmy implements Challenge {
 
     final ChallengeSettingsManager settings = new ChallengeSettingsManager(this, MobArmySettings.class);
     final MobArmyGame game = new MobArmyGame(this);
+
+    @Override public GameEntryPolicy getEntryPolicy() { return new MobArmyEntryPolicy(game); }
 
     @Override
     public void onEnable() {

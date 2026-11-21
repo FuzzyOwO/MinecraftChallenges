@@ -1,6 +1,7 @@
 package gg.itzkatze.katze.forcebattle.tasks;
 
 import gg.itzkatze.katze.KatzeGames;
+import gg.itzkatze.katze.game.entry.GameEntryService;
 import gg.itzkatze.katze.configuration.GlobalSetting;
 import gg.itzkatze.katze.configuration.SettingsManager;
 import gg.itzkatze.katze.configuration.states.PlayerTeamBothState;
@@ -23,7 +24,7 @@ public class ItemTask implements ForceTask {
 
         for (KatzePlayer player : KatzePlayer.getOnlinePlayers()) {
             ForceBattlePlayer katzePlayer = (ForceBattlePlayer) player;
-            if (!katzePlayer.isParticipating()) continue;
+            if ((!katzePlayer.isParticipating() || !GameEntryService.get().allowsProgress(katzePlayer.getUuid()))) continue;
 
             checkPlayerObjective(katzePlayer);
             checkTeamObjective(katzePlayer);

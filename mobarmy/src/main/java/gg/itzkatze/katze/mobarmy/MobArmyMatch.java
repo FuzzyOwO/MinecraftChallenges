@@ -19,6 +19,7 @@ public final class MobArmyMatch {
     long startedAt = System.currentTimeMillis();
     long endedAt;
     boolean archived;
+    boolean deferredAdmissions;
     Phase phase = Phase.COLLECTION;
     List<Side> sides = new ArrayList<>();
 
@@ -134,7 +135,7 @@ public final class MobArmyMatch {
                     throw new IllegalStateException("Invalid captured mob");
                 }
             }
-            if (!side.players.keySet().containsAll(side.members.keySet())) throw new IllegalStateException("Missing participant snapshot");
+            if (!deferredAdmissions && !side.players.keySet().containsAll(side.members.keySet())) throw new IllegalStateException("Missing participant snapshot");
             side.players.values().forEach(PlayerLoadout::validate);
             side.baselines.values().forEach(PlayerLoadout::validate);
             for (var entry : side.live.entrySet()) {
@@ -144,7 +145,7 @@ public final class MobArmyMatch {
                     throw new IllegalStateException("Invalid live mob snapshot");
                 }
             }
-            if (phase == Phase.COMBAT && !side.forfeited && !side.baselines.keySet().containsAll(side.members.keySet())) {
+            if (phase == Phase.COMBAT && !deferredAdmissions && !side.forfeited && !side.baselines.keySet().containsAll(side.members.keySet())) {
                 throw new IllegalStateException("Missing combat loadout");
             }
         }

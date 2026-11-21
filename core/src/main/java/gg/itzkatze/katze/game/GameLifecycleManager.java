@@ -4,6 +4,11 @@ import gg.itzkatze.katze.KatzeGames;
 import gg.itzkatze.katze.achievements.AchievementService;
 import gg.itzkatze.katze.challenges.ChallengeManager;
 import gg.itzkatze.katze.game.seed.SeedGenerator;
+import gg.itzkatze.katze.game.entry.GameEntryService;
+import gg.itzkatze.katze.game.entry.LeaveReason;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
 import gg.itzkatze.katze.level.GameXp;
 import gg.itzkatze.katze.lobby.LobbyManager;
 import gg.itzkatze.katze.player.KatzePlayer;
@@ -39,6 +44,7 @@ public class GameLifecycleManager implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void onPlayerJoin(@NotNull PlayerJoinEvent event) {
+        if (GameEntryService.get().isRoutingEnabled() && !ChallengeManager.isGameStarted()) return;
         if (ChallengeManager.isGameStarted()) {
             if (event.getPlayer().isOp() && SessionPersistence.isAwaitingResume()) {
                 event.getPlayer().sendMessage(Component.translatable("katze.game.restored")
@@ -90,6 +96,10 @@ public class GameLifecycleManager implements Listener {
     }
 
     public static void startGame() {
+        if (GameEntryService.get().isRoutingEnabled()) {
+            startSharedGame();
+            return;
+        }
         ReplayService.get().closeViewers();
         GameXp.begin();
         KatzePlayer.removeOfflinePlayers();
@@ -121,6 +131,16 @@ public class GameLifecycleManager implements Listener {
         AchievementService.get().begin();
     }
 
+    private static void startSharedGame() {
+        ReplayService.get().closeViewers();
+        GameXp.begin();
+        KatzePlayer.removeOfflinePlayers();
+        Set<UUID> participants = KatzePlayer.getOnlinePlayers().stream().filter(KatzePlayer::isParticipating)
+                .map(KatzePlayer::getUuid).collect(Collectors.toSet());
+        GameEntryService.get().beginRound(UUID.randomUUID(), participants);
+        prepareWorlds();
+        AchievementService.get().begin();
+    }
     private static void prepareWorlds() {
         for (World world : GameWorldManager.getWorlds()) {
 
@@ -147,6 +167,12 @@ public class GameLifecycleManager implements Listener {
         StartCountdown.cancel();
         KatzeGames.get().releasePause();
         KatzeGames.getTimer().stop();
+        if (GameEntryService.get().isRoutingEnabled()) {
+            for (KatzePlayer player : KatzePlayer.getOnlinePlayers()) {
+                if (player.getPlayer() != null) GameEntryService.get().enterLimbo(player.getPlayer(), LeaveReason.RESET);
+            }
+            GameEntryService.get().reset();
+        }
         GameXp.onReset();
         AchievementService.get().reset();
         ChallengeManager.resetGameState();
@@ -156,7 +182,7 @@ public class GameLifecycleManager implements Listener {
         StructureScanner.clear();
 
         for (KatzePlayer player : KatzePlayer.getOnlinePlayers()) {
-            sendToLobby(player, true);
+            if (!GameEntryService.get().isRoutingEnabled()) sendToLobby(player, true);
             if (player.getPlayer() != null) {
                 player.getPlayer().setRespawnLocation(LobbyManager.getSpawn(), true);
             }

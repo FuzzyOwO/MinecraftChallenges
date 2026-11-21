@@ -56,6 +56,7 @@ public class LobbyManager implements Listener {
 
     private static final List<LobbyIsland> islands = new ArrayList<>();
     private static @Nullable Lobby activeLobby;
+    private static @Nullable Location fallbackSpawn;
     private static @Nullable String lastIslandId;
 
     public static void loadIslands() {
@@ -73,19 +74,20 @@ public class LobbyManager implements Listener {
     }
 
     public static boolean isActive() {
-        return activeLobby != null;
+        return activeLobby != null || fallbackSpawn != null;
     }
 
     public static @Nullable Lobby getActiveLobby() {
         return activeLobby;
     }
 
-    public static @Nullable Location getSpawn() {
-        return activeLobby == null ? null : activeLobby.getSpawn().clone();
+    public static synchronized @Nullable Location getSpawn() {
+        Location spawn = activeLobby == null ? fallbackSpawn : activeLobby.getSpawn();
+        return spawn == null ? null : spawn.clone();
     }
 
     public static void createLobbyIfNeeded() {
-        if (activeLobby != null) return;
+        if (activeLobby != null || fallbackSpawn != null) return;
         World world = GameWorldManager.getLimbo();
 
         LobbyRecord record = WorldStorage.load(RECORD_FILE, LobbyRecord.class);
@@ -100,12 +102,26 @@ public class LobbyManager implements Listener {
         for (LobbyIsland island : selectionOrder(islands, lastIslandId, ThreadLocalRandom.current())) {
             if (tryCreate(island, world)) return;
         }
-        logger.error("No lobby island could be pasted.");
+        logger.error("No lobby island could be pasted; using a fallback platform.");
+        fallbackSpawn = createFallback(world);
     }
 
+    static Location createFallback(World world) {
+        int center = 10000;
+        for (int x = center - 2; x <= center + 2; x++) {
+            for (int z = center - 2; z <= center + 2; z++) {
+                world.getBlockAt(x, BASE_Y - 1, z).setType(Material.BEDROCK, false);
+                for (int y = BASE_Y; y < BASE_Y + 3; y++) world.getBlockAt(x, y, z).setType(Material.AIR, false);
+            }
+        }
+        Location spawn = new Location(world, center + 0.5, BASE_Y, center + 0.5);
+        world.setSpawnLocation(spawn);
+        return spawn;
+    }
     public static void destroyLobby() {
         Lobby lobby = activeLobby;
         activeLobby = null;
+        fallbackSpawn = null;
         if (lobby != null) {
             for (LobbyFeature feature : lobby.getFeatures()) {
                 if (feature instanceof Listener listener) {
@@ -142,7 +158,7 @@ public class LobbyManager implements Listener {
         return order.isEmpty() || order.getFirst().getId().equals(currentId) ? null : order.getFirst();
     }
 
-    public static boolean switchIsland(@NotNull LobbyIsland island) {
+    public static synchronized boolean switchIsland(@NotNull LobbyIsland island) {
         Lobby previous = activeLobby;
         World world = previous == null ? null : previous.getWorld();
         if (previous == null || world == null) return false;
@@ -154,6 +170,7 @@ public class LobbyManager implements Listener {
         destroyLobby();
         Lobby lobby = create(island, structure, world);
         for (KatzePlayer player : KatzePlayer.getOnlinePlayers()) {
+            if (player.getPlayer() == null || !GameWorldManager.isLimbo(player.getPlayer().getWorld())) continue;
             player.teleport(lobby.getSpawn());
             onPlayerJoin(player);
         }
@@ -289,7 +306,7 @@ public class LobbyManager implements Listener {
     }
 
     private static boolean isLobbyWorld(@NotNull World world) {
-        return activeLobby != null && world.equals(activeLobby.getWorld());
+        return GameWorldManager.isLimbo(world);
     }
 
     @EventHandler
