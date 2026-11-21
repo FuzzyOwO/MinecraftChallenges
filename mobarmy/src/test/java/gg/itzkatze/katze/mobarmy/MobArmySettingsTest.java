@@ -19,6 +19,8 @@ class MobArmySettingsTest {
     @Test void mobLimitRejectsOutOfRangeValues() {
         assertThrows(IllegalArgumentException.class, () -> new MobArmySettings.MobLimit(0));
         assertThrows(IllegalArgumentException.class, () -> new MobArmySettings.MobLimit(1001));
+        assertDoesNotThrow(() -> new MobArmySettings.MobLimit(1));
+        assertDoesNotThrow(() -> new MobArmySettings.MobLimit(1000));
     }
 
     @Test void defaultMobLimitIsWithinEditableRange() {

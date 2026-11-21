@@ -616,6 +616,7 @@ final class MobArmyGame {
         if (match.arenaWorldVersion != 1) throw new IllegalStateException("Unsupported MobArmy arena world version; use /reset to start a new round");
         if (match.phase == MobArmyMatch.Phase.RESULTS) archive();
         else ReplayService.beginRound(match.id, match.participants(), ChallengeType.MOB_ARMY, match.phase == MobArmyMatch.Phase.COMBAT);
+        for (var side : match.sides) for (var mob : side.mobs) cap.recordKill(side.id, mob.type);
         if (!protectedPhase()) return;
         restoring = true;
         try {
