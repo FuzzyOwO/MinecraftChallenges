@@ -19,6 +19,7 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.Style;
 import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -77,7 +78,16 @@ public class KatzeTimer implements GameTimer {
         }, 20L, 20L);
     }
 
+    static boolean shouldShowActionbar(KatzePlayer player) {
+        Player bukkitPlayer = player.getPlayer();
+        return bukkitPlayer != null && !GameWorldManager.isLimbo(bukkitPlayer.getWorld());
+    }
+
     private Component getActionbarMessage(KatzePlayer player) {
+        if (!shouldShowActionbar(player)) {
+            return Component.empty();
+        }
+
         Challenge actionbarChallenge = ChallengeManager.getActiveChallenges().stream()
                 .filter(challenge -> challenge.getActionbar(player, running, elapsedSeconds) != null)
                 .max(Comparator.comparingInt(Challenge::getActionbarPriority))
