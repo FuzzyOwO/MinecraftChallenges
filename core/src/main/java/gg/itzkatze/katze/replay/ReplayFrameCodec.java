@@ -41,10 +41,13 @@ final class ReplayFrameCodec {
                 out.writeBoolean(player.team() != null);
                 if (player.team() != null) out.writeInt(player.team());
                 out.writeDouble(player.health()); out.writeDouble(player.maxHealth());
-                out.writeInt(player.food()); out.writeInt(player.level()); text(out, player.world()); texts(out, player.information());
+                out.writeInt(player.food()); out.writeInt(player.level()); text(out, player.world());
+                texts(out, player.information());
                 out.writeInt(player.scoreboards().size());
                 for (var entry : player.scoreboards().entrySet()) { text(out, entry.getKey()); texts(out, entry.getValue()); }
             }
+            out.writeDouble(actor.health());
+            out.writeDouble(actor.maxHealth());
         }
         out.writeInt(frame.blocks().size());
         for (var block : frame.blocks()) {
@@ -90,10 +93,13 @@ final class ReplayFrameCodec {
             float direction = in.readFloat();
             String item = text(in);
             ReplayFrame.PlayerState player = null;
+            double health = 0;
+            double maximum = 0;
             if (in.readBoolean()) {
                 List<String> inventory = texts(in), backpack = texts(in);
                 Integer team = in.readBoolean() ? in.readInt() : null;
-                double health = in.readDouble(), maximum = in.readDouble();
+                health = in.readDouble();
+                maximum = in.readDouble();
                 int food = in.readInt(), level = in.readInt();
                 String dimension = text(in);
                 List<String> information = texts(in);
@@ -102,8 +108,10 @@ final class ReplayFrameCodec {
                 for (int j = 0; j < boards; j++) scoreboards.put(text(in), texts(in));
                 player = new ReplayFrame.PlayerState(inventory, backpack, team, health, maximum, food, level, dimension, information, scoreboards);
             }
-            actors.add(new ReplayFrame.Actor(id, world, type, name, snapshot, texture, signature, x, y, z, yaw, pitch, pose,
-                    burning, swinging, equipment, vehicle, hurt, direction, item, player));
+            actors.add(new ReplayFrame.Actor(
+                    id, world, type, name, snapshot, texture, signature, x, y, z, yaw, pitch, pose,
+                    burning, swinging, equipment, vehicle, hurt, direction, item, player, health, maximum
+            ));
         }
         List<ReplayFrame.BlockChange> blocks = new ArrayList<>();
         count = count(in);

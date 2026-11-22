@@ -237,12 +237,14 @@ final class ReplayRecorder {
             }
         }
         Entity vehicle = entity.getVehicle();
+        double health = entity instanceof LivingEntity living ? living.getHealth() : 0;
+        double maxHealth = entity instanceof LivingEntity living ? living.getMaxHealth() : 0;
         return new ReplayFrame.Actor(entity.getUniqueId(), location.getWorld().getUID(), entity.getType().name(),
                 player == null ? null : player.getName(), snapshot, texture == null ? null : texture.getValue(),
                 texture == null ? null : texture.getSignature(), location.getX(), location.getY(), location.getZ(), location.getYaw(), location.getPitch(),
                 entity.getPose().name(), entity.getFireTicks() > 0, swinging, items.equals(previous) ? null : List.copyOf(items),
                 vehicle == null ? null : vehicle.getUniqueId(), hurt, entity instanceof LivingEntity living ? living.getHurtDirection() : 0,
-                item, player == null ? null : playerSnapshots.capture(player, tick));
+                item, player == null ? null : playerSnapshots.capture(player, tick), health, maxHealth);
     }
 
     CompletableFuture<Void> finish() {

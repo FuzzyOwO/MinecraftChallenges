@@ -65,7 +65,7 @@ record ReplayCheckpoint(int index, ReplayFrame seed, ReplayFrame frame) {
         ReplayCheckpoint build() {
             List<ReplayFrame.Actor> actors = definitions.values().stream().map(actor -> new ReplayFrame.Actor(actor.id(), actor.world(), actor.type(), actor.name(),
                     actor.snapshot(), actor.texture(), actor.signature(), actor.x(), actor.y(), actor.z(), actor.yaw(), actor.pitch(), actor.pose(), actor.burning(),
-                    actor.swinging(), equipment.get(actor.id()), actor.vehicle(), actor.hurt(), actor.hurtDirection(), items.get(actor.id()), players.get(actor.id()))).toList();
+                    actor.swinging(), equipment.get(actor.id()), actor.vehicle(), actor.hurt(), actor.hurtDirection(), items.get(actor.id()), players.get(actor.id()), actor.health(), actor.maxHealth())).toList();
             return new ReplayCheckpoint(index, new ReplayFrame(current.tick(), actors, terrain.snapshot(), current.scenes()), current);
         }
     }

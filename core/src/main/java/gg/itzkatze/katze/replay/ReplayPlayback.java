@@ -253,6 +253,9 @@ final class ReplayPlayback implements AutoCloseable {
             living.setCollidable(false);
             living.setRemoveWhenFarAway(false);
             living.setCanPickupItems(false);
+            // Restore health from replay data if available
+            if (state.health() > 0) living.setHealth(state.health());
+            if (state.maxHealth() > 0) living.setMaxHealth(state.maxHealth());
         }
         return entity;
     }

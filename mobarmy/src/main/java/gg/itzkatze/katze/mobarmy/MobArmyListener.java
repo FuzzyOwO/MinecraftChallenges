@@ -61,7 +61,6 @@ import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffectType;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -203,7 +202,7 @@ final class MobArmyListener implements Listener {
         Entity entity = event.getEntity();
         MobArmyMatch.Side side = game.tracked(entity);
         if (side == null) return;
-        
+
         if (transformableMobs.contains(entity.getType())) {
             event.setCancelled(true);
             side.live.remove(entity.getUniqueId());
