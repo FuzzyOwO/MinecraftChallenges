@@ -26,6 +26,7 @@ import org.bukkit.Location;
 import org.bukkit.Sound;
 import org.bukkit.SoundCategory;
 import org.bukkit.World;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -160,6 +161,10 @@ public class GameLifecycleManager implements Listener {
                 () -> KatzeGames.broadcast(Component.translatable("katze.game.reset.failed").color(KatzeColor.RED)));
     }
 
+    static boolean shouldReturnToLobby(Player player) {
+        return player != null && !GameWorldManager.isLimbo(player.getWorld());
+    }
+
     public static void resetGame(Runnable onSuccess, Runnable onFailure) {
         SeedGenerator.cancel();
         if (GameWorldManager.isResetting()) return;
@@ -169,7 +174,8 @@ public class GameLifecycleManager implements Listener {
         KatzeGames.getTimer().stop();
         if (GameEntryService.get().isRoutingEnabled()) {
             for (KatzePlayer player : KatzePlayer.getOnlinePlayers()) {
-                if (player.getPlayer() != null) GameEntryService.get().enterLimbo(player.getPlayer(), LeaveReason.RESET);
+                Player bukkitPlayer = player.getPlayer();
+                if (shouldReturnToLobby(bukkitPlayer)) GameEntryService.get().enterLimbo(bukkitPlayer, LeaveReason.RESET);
             }
             GameEntryService.get().reset();
         }
