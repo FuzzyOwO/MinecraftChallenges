@@ -34,8 +34,12 @@ public class RandomizerSettingsGUI extends SettingsMenu {
                 List.of(Component.translatable("katze.randomizer.gui.block_drops.description").color(KatzeColor.LIGHT_GRAY))),
         MOB_DROPS(11, Material.ROTTEN_FLESH, "katze.randomizer.setting.mob_drops", RandomizerSettings.RandomizerSetting.MOB_DROPS,
                 List.of(Component.translatable("katze.randomizer.gui.mob_drops.description").color(KatzeColor.LIGHT_GRAY))),
-        CHEST_LOOT(13, Material.CHEST, "katze.randomizer.setting.chest_loot", RandomizerSettings.RandomizerSetting.CHEST_LOOT,
+        CHEST_LOOT(12, Material.CHEST, "katze.randomizer.setting.chest_loot", RandomizerSettings.RandomizerSetting.CHEST_LOOT,
                 List.of(Component.translatable("katze.randomizer.gui.chest_loot.description").color(KatzeColor.LIGHT_GRAY))),
+        FISHING(13, Material.FISHING_ROD, "katze.randomizer.setting.fishing", RandomizerSettings.RandomizerSetting.FISHING,
+                List.of(Component.translatable("katze.randomizer.gui.fishing.description").color(KatzeColor.LIGHT_GRAY))),
+        PIGLIN_BARTERING(14, Material.GOLD_INGOT, "katze.randomizer.setting.piglin_bartering", RandomizerSettings.RandomizerSetting.PIGLIN_BARTERING,
+                List.of(Component.translatable("katze.randomizer.gui.piglin_bartering.description").color(KatzeColor.LIGHT_GRAY))),
         SHARED_MAPPINGS(15, Material.PLAYER_HEAD, "katze.randomizer.setting.shared_mappings", RandomizerSettings.RandomizerSetting.SHARED_MAPPINGS,
                 List.of(
                         Component.translatable("katze.randomizer.gui.shared_mappings.on").color(KatzeColor.LIGHT_GRAY),

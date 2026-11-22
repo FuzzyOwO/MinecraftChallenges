@@ -23,6 +23,14 @@ public class RandomizerSettings {
         return SettingsManager.isEnabled(RandomizerSetting.CHEST_LOOT);
     }
 
+    public static boolean isFishingEnabled() {
+        return SettingsManager.isEnabled(RandomizerSetting.FISHING);
+    }
+
+    public static boolean isPiglinBarteringEnabled() {
+        return SettingsManager.isEnabled(RandomizerSetting.PIGLIN_BARTERING);
+    }
+
     public static boolean isSharedMappingsEnabled() {
         return SettingsManager.isEnabled(RandomizerSetting.SHARED_MAPPINGS);
     }
@@ -36,6 +44,8 @@ public class RandomizerSettings {
         BLOCK_DROPS(false, OnOffState.ON),
         MOB_DROPS(false, OnOffState.OFF),
         CHEST_LOOT(false, OnOffState.ON),
+        FISHING(false, OnOffState.OFF),
+        PIGLIN_BARTERING(false, OnOffState.OFF),
         SHARED_MAPPINGS(true, OnOffState.ON),
         TEAM_MAPPINGS(true, OnOffState.OFF);
 

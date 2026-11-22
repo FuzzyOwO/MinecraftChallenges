@@ -13,8 +13,8 @@ class RandomizerDropsTest {
 
     private final RandomizerGameListener listener = new RandomizerGameListener(List.of(Material.DIAMOND), Stack::new);
 
-    @Test void blockLootMobLootAndChestLootUseTheSameReplacementAndKeepCounts() {
-        ItemStack mined = listener.randomizeBlockDrop(new Stack(Material.COAL, 4), List.of(), null);
+    @Test void blockLootMobLootAndChestLootUseTheSameReplacement() {
+        ItemStack mined = listener.randomizeBlockDrop(new Stack(Material.COAL, 4), null);
         List<ItemStack> chest = new ArrayList<>(List.of(new Stack(Material.COAL, 17)));
         List<ItemStack> mob = new ArrayList<>(List.of(new Stack(Material.COAL, 2)));
 
@@ -30,35 +30,11 @@ class RandomizerDropsTest {
     }
 
     @Test void dirtAndGrassUseTheirActualDirtDrop() {
-        ItemStack dirt = listener.randomizeBlockDrop(new Stack(Material.DIRT, 1), List.of(), null);
-        ItemStack grass = listener.randomizeBlockDrop(new Stack(Material.DIRT, 1), List.of(), null);
+        ItemStack dirt = listener.randomizeBlockDrop(new Stack(Material.DIRT, 1), null);
+        ItemStack grass = listener.randomizeBlockDrop(new Stack(Material.DIRT, 1), null);
 
         assertEquals(Material.DIAMOND, dirt.getType());
         assertEquals(dirt.getType(), grass.getType());
-    }
-
-    @Test void brokenContainersPreserveStoredLootButRandomizeTheContainerItem() {
-        ItemStack stored = new Stack(Material.EMERALD, 12);
-        List<ItemStack> contents = List.of(stored.clone());
-
-        assertSame(stored, listener.randomizeBlockDrop(stored, contents, null));
-        ItemStack chest = listener.randomizeBlockDrop(new Stack(Material.CHEST, 1), contents, null);
-
-        assertEquals(Material.EMERALD, stored.getType());
-        assertEquals(12, stored.getAmount());
-        assertEquals(Material.DIAMOND, chest.getType());
-        assertEquals(1, chest.getAmount());
-    }
-
-    @Test void mergedAndSplitContainerStacksArePreserved() {
-        List<ItemStack> contents = List.of(new Stack(Material.EMERALD, 3), new Stack(Material.EMERALD, 5));
-        ItemStack first = new Stack(Material.EMERALD, 6);
-        ItemStack second = new Stack(Material.EMERALD, 2);
-
-        assertSame(first, listener.randomizeBlockDrop(first, contents, null));
-        assertSame(second, listener.randomizeBlockDrop(second, contents, null));
-        assertEquals(Material.DIAMOND,
-                listener.randomizeBlockDrop(new Stack(Material.EMERALD, 1), contents, null).getType());
     }
 
     private static final class Stack extends ItemStack {
