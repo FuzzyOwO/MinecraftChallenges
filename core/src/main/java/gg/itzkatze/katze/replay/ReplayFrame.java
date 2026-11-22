@@ -30,6 +30,12 @@ public record ReplayFrame(int tick, List<Actor> actors, List<BlockChange> blocks
                      double x, double y, double z, float yaw, float pitch, String pose, boolean burning, boolean swinging, List<String> equipment) {
             this(id, world, type, name, snapshot, texture, signature, x, y, z, yaw, pitch, pose, burning, swinging, equipment, null, false, 0, null, null, 0, 0);
         }
+
+        public Actor(UUID id, UUID world, String type, String name, String snapshot, String texture, String signature,
+                     double x, double y, double z, float yaw, float pitch, String pose, boolean burning, boolean swinging,
+                     List<String> equipment, UUID vehicle, boolean hurt, float hurtDirection, String item, PlayerState player) {
+            this(id, world, type, name, snapshot, texture, signature, x, y, z, yaw, pitch, pose, burning, swinging, equipment, vehicle, hurt, hurtDirection, item, player, 0, 0);
+        }
         boolean participant(List<UUID> participants) {
             return "PLAYER".equals(type) && participants.contains(id);
         }
