@@ -258,10 +258,6 @@ public final class ReplayService {
             player.sendMessage(Component.translatable("katze.replay.no_active_session", TextArg.text("player", name)));
             return;
         }
-        if (sessions.size() + loading.size() >= Math.max(1, plugin.getConfig().getInt("replays.max-viewers", 4))) {
-            player.sendMessage(Component.translatable("katze.replay.busy"));
-            return;
-        }
         player.closeInventory();
         try {
             JsonFiles.write(returnFile(player.getUniqueId()), ReturnState.capture(player));
