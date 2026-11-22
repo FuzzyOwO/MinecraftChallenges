@@ -3,14 +3,14 @@ package gg.itzkatze.katze.replay;
 import com.google.gson.Gson;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-import java.util.UUID;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.List;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -39,6 +39,33 @@ class ReplayFrameCompatibilityTest {
                 List.of(new ReplayFrame.Container(world, 1, 64, 0)));
         Gson gson = new Gson();
         assertEquals(frame, gson.fromJson(gson.toJson(frame), ReplayFrame.class));
+    }
+
+    @Test void actorHealthAndMaxHealthSurviveBinarySerialization() throws Exception {
+        UUID id = UUID.randomUUID(), world = UUID.randomUUID();
+        ReplayFrame.Actor actor = new ReplayFrame.Actor(id, world, "ZOMBIE", null, null, null, null, 0, 64, 0,
+                0, 0, "STANDING", false, false, null, null, false, 0, null, null, 7.5, 20);
+        ReplayFrame frame = new ReplayFrame(0, List.of(actor), List.of(), List.of());
+        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+        new ReplayFrameCodec().write(new DataOutputStream(bytes), frame);
+        try (var in = new DataInputStream(new ByteArrayInputStream(bytes.toByteArray()))) {
+            assertEquals(frame, new ReplayFrameCodec().read(in));
+            assertEquals(-1, in.read());
+        }
+    }
+
+    @Test void actorHealthDoesNotReusePlayerHealth() throws Exception {
+        UUID id = UUID.randomUUID(), world = UUID.randomUUID();
+        ReplayFrame.PlayerState player = new ReplayFrame.PlayerState(List.of("item"), List.of(), null, 13, 14, 20, 1, "world", List.of());
+        ReplayFrame.Actor actor = new ReplayFrame.Actor(id, world, "PLAYER", "Katze", null, null, null, 0, 64, 0,
+                0, 0, "STANDING", false, false, null, null, false, 0, null, player, 7.5, 20);
+        ReplayFrame frame = new ReplayFrame(0, List.of(actor), List.of(), List.of());
+        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+        new ReplayFrameCodec().write(new DataOutputStream(bytes), frame);
+        try (var in = new DataInputStream(new ByteArrayInputStream(bytes.toByteArray()))) {
+            assertEquals(frame, new ReplayFrameCodec().read(in));
+            assertEquals(-1, in.read());
+        }
     }
 
     @Test void binaryFramesFromBeforeContainerRecordingRemainReadable() throws Exception {

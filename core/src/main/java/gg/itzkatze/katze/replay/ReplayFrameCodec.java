@@ -108,9 +108,11 @@ final class ReplayFrameCodec {
                 for (int j = 0; j < boards; j++) scoreboards.put(text(in), texts(in));
                 player = new ReplayFrame.PlayerState(inventory, backpack, team, health, maximum, food, level, dimension, information, scoreboards);
             }
+            double actorHealth = in.readDouble();
+            double actorMaxHealth = in.readDouble();
             actors.add(new ReplayFrame.Actor(
                     id, world, type, name, snapshot, texture, signature, x, y, z, yaw, pitch, pose,
-                    burning, swinging, equipment, vehicle, hurt, direction, item, player, health, maximum
+                    burning, swinging, equipment, vehicle, hurt, direction, item, player, actorHealth, actorMaxHealth
             ));
         }
         List<ReplayFrame.BlockChange> blocks = new ArrayList<>();
