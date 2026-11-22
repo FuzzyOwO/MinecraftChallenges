@@ -6,13 +6,16 @@ import gg.itzkatze.katze.gui.KatzeGUI;
 import gg.itzkatze.katze.player.KatzePlayer;
 import gg.itzkatze.katze.text.TextArg;
 import gg.itzkatze.katze.util.ItemStackCreator;
+import gg.itzkatze.katze.game.entry.GameEntryService;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.JoinConfiguration;
 import org.bukkit.Material;
+import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.List;
+import java.util.UUID;
 
 public final class ActiveGamesGUI extends KatzeGUI {
     private static final int PAGE_SIZE = 45;
@@ -51,14 +54,43 @@ public final class ActiveGamesGUI extends KatzeGUI {
                     Component modes = Component.join(JoinConfiguration.separator(Component.text(", ")),
                             view.modes().stream().map(type -> type.displayName()).toList());
                     Material icon = view.modes().isEmpty() ? Material.COMPASS : view.modes().getFirst().getMaterial().material();
+                    Player player = viewer.getPlayer();
+                    UUID playerId = player.getUniqueId();
+
+                    boolean canRejoin = playerId != null
+                            && entries.currentRoundId() != null
+                            && entries.currentRoundId().equals(view.roundId())
+                            && !entries.roundFinished()
+                            && entries.isEligible(playerId);
+                    Component loreText;
+                    if (canRejoin) {
+                        loreText = Component.translatable("katze.game.limbo.rejoin");
+                    } else {
+                        loreText = Component.translatable("katze.game.limbo.spectate");
+                    }
                     return ItemStackCreator.getStack(modes, icon, 1, view.phase(),
                             Component.translatable("katze.game.limbo.participants", TextArg.number("count", view.participants())),
-                            Component.translatable("katze.game.limbo.spectate"));
+                            loreText);
                 }
                 @Override public void run(InventoryClickEvent event, KatzePlayer viewer) {
                     if (viewer.getPlayer() == null) return;
-                    EntryResult result = entries.enter(viewer.getPlayer(), view.roundId(), EntryReason.SPECTATE);
-                    if (result == EntryResult.DENIED) viewer.sendMessage(Component.translatable("katze.game.limbo.unavailable"));
+                    Player player = viewer.getPlayer();
+                    UUID playerId = player.getUniqueId();
+
+                    boolean canRejoin = playerId != null
+                            && entries.currentRoundId() != null
+                            && entries.currentRoundId().equals(view.roundId())
+                            && !entries.roundFinished()
+                            && entries.isEligible(playerId);
+                    EntryResult result;
+                    if (canRejoin) {
+                        result = entries.enter(player, view.roundId(), EntryReason.REJOIN);
+                    } else {
+                        result = entries.enter(player, view.roundId(), EntryReason.SPECTATE);
+                    }
+                    if (result == EntryResult.DENIED) {
+                        viewer.sendMessage(Component.translatable("katze.game.limbo.unavailable"));
+                    }
                 }
             });
         }
