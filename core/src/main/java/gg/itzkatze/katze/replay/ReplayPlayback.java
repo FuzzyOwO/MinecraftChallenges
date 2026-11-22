@@ -262,10 +262,21 @@ final class ReplayPlayback implements AutoCloseable {
         entity.eject();
     }
 
+    private static boolean spawnable(ReplayFrame.Actor actor) {
+        String type = actor.type();
+        if (type.equals("PLAYER") || type.equals("ITEM")) return true;
+        try {
+            return EntityType.valueOf(type).isSpawnable();
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
+    }
+
     private void render(ReplayFrame frame) {
         containers.render(frame.containers());
+        List<ReplayFrame.Actor> visible = frame.actors().stream().filter(ReplayPlayback::spawnable).toList();
         Set<UUID> present = new HashSet<>();
-        for (ReplayFrame.Actor state : frame.actors()) {
+        for (ReplayFrame.Actor state : visible) {
             present.add(state.id());
             Entity entity = actors.get(state.id());
             if (entity == null || !entity.isValid() || !entity.getWorld().equals(worlds.get(state.world()))) {
@@ -276,8 +287,8 @@ final class ReplayPlayback implements AutoCloseable {
                 appliedItems.remove(state.id());
             }
         }
-        ReplayMounts.detachChanged(actors, frame.actors());
-        for (ReplayFrame.Actor state : frame.actors()) {
+        ReplayMounts.detachChanged(actors, visible);
+        for (ReplayFrame.Actor state : visible) {
             Entity entity = actors.get(state.id());
             Location destination = smoothLocation(state);
             if (state.vehicle() == null || !actors.containsKey(state.vehicle())) entity.teleport(destination);
@@ -301,7 +312,7 @@ final class ReplayPlayback implements AutoCloseable {
                 appliedItems.put(state.id(), item);
             }
         }
-        ReplayMounts.attach(actors, frame.actors());
+        ReplayMounts.attach(actors, visible);
         for (UUID id : new ArrayList<>(actors.keySet())) if (!present.contains(id)) actors.remove(id).remove();
     }
 
