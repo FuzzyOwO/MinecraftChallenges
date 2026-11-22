@@ -81,10 +81,10 @@ final class AchievementServiceTest {
     }
     @Test
     void catalogueHasExactlyThePdfEntriesAndConfirmedRewards() {
-        assertEquals(42, Achievement.values().length);
-        assertEquals(42, Arrays.stream(Achievement.values()).map(Achievement::id).distinct().count());
-        assertEquals(78, Arrays.stream(Achievement.values()).mapToInt(achievement -> achievement.stages().size()).sum());
-        assertEquals(3700, Arrays.stream(Achievement.values()).flatMap(achievement -> achievement.stages().stream()).mapToInt(stage -> stage.rarity().xp()).sum());
+        assertEquals(43, Achievement.values().length);
+        assertEquals(43, Arrays.stream(Achievement.values()).map(Achievement::id).distinct().count());
+        assertEquals(79, Arrays.stream(Achievement.values()).mapToInt(achievement -> achievement.stages().size()).sum());
+        assertEquals(3725, Arrays.stream(Achievement.values()).flatMap(achievement -> achievement.stages().stream()).mapToInt(stage -> stage.rarity().xp()).sum());
         assertEquals(List.of(4, 10, 15, 20, 25), Achievement.ROUND_DEATHS.stages().stream().map(AchievementStage::target).toList());
         assertEquals(8, AchievementCategory.values().length);
     }
@@ -492,15 +492,15 @@ final class AchievementServiceTest {
     @Test
     void allAchievementsPayOnlyTheSeparateRewardPool() {
         for (Achievement achievement : Achievement.values()) service.progress(player, "Katze", achievement, achievement.maximum());
-        assertEquals(3700, service.profile(player).xp());
+        assertEquals(3725, service.profile(player).xp());
         assertEquals(11, service.profile(player).level().level());
         assertEquals(0, levels.xp(player));
         assertTrue(levels.drainRecentGains().isEmpty());
         PlayerDataStore loaded = new PlayerDataStore(file, (task, ticks) -> {});
         AchievementService restored = service(loaded);
         for (Achievement achievement : Achievement.values()) restored.progress(player, "Katze", achievement, achievement.maximum());
-        assertEquals(3700, restored.profile(player).xp());
-        assertEquals(42, notices.size());
+        assertEquals(3725, restored.profile(player).xp());
+        assertEquals(43, notices.size());
     }
 
     @Test

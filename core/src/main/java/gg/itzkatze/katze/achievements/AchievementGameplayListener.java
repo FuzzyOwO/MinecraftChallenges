@@ -19,6 +19,7 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
 import org.bukkit.entity.Tameable;
+import org.bukkit.entity.Villager;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -171,7 +172,9 @@ public final class AchievementGameplayListener implements Listener {
         if (event.getEntity() instanceof Player) return;
         Player killer = event.getEntity().getKiller();
         if (killer == null && event.getEntity().getLastDamageCause() instanceof EntityDamageByEntityEvent damage) killer = owner(damage.getDamager());
-        if (killer != null) service.distinct(killer, Achievement.MOB_TYPES, event.getEntityType().getKey().toString());
+        if (killer == null) return;
+        service.distinct(killer, Achievement.MOB_TYPES, event.getEntityType().getKey().toString());
+        if (event.getEntity() instanceof Villager villager && !villager.isAdult()) service.record(killer, Achievement.KILL_BABY_VILLAGER);
     }
 
     private Player owner(Entity entity) {
