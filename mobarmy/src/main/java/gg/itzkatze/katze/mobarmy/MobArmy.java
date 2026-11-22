@@ -98,7 +98,9 @@ public final class MobArmy implements Challenge {
 
     @Override
     public boolean allowsGameplay(ChallengeType type) {
-        return type == ChallengeType.MOB_ARMY || game.match == null || game.match.phase == MobArmyMatch.Phase.COLLECTION;
+        if (type == ChallengeType.MOB_ARMY) return true;
+        if (type == ChallengeType.RANDOMIZER) return game.match == null || game.match.phase != MobArmyMatch.Phase.RESULTS;
+        return game.match == null || game.match.phase == MobArmyMatch.Phase.COLLECTION;
     }
 
     @Override

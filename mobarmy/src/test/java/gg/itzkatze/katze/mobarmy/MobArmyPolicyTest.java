@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 class MobArmyPolicyTest {
-    @Test void modifiersAreAllowedOnlyDuringCollectionWithoutUnloadingTheirState() {
+    @Test void randomizerStaysActiveAfterCollectionWhileItemRainStops() {
         var challenge = new MobArmy();
         assertNull(challenge.getScoreboardContent());
         assertTrue(challenge.allowsCombination(ChallengeType.RANDOMIZER));
@@ -17,13 +17,16 @@ class MobArmyPolicyTest {
         challenge.game.match = new MobArmyMatch();
         assertTrue(challenge.allowsGameplay(ChallengeType.RANDOMIZER));
         challenge.game.match.phase = MobArmyMatch.Phase.CONFIGURATION;
-        assertFalse(challenge.allowsGameplay(ChallengeType.RANDOMIZER));
+        assertTrue(challenge.allowsGameplay(ChallengeType.RANDOMIZER));
         assertFalse(challenge.allowsGameplay(ChallengeType.ITEM_RAIN));
         assertTrue(challenge.allowsGameplay(ChallengeType.MOB_ARMY));
         assertFalse(challenge.requiresCombatDamage());
         challenge.game.match.phase = MobArmyMatch.Phase.COMBAT;
+        assertTrue(challenge.allowsGameplay(ChallengeType.RANDOMIZER));
+        assertFalse(challenge.allowsGameplay(ChallengeType.ITEM_RAIN));
         assertTrue(challenge.requiresCombatDamage());
         challenge.game.match.phase = MobArmyMatch.Phase.RESULTS;
+        assertFalse(challenge.allowsGameplay(ChallengeType.RANDOMIZER));
         assertFalse(challenge.requiresCombatDamage());
     }
 
