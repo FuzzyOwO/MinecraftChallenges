@@ -100,5 +100,7 @@ public class DeathTask {
     private static void returnItems(PlayerDeathEvent event) {
         event.setKeepInventory(true);
         event.getDrops().clear();
+        event.setKeepLevel(true);
+        event.setDroppedExp(0);
     }
 }
