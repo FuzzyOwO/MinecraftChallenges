@@ -61,6 +61,7 @@ import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffectType;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -70,6 +71,7 @@ import java.util.UUID;
 final class MobArmyListener implements Listener {
 
     private static final int SPECIAL_MOB_LIMIT = 3;
+    private static final List<EntityType> transformableMobs = List.of(EntityType.PIGLIN, EntityType.PIGLIN_BRUTE, EntityType.HOGLIN);
     private final MobArmyGame game;
     private final Map<UUID, MobArmyMatch.CapturedMob> lethal = new HashMap<>();
 
@@ -198,10 +200,18 @@ final class MobArmyListener implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void transform(EntityTransformEvent event) {
-        var side = game.tracked(event.getEntity());
+        Entity entity = event.getEntity();
+        MobArmyMatch.Side side = game.tracked(entity);
         if (side == null) return;
-        side.live.remove(event.getEntity().getUniqueId());
-        for (Entity entity : event.getTransformedEntities()) if (entity instanceof LivingEntity living) game.track(side, living);
+        
+        if (transformableMobs.contains(entity.getType())) {
+            event.setCancelled(true);
+            side.live.remove(entity.getUniqueId());
+            return;
+        }
+
+        side.live.remove(entity.getUniqueId());
+        for (Entity transformed : event.getTransformedEntities()) if (transformed instanceof LivingEntity living) game.track(side, living);
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
