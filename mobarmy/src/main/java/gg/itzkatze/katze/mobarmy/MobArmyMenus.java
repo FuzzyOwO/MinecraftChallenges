@@ -246,17 +246,6 @@ final class MobArmyMenus {
                                             open(who);
                                         }, KatzePlayer::sendMessage
                                 );
-                            } else if (setting == MobArmySettings.MOB_LIMIT) {
-                                int current = ((MobArmySettings.MobLimit) challenge.settings.getState(setting)).amount();
-                                NumberSignInput.open(
-                                        player, setting.getDisplayName(), current, 1, 1000, (who, amount) -> {
-                                            if (editable(who)) {
-                                                challenge.settings.setState(setting, new MobArmySettings.MobLimit(amount));
-                                                SessionPersistence.requestSave();
-                                            }
-                                            open(who);
-                                        }, KatzePlayer::sendMessage
-                                );
                             } else {
                                 challenge.settings.setState(setting, challenge.settings.getState(setting).next());
                                 SessionPersistence.requestSave();

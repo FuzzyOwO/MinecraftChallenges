@@ -5,7 +5,7 @@ Collect an army, send it against your opponents, and finish their waves in the *
 ## 1. Collect and gear up
 
 - You have **90 minutes by default** to gather supplies and kill mobs for your army.
-- Almost every mob counts, including animals, golems, and bosses; **the Ender Dragon does not count**.
+- Every mob type has a **cap per team**
 - Collected mobs return at full health with their equipment and variants.
 - Starter equipment, when enabled, is an **unbreakable diamond axe, pickaxe, and shovel with Efficiency I**.
 - Collection deaths can drop your other gear; **starter tools you were carrying and collected mobs are safe**.
@@ -48,6 +48,7 @@ Collect an army, send it against your opponents, and finish their waves in the *
 | Setting           | What changes                                                        | Default    |
 |-------------------|---------------------------------------------------------------------|------------|
 | Collection time   | Time to collect mobs and supplies: **1–1,440 minutes**.             | 90 minutes |
+| Mob limits        | Turn the per-mob-type collection caps on or off.                    | On         |
 | Starter equipment | Start with the unbreakable enchanted diamond tools described above. | On         |
 | Backpack          | Enable personal or shared team storage.                             | On         |
 

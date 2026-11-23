@@ -5,6 +5,7 @@ import gg.itzkatze.katze.game.entry.GameEntryService;
 import gg.itzkatze.katze.event.PlayerTeamJoinEvent;
 import gg.itzkatze.katze.event.PlayerTeamLeaveEvent;
 import gg.itzkatze.katze.text.TextArg;
+import gg.itzkatze.katze.util.StringUtility;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Material;
 import org.bukkit.attribute.Attribute;
@@ -69,7 +70,6 @@ import java.util.UUID;
 
 final class MobArmyListener implements Listener {
 
-    private static final int SPECIAL_MOB_LIMIT = 3;
     private static final List<EntityType> transformableMobs = List.of(EntityType.PIGLIN, EntityType.PIGLIN_BRUTE, EntityType.HOGLIN);
     private final MobArmyGame game;
     private final Map<UUID, MobArmyMatch.CapturedMob> lethal = new HashMap<>();
@@ -91,33 +91,36 @@ final class MobArmyListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST)
     public void mobDeath(EntityDeathEvent event) {
-        var entity = event.getEntity();
+        LivingEntity entity = event.getEntity();
         if (entity instanceof Player) return;
-        var tracked = game.tracked(entity);
+        MobArmyMatch.Side tracked = game.tracked(entity);
         if (tracked != null || game.arena.owns(entity.getWorld())) {
             event.getDrops().clear();
             event.setDroppedExp(0);
             game.died(entity);
             return;
         }
-        var saved = lethal.remove(entity.getUniqueId());
+        MobArmyMatch.CapturedMob saved = lethal.remove(entity.getUniqueId());
         if (game.match == null || !game.running() || game.match.phase != MobArmyMatch.Phase.COLLECTION
                 || !MobCapture.eligible(entity) || entity.getKiller() == null) return;
         if (waiting(entity.getKiller())) return;
-        var side = game.side(entity.getKiller().getUniqueId());
+        MobArmyMatch.Side side = game.side(entity.getKiller().getUniqueId());
         if (side == null) return;
-        var type = entity.getType();
+        EntityType type = entity.getType();
+        int cap = game.mobCap(type);
         int kills = game.cap.recordKill(side.id, type.name());
-        int limit = type == EntityType.WITHER || type == EntityType.WARDEN
-                ? SPECIAL_MOB_LIMIT
-                : ((MobArmySettings.MobLimit) game.challenge.settings.getState(MobArmySettings.MOB_LIMIT)).amount();
-        if (kills > limit) return;
-        var collected = saved != null ? saved : MobCapture.capture(entity);
+        if (cap == 0) {
+            if (kills == 1) MobArmyGame.online(side, player -> player.sendMessage(Component.translatable("katze.mobarmy.mob.blocked",
+                    TextArg.text("mob", StringUtility.formatName(type.name())))));
+            return;
+        }
+        if (kills > cap) return;
+        MobArmyMatch.CapturedMob collected = saved != null ? saved : MobCapture.capture(entity);
         collected.collector = entity.getKiller().getUniqueId();
         side.mobs.add(collected);
-        if (kills == limit) MobArmyGame.online(side, player -> {
+        if (kills == cap) MobArmyGame.online(side, player -> {
             player.sendMessage(Component.translatable("katze.mobarmy.limit.reached",
-                    TextArg.number("amount", limit), TextArg.text("mob", type.name().toLowerCase(Locale.ROOT))));
+                    TextArg.number("amount", cap), TextArg.text("mob", type.name().toLowerCase(Locale.ROOT))));
             player.sendMessage(Component.translatable("katze.mobarmy.limit.blocked"));
         });
         game.dirty();

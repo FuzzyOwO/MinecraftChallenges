@@ -33,6 +33,7 @@ public final class MobArmy implements Challenge {
 
     @Override
     public void onEnable() {
+        game.installLimits();
         game.load();
         game.enable();
     }
@@ -141,7 +142,7 @@ public final class MobArmy implements Challenge {
     }
 
     @Override
-    public @NonNull List<Component> getReplayInfo(KatzePlayer target) {
+    public @NonNull List<Component> getReplayInfo(@NonNull KatzePlayer target) {
         if (game.match == null) return List.of();
         List<Component> lines = new ArrayList<>();
         lines.add(Component.translatable("katze.mobarmy.phase." + game.match.phase.name().toLowerCase(Locale.ROOT)));

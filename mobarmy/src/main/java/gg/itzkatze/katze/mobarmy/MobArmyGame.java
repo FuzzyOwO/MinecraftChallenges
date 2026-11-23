@@ -25,6 +25,7 @@ import org.bukkit.NamespacedKey;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Mob;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
@@ -33,7 +34,14 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.scheduler.BukkitTask;
 
+import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.StandardOpenOption;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -50,6 +58,7 @@ import java.util.stream.Collectors;
 final class MobArmyGame {
 
     private static final String FILE = "mobarmy.json";
+    private static final String LIMITS = "data/mobarmy-limits.yml";
     private static final NamespacedKey MATCH = new NamespacedKey("katzegames", "mobarmy_match");
     private static final NamespacedKey WAVE = new NamespacedKey("katzegames", "mobarmy_wave");
     final MobArmy challenge;
@@ -58,6 +67,7 @@ final class MobArmyGame {
     final MobArmyTracker tracker = new MobArmyTracker(this);
     final Map<String, MobArmyMenus.Backpack> backpacks = new HashMap<>();
     final MobCapCounter cap = new MobCapCounter();
+    private MobLimitTable limits = MobLimitTable.EMPTY;
     MobArmyMatch match;
     private BukkitTask ticker;
     private boolean restoring;
@@ -94,6 +104,45 @@ final class MobArmyGame {
 
     void enable() {ticker = Bukkit.getScheduler().runTaskTimer(KatzeGames.get(), this::safeTick, 1, 1);}
 
+    void installLimits() {
+        File file = limitsFile();
+        if (!file.exists()) {KatzeGames.get().saveResource(LIMITS, false); return;}
+        mergeLimits(file);
+    }
+
+    private static void mergeLimits(File file) {
+        try (InputStream defaults = KatzeGames.get().getResource(LIMITS)) {
+            if (defaults == null) return;
+            List<String> missing = MobLimitTable.missingDefaultLines(
+                    new BufferedReader(new InputStreamReader(defaults, StandardCharsets.UTF_8)).lines().toList(),
+                    Files.readAllLines(file.toPath(), StandardCharsets.UTF_8));
+            if (missing.isEmpty()) return;
+            String existing = Files.readString(file.toPath(), StandardCharsets.UTF_8);
+            String addition = (existing.endsWith("\n") ? "" : System.lineSeparator())
+                    + "# Added automatically by a KatzeGames update:" + System.lineSeparator()
+                    + String.join(System.lineSeparator(), missing) + System.lineSeparator();
+            Files.writeString(file.toPath(), addition, StandardCharsets.UTF_8, StandardOpenOption.APPEND, StandardOpenOption.CREATE);
+            KatzeGames.get().getLogger().info("Added " + missing.size() + " new mob types to " + LIMITS);
+        } catch (IOException exception) {
+            KatzeGames.get().getLogger().log(Level.WARNING, "Unable to update " + LIMITS + ": " + exception.getMessage());
+        }
+    }
+
+    private static File limitsFile() {return new File(KatzeGames.get().getDataDirectory(), LIMITS);}
+
+    static int limit(MobLimitTable limits, boolean limitsEnabled, EntityType type) {
+        int cap = limits.cap(type);
+        if (cap == 0) return 0;
+        return limitsEnabled ? cap : MobLimitTable.UNLIMITED;
+    }
+
+    int mobCap(EntityType type) {return limit(limits, challenge.settings.isEnabled(MobArmySettings.MOB_LIMIT), type);}
+
+    private void reloadLimits() {
+        MobLimitTable loaded = MobLimitTable.read(limitsFile().toPath());
+        if (loaded != null) limits = loaded;
+    }
+
     void disable() {
         audience.restore();
         arena.cancelBuilds();
@@ -121,6 +170,7 @@ final class MobArmyGame {
 
     void start() {
         failed = false;
+        reloadLimits();
         targetTicks = 0;
         match = new MobArmyMatch();
         match.minecraftVersion = Bukkit.getMinecraftVersion();
@@ -644,6 +694,7 @@ final class MobArmyGame {
         if (match.arenaWorldVersion != 1) throw new IllegalStateException("Unsupported MobArmy arena world version; use /reset to start a new round");
         if (match.phase == MobArmyMatch.Phase.RESULTS) archive();
         else ReplayService.beginRound(match.id, match.participants(), ChallengeType.MOB_ARMY, match.phase == MobArmyMatch.Phase.COMBAT);
+        reloadLimits();
         for (var side : match.sides) for (var mob : side.mobs) cap.recordKill(side.id, mob.type);
         if (!protectedPhase()) return;
         restoring = true;

@@ -15,7 +15,7 @@ enum MobArmySettings implements Setting {
     STARTER_EQUIPMENT(OnOffState.ON),
     BACKPACK(OnOffState.ON),
     COLLECTION_DURATION(new Duration(90)),
-    MOB_LIMIT(new MobLimit(100)),
+    MOB_LIMIT(OnOffState.ON),
     REPLAY_SAVING(ReplaySaveMode.withBattlePhase());
 
     private final SettingStateType initial;
@@ -54,23 +54,4 @@ enum MobArmySettings implements Setting {
 
     }
 
-    record MobLimit(int amount) implements ConfigurableSettingState {
-
-        MobLimit {if (amount < 1 || amount > 1000) throw new IllegalArgumentException("Mob limit must be 1–1000");}
-
-        @Override
-        public @NonNull String serialize() {return Integer.toString(amount);}
-
-        @Override
-        public SettingStateType parse(@NonNull String raw) {
-            try {return new MobLimit(Integer.parseInt(raw));} catch (IllegalArgumentException exception) {return null;}
-        }
-
-        @Override
-        public @NonNull Component getDisplayName() {return Component.translatable("katze.mobarmy.mob_limit", TextArg.number("amount", amount));}
-
-        @Override
-        public @NonNull SettingStateType next() {return new MobLimit(amount >= 1000 ? 1 : amount + 1);}
-
-    }
 }

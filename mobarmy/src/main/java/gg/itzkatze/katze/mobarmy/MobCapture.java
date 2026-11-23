@@ -5,7 +5,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.attribute.Attribute;
-import org.bukkit.entity.EnderDragon;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.IronGolem;
@@ -50,8 +49,7 @@ final class MobCapture {
     }
 
     static boolean eligible(LivingEntity entity) {
-        return !(entity instanceof Player) && !(entity instanceof EnderDragon) && entity.getType().isAlive()
-                && entity.getType() != EntityType.ARMOR_STAND;
+        return !(entity instanceof Player) && entity.getType().isAlive() && entity.getType() != EntityType.ARMOR_STAND;
     }
 
     static MobArmyMatch.CapturedMob capture(LivingEntity entity) {
