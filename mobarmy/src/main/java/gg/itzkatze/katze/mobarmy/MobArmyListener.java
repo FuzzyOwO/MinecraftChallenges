@@ -44,6 +44,7 @@ import org.bukkit.event.entity.EntityRemoveEvent;
 import org.bukkit.event.entity.EntityTargetLivingEntityEvent;
 import org.bukkit.event.entity.EntityTeleportEvent;
 import org.bukkit.event.entity.EntityTransformEvent;
+import org.bukkit.event.entity.EntityTransformEvent.TransformReason;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.entity.PotionSplashEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
@@ -70,7 +71,6 @@ import java.util.UUID;
 
 final class MobArmyListener implements Listener {
 
-    private static final List<EntityType> transformableMobs = List.of(EntityType.PIGLIN, EntityType.PIGLIN_BRUTE, EntityType.HOGLIN);
     private final MobArmyGame game;
     private final Map<UUID, MobArmyMatch.CapturedMob> lethal = new HashMap<>();
 
@@ -200,18 +200,18 @@ final class MobArmyListener implements Listener {
         game.track(game.match.sides.get(index), event.getEntity());
     }
 
-    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void transform(EntityTransformEvent event) {
+        if (event.getTransformReason() != TransformReason.SPLIT && game.tracked(event.getEntity()) != null) {
+            event.setCancelled(true);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void trackTransformation(EntityTransformEvent event) {
         Entity entity = event.getEntity();
         MobArmyMatch.Side side = game.tracked(entity);
         if (side == null) return;
-
-        if (transformableMobs.contains(entity.getType())) {
-            event.setCancelled(true);
-            side.live.remove(entity.getUniqueId());
-            return;
-        }
-
         side.live.remove(entity.getUniqueId());
         for (Entity transformed : event.getTransformedEntities()) if (transformed instanceof LivingEntity living) game.track(side, living);
     }
