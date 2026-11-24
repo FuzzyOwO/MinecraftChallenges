@@ -1,9 +1,6 @@
 package gg.itzkatze.katze.mobarmy;
 
 public class ArenaLayout {
-    // Buffer beyond arena boundaries to prevent mobs from teleporting outside
-    private static final int MOB_TELEPORT_BUFFER = 8;
-
     final int width;
     final int height;
     final int length;
@@ -30,8 +27,6 @@ public class ArenaLayout {
     }
 
     boolean containsMob(double x, double y, double z) {
-        return x >= -MOB_TELEPORT_BUFFER && x <= width + MOB_TELEPORT_BUFFER
-                && z >= -MOB_TELEPORT_BUFFER && z <= length + MOB_TELEPORT_BUFFER
-                && y >= floor - MOB_TELEPORT_BUFFER && y <= roof() + MOB_TELEPORT_BUFFER;
+        return x >= 0 && x < width && z >= 0 && z < length && y >= floor && y < roof();
     }
 }

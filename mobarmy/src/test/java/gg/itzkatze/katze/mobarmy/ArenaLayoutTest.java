@@ -16,13 +16,15 @@ class ArenaLayoutTest {
         assertFalse(layout.contains(40, 94, 97, false));
     }
 
-    @Test void touchingWallsOrTheRoofDoesNotRecoverMobsToAnotherPosition() {
-        assertTrue(layout.containsMob(-0.3, 94, 40));
-        assertTrue(layout.containsMob(87.3, 94, 40));
-        assertTrue(layout.containsMob(40, 94, 97.3));
-        assertTrue(layout.containsMob(40, 124, 40));
-        assertFalse(layout.containsMob(40, 20, 40));
-        assertFalse(layout.containsMob(140, 94, 40));
+    @Test void mobsInsideTheBarrierBorderStayPutButEverythingOutsideIsRecovered() {
+        assertTrue(layout.containsMob(0.3, 94, 40.4));
+        assertTrue(layout.containsMob(86.7, 94, 40));
+        assertTrue(layout.containsMob(40, 122.9, 96.7));
+        assertFalse(layout.containsMob(-0.3, 94, 40));
+        assertFalse(layout.containsMob(87.3, 94, 40));
+        assertFalse(layout.containsMob(40, 94, 97.3));
+        assertFalse(layout.containsMob(40, layout.roof() + 1, 40));
+        assertFalse(layout.containsMob(40, layout.floor - 1, 40));
     }
 
     @Test void teamsUseDistinctWorldKeys() {
