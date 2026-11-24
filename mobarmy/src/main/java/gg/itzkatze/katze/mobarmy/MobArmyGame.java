@@ -391,8 +391,8 @@ final class MobArmyGame {
             dirty();
         }
         if (combat()) {
-            boolean refreshVex = ++targetTicks >= 1200;
-            if (refreshVex) targetTicks = 0;
+            boolean refreshFlyingTargets = ++targetTicks >= 1200;
+            if (refreshFlyingTargets) targetTicks = 0;
             for (var side : match.sides) {
                 if (side.finished || side.preparing) continue;
                 match.tickClock(side, true);
@@ -424,7 +424,7 @@ final class MobArmyGame {
                     MobHabitat.maintain(living);
                     int index = match.sides.indexOf(side);
                     if (!arena.insideMob(index, living.getLocation())) living.teleport(arena.spawn(index, living));
-                    if (living instanceof Mob mobEntity) MobArmyTargeting.update(mobEntity, side, fighters, refreshVex);
+                    if (living instanceof Mob mobEntity) MobArmyTargeting.update(mobEntity, side, fighters, refreshFlyingTargets);
                 }
                 if (side.queue.isEmpty() && side.live.isEmpty()) advance(side);
             }

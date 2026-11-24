@@ -5,9 +5,12 @@ import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Mob;
+import org.bukkit.entity.Phantom;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Vex;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.lang.reflect.Proxy;
 import java.util.List;
@@ -64,13 +67,14 @@ class MobArmyTargetingTest {
         assertFalse(MobArmyTargeting.canFight(side, fighter.player, world));
     }
 
-    @Test
-    void vexesRefreshToTheNearestFighterAndImmediatelyRecoverLostAggro() {
+    @ParameterizedTest
+    @ValueSource(classes = {Vex.class, Phantom.class})
+    void vexesAndPhantomsRetargetTheNearestFighterAndRecoverLostAggro(Class<? extends Mob> type) {
         Fighter nearest = fighter(2);
         Fighter farther = fighter(10);
         Fighter resting = fighter(1);
         side.roofTicks.put(resting.id, 100L);
-        Enemy enemy = new Enemy(Vex.class, farther.player);
+        Enemy enemy = new Enemy(type, farther.player);
         List<Player> players = List.of(resting.player, farther.player, nearest.player);
 
         MobArmyTargeting.update(enemy.mob, side, players, false);
@@ -103,6 +107,7 @@ class MobArmyTargetingTest {
                 case "getUniqueId" -> id;
                 case "getWorld" -> world;
                 case "getLocation" -> new Location(world, x, 64, 0);
+                case "toString" -> "Fighter at x=" + x;
                 case "isOnline" -> online;
                 case "isDead" -> dead;
                 case "getGameMode" -> mode;
