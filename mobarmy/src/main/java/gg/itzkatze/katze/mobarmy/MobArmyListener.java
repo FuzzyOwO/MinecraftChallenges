@@ -425,7 +425,7 @@ final class MobArmyListener implements Listener {
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void flow(BlockFromToEvent event) {
         if (!game.arena.owns(event.getBlock().getWorld())) return;
-        var side = fluidSide(event.getToBlock());
+        var side = editableSide(event.getToBlock());
         if (side == null) {
             event.setCancelled(true);
             return;
@@ -434,7 +434,7 @@ final class MobArmyListener implements Listener {
         game.dirty();
     }
 
-    private MobArmyMatch.Side fluidSide(Block block) {
+    private MobArmyMatch.Side editableSide(Block block) {
         if (!game.combat()) return null;
         int index = game.arena.index(block.getLocation(), game.match.sides.size());
         if (index < 0) return null;
@@ -446,8 +446,18 @@ final class MobArmyListener implements Listener {
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void explode(EntityExplodeEvent event) {
         if (!game.arena.owns(event.getLocation().getWorld())) return;
-        event.blockList().clear();
+        if (event.getEntity() instanceof TNTPrimed) {
+            event.blockList().removeIf(block -> !canChainPrime(block));
+        } else {
+            event.blockList().clear();
+        }
         event.setYield(0);
+    }
+
+    private boolean canChainPrime(Block block) {
+        if (block.getType() != Material.TNT) return false;
+        MobArmyMatch.Side side = editableSide(block);
+        return side != null && game.arena.placed(side, block);
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
@@ -478,7 +488,7 @@ final class MobArmyListener implements Listener {
     public void form(BlockFormEvent event) {
         Block block = event.getBlock();
         if (!game.arena.owns(block.getWorld())) return;
-        var side = fluidSide(block);
+        var side = editableSide(block);
         Material formed = event.getNewState().getType();
         if (side == null || !block.isLiquid() || formed != Material.STONE && formed != Material.COBBLESTONE
                 && formed != Material.OBSIDIAN && formed != Material.BASALT) {
