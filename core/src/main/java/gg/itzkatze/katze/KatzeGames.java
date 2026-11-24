@@ -33,6 +33,7 @@ import gg.itzkatze.katze.level.LevelStore;
 import gg.itzkatze.katze.level.LevelUpNotice;
 import gg.itzkatze.katze.level.PlaytimeXp;
 import gg.itzkatze.katze.level.XpDigest;
+import gg.itzkatze.katze.lobby.LobbyExperienceBar;
 import gg.itzkatze.katze.lobby.LobbyManager;
 import gg.itzkatze.katze.lobby.PointsSidebar;
 import gg.itzkatze.katze.lobby.cosmetics.ClientModHint;
@@ -110,6 +111,7 @@ public final class KatzeGames extends JavaPlugin {
         achievementSampler = new AchievementSampler(AchievementService.get());
         getServer().getPluginManager().registerEvents(new AchievementGameplayListener(AchievementService.get(), achievementSampler), this);
         PointsSidebar.install(CosmeticStore.get(), LevelStore.get());
+        new LobbyExperienceBar(LevelStore.get()).start(this);
         LevelUpNotice.install(LevelStore.get());
 
         loopThroughPackage("gg.itzkatze.katze.commands", KatzeCommand.class)
