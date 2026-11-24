@@ -14,10 +14,16 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.Container;
+import org.bukkit.block.data.Bisected;
+import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.Directional;
 import org.bukkit.block.data.Levelled;
+import org.bukkit.block.data.type.Bed;
+import org.bukkit.block.data.type.Stairs;
+import org.bukkit.block.data.type.TrapDoor;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.LivingEntity;
@@ -70,6 +76,7 @@ public class RandomizerGameListener implements Listener {
     private final Map<BlockPos, Player> pendingDrops = new HashMap<>();
     // Blocks this tick whose drops were already randomized through a drop event.
     private final Set<BlockPos> handledBlocks = new HashSet<>();
+    private final Set<UUID> handledDropItems = new HashSet<>();
     private int blockTick = -1;
     private int explosionTick = -1;
     private int containerTick = -1;
@@ -113,6 +120,7 @@ public class RandomizerGameListener implements Listener {
         brokenContainers.clear();
         pendingDrops.clear();
         handledBlocks.clear();
+        handledDropItems.clear();
         blockTick = -1;
         explosionTick = -1;
         containerTick = -1;
@@ -123,8 +131,9 @@ public class RandomizerGameListener implements Listener {
     public void onBlockDrop(BlockDropItemEvent event) {
         if (!blockDropsEnabled()) return;
         Location location = event.getBlock().getLocation();
-        markHandled(location);
+        syncBlockTick(Bukkit.getCurrentTick());
         for (Item item : event.getItems()) {
+            handledDropItems.add(item.getUniqueId());
             ItemStack stack = item.getItemStack();
             ItemStack replacement = randomizeBlockDrop(stack, event.getPlayer(), location);
             if (replacement != stack) item.setItemStack(replacement);
@@ -139,14 +148,33 @@ public class RandomizerGameListener implements Listener {
         containerTick = tick;
         BlockState state = event.getBlock().getState();
         if (state instanceof Container) brokenContainers.put(state.getLocation(), containerContents(state));
+
+        Block otherPart = otherPart(event.getBlock(), state.getBlockData());
+        if (otherPart != null) addPending(otherPart.getLocation(), event.getPlayer());
+    }
+
+    private Block otherPart(Block block, BlockData data) {
+        if (data instanceof Bed bed) {
+            BlockFace facing = bed.getFacing();
+            Block other = block.getRelative(bed.getPart() == Bed.Part.FOOT ? facing : facing.getOppositeFace());
+            return other.getBlockData() instanceof Bed opposite && opposite.getMaterial() == bed.getMaterial()
+                    && opposite.getPart() != bed.getPart() && opposite.getFacing() == facing ? other : null;
+        }
+        if (data instanceof Bisected bisected && !(data instanceof Stairs) && !(data instanceof TrapDoor)) {
+            Block other = block.getRelative(bisected.getHalf() == Bisected.Half.TOP ? BlockFace.DOWN : BlockFace.UP);
+            return other.getBlockData() instanceof Bisected opposite && opposite.getMaterial() == bisected.getMaterial()
+                    && opposite.getHalf() != bisected.getHalf() ? other : null;
+        }
+        return null;
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onBlockBreakBlock(BlockBreakBlockEvent event) {
         if (!blockDropsEnabled()) return;
         Location location = event.getBlock().getLocation();
-        markHandled(location);
-        event.getDrops().replaceAll(stack -> randomizeBlockDrop(stack, null, location));
+        markBlockHandled(location);
+        Player player = pendingDrops.get(BlockPos.of(location));
+        event.getDrops().replaceAll(stack -> randomizeBlockDrop(stack, player, location));
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
@@ -169,22 +197,22 @@ public class RandomizerGameListener implements Listener {
         }
     }
 
-    private void syncBlockTick() {
-        int tick = Bukkit.getCurrentTick();
+    private void syncBlockTick(int tick) {
         if (blockTick != tick) {
             pendingDrops.clear();
             handledBlocks.clear();
+            handledDropItems.clear();
             blockTick = tick;
         }
     }
 
-    private void markHandled(Location location) {
-        syncBlockTick();
+    private void markBlockHandled(Location location) {
+        syncBlockTick(Bukkit.getCurrentTick());
         handledBlocks.add(BlockPos.of(location));
     }
 
     private void addPending(Location location, Player player) {
-        syncBlockTick();
+        syncBlockTick(Bukkit.getCurrentTick());
         BlockPos key = BlockPos.of(location);
         // never replace a known responsible player with "unknown"
         if (player != null) pendingDrops.put(key, player);
@@ -250,12 +278,12 @@ public class RandomizerGameListener implements Listener {
         if (explosionDrops.isEmpty() && pendingDrops.isEmpty()) return;
         int tick = Bukkit.getCurrentTick();
         if (explosionTick != tick) explosionDrops.clear();
-        if (blockTick != tick) {
-            pendingDrops.clear();
-            handledBlocks.clear();
-        }
+        syncBlockTick(tick);
         if (!blockDropsEnabled()) return;
-        BlockPos blockLocation = BlockPos.of(event.getLocation());
+        Item item = event.getEntity();
+        if (handledDropItems.contains(item.getUniqueId())) return;
+        Location location = event.getLocation();
+        BlockPos blockLocation = BlockPos.of(location);
         if (handledBlocks.contains(blockLocation)) return;
         Player player;
         if (pendingDrops.containsKey(blockLocation)) {
@@ -265,9 +293,8 @@ public class RandomizerGameListener implements Listener {
             if (drops == null) return;
             player = drops.player();
         }
-        Item item = event.getEntity();
         ItemStack stack = item.getItemStack();
-        ItemStack replacement = randomizeBlockDrop(stack, player, event.getLocation());
+        ItemStack replacement = randomizeBlockDrop(stack, player, location);
         if (replacement != stack) item.setItemStack(replacement);
     }
 
