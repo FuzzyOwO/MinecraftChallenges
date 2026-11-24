@@ -1,5 +1,6 @@
 package gg.itzkatze.katze.mobarmy;
 
+import org.bukkit.inventory.EquipmentSlot;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -210,6 +211,7 @@ public final class MobArmyMatch {
         String data;
         String variant;
         List<String> equipment = new ArrayList<>();
+        Map<EquipmentSlot, String> equipmentItems;
         List<String> attributes = new ArrayList<>();
         int wave = -1;
 

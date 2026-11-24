@@ -1,29 +1,34 @@
 package gg.itzkatze.katze.mobarmy;
 
+import gg.itzkatze.katze.replay.ReplayItems;
 import io.papermc.paper.entity.EntitySerializationFlag;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Hoglin;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.IronGolem;
 import org.bukkit.NamespacedKey;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.entity.Mob;
+import org.bukkit.entity.PiglinAbstract;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.EntityEquipment;
+import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.Vector;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.EnumMap;
 import java.util.Base64;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.function.Function;
@@ -63,20 +68,37 @@ final class MobCapture {
         fields(state).forEach((key, value) -> {
             if (DETAILS.contains(key)) mob.attributes.add(key + ": " + value);
         });
-        if (entity.getEquipment() != null) {
-            List<ItemStack> equipment = new ArrayList<>(Arrays.asList(entity.getEquipment().getArmorContents()));
-            equipment.add(entity.getEquipment().getItemInMainHand());
-            equipment.add(entity.getEquipment().getItemInOffHand());
-            for (ItemStack item : equipment) {
-                if (item == null || item.isEmpty()) continue;
-                mob.equipment.add(item.getType().name() + (item.getEnchantments().isEmpty() ? "" : " " + item.getEnchantments()));
-            }
-        }
+        captureEquipment(mob, entity.getEquipment());
         for (Attribute attribute : List.of(Attribute.MAX_HEALTH, Attribute.ATTACK_DAMAGE, Attribute.MOVEMENT_SPEED, Attribute.ARMOR)) {
             var value = entity.getAttribute(attribute);
             if (value != null) mob.attributes.add(attribute.getKey().getKey() + ": " + value.getValue());
         }
         return mob;
+    }
+
+    static void captureEquipment(MobArmyMatch.CapturedMob mob, EntityEquipment equipment) {
+        if (equipment == null) return;
+        mob.equipmentItems = new EnumMap<>(EquipmentSlot.class);
+        for (EquipmentSlot slot : EquipmentSlot.values()) {
+            ItemStack item = equipment.getItem(slot);
+            String encoded = ReplayItems.encode(item);
+            if (encoded.isEmpty()) continue;
+            mob.equipmentItems.put(slot, encoded);
+            mob.equipment.add(item.getType().name() + (item.getEnchantments().isEmpty() ? "" : " " + item.getEnchantments()));
+        }
+    }
+
+    private static void restoreEquipment(LivingEntity entity, Map<EquipmentSlot, String> items) {
+        if (items == null) return;
+        EntityEquipment equipment = entity.getEquipment();
+        if (equipment == null) return;
+        for (EquipmentSlot slot : EquipmentSlot.values()) {
+            String item = items.get(slot);
+            ItemStack current = equipment.getItem(slot);
+            if (item != null || current != null && !current.isEmpty()) {
+                equipment.setItem(slot, ReplayItems.decode(item), true);
+            }
+        }
     }
 
     @SuppressWarnings("deprecation")
@@ -96,8 +118,19 @@ final class MobCapture {
         return spawn(data, location.getWorld(), fresh, entity -> location);
     }
 
+    static LivingEntity spawn(MobArmyMatch.CapturedMob mob, World world, Function<LivingEntity, Location> position) {
+        LivingEntity living = deserialize(mob.data, world);
+        restoreEquipment(living, mob.equipmentItems);
+        return spawn(living, true, position);
+    }
+
     static LivingEntity spawn(String data, World world, boolean fresh, Function<LivingEntity, Location> position) {
-        LivingEntity living = deserialize(data, world);
+        return spawn(deserialize(data, world), fresh, position);
+    }
+
+    private static LivingEntity spawn(LivingEntity living, boolean fresh, Function<LivingEntity, Location> position) {
+        if (living instanceof PiglinAbstract piglin) piglin.setImmuneToZombification(true);
+        if (living instanceof Hoglin hoglin) hoglin.setImmuneToZombification(true);
         if (fresh && living instanceof IronGolem golem) {
             golem.getPersistentDataContainer().set(HOSTILE_GOLEM, PersistentDataType.BYTE, (byte) 1);
             golem.setPlayerCreated(false);

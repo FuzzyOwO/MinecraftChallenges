@@ -410,7 +410,7 @@ final class MobArmyGame {
                 var mob = match.nextSpawn(side);
                 if (mob != null) {
                     try {
-                        LivingEntity entity = MobCapture.spawn(mob.data, arena.world(match.sides.indexOf(side)), true, living -> arena.spawn(match.sides.indexOf(side), living));
+                        LivingEntity entity = MobCapture.spawn(mob, arena.world(match.sides.indexOf(side)), living -> arena.spawn(match.sides.indexOf(side), living));
                         track(side, entity);
                     } catch (RuntimeException exception) {
                         side.queue.addFirst(mob);
